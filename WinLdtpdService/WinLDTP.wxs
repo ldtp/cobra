@@ -1,0 +1,243 @@
+<?xml version='1.0' encoding='windows-1252'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+
+<?define UpgradeCode=F0C8AC98-8C96-40F3-8D51-0EF5B40343EC?>
+<?define Version=1.0.0?>
+<?if $(sys.BUILDARCH)=x64?>
+   <?define Is64bit="yes"?>
+   <?define CommonFilesFolder="CommonFiles64Folder"?>
+   <?define ProgramFilesFolder="ProgramFiles64Folder"?>
+   <?define SystemFolder="System64Folder"?>
+<?elseif $(sys.BUILDARCH)=x86?>
+   <?define Is64bit="no"?>
+   <?define CommonFilesFolder="CommonFilesFolder"?>
+   <?define ProgramFilesFolder="ProgramFilesFolder"?>
+   <?define SystemFolder="SystemFolder"?>
+<?else?>
+   <?error Unknown build architecture?>
+<?endif?>
+
+   <Product Id='*'
+            UpgradeCode='$(var.UpgradeCode)'
+            Name='WinLDTP 1.0'
+            Language='1033'
+            Codepage='1252'
+            Version='$(var.Version)'
+            Manufacturer='VMware, Inc.'>
+
+      <Package Id='*'
+               Description='Windows LDTP 1.0 Installer'
+               Comments='Windows LDTP is Free Software project.'
+               Manufacturer='VMware, Inc.'
+               InstallerVersion='200'
+               Languages='1033'
+               Compressed='yes'
+               SummaryCodepage='1252' />
+
+      <Media Id='1' Cabinet='data.cab' EmbedCab='yes' />
+
+      <Directory Id='TARGETDIR' Name='SourceDir'>
+         <Directory Id='$(var.ProgramFilesFolder)'>
+            <Directory Id='CompanyFolder' Name='VMware'>
+               <Directory Id='INSTALLDIR' Name='WinLDTP 1.0'>
+                  <Directory Id='PYLDTPDIR' Name='ldtp' />
+               </Directory>
+            </Directory>
+         </Directory>
+         <Directory Id="ProgramMenuFolder">
+            <Directory Id="ProgramMenuDir" Name="WinLDTP 1.0" />
+         </Directory>
+         <Directory Id="DesktopFolder" />
+      </Directory>
+
+      <DirectoryRef Id='INSTALLDIR'>
+         <Component Id='MainExecutable'
+                    Guid='F0C8AC98-8C96-40F3-8D51-0EF5B40343EC'
+                    Win64="$(var.Is64bit)">
+            <Environment Id='UpdatePath' Name='PATH' Action='set' Permanent='no' System='yes' Part='last' Value='[INSTALLDIR]' />
+            <Environment Id='UpdatePythonPath' Name='PYTHONPATH' Action='set' Permanent='no' System='yes' Part='last' Value='[INSTALLDIR]' />
+            <File Id='WinLDTPEXE'
+                  Name='WinLdtpdService.exe'
+                  DiskId='1'
+                  Source='WinLdtpdService.exe'
+                  KeyPath='yes'>
+            <Shortcut Id="startmenuWinLDTPService"
+                      Directory="ProgramMenuDir"
+                      Name="WinLDTPService 1.0"
+                      WorkingDirectory='INSTALLDIR'
+                      Icon="WinLdtpdService.exe"
+                      IconIndex="0"
+                      Advertise="yes" />
+            <!-- This is considered BAD practice - should be a user option, defaulting to no -->
+            <!-- FYI, look into 
+               <ShortcutProperty Key="System.AppUserModel.PreventPinning" Value="0" />
+               <ShortcutProperty Key="System.AppUserModel.ID" Value="[AppUserModelId]" />
+              These would be child elements of Shortcut.
+            -->
+            <Shortcut Id="desktopWinLDTP10"
+                      Directory="DesktopFolder"
+                      Name="WinLDTP 1.0"
+                      WorkingDirectory='INSTALLDIR'
+                      Icon="WinLdtpdService.exe"
+                      IconIndex="0"
+                      Advertise="yes" />
+            </File>
+         </Component>
+         <Component Id='SetEnvironmentVariable'
+                    Guid='5F6DEE34-7DEB-49F5-8392-44936CC15348'
+                    Win64="$(var.Is64bit)">
+            <File Id='SetEnvironmentVariableexe'
+                  Name='SetEnvironmentVariable.exe'
+                  DiskId='1'
+                  Source='SetEnvironmentVariable.exe'
+                  KeyPath='yes' />
+         </Component>
+
+         <Component Id='CookComputing.XmlRpcV2'
+                    Guid='7CD1E932-A456-4858-956B-AB807AB8DB04'
+                    Win64="$(var.Is64bit)">
+            <File Id='CookComputing.XmlRpcV2DLL'
+                  Name='CookComputing.XmlRpcV2.dll'
+                  DiskId='1'
+                  Source='CookComputing.XmlRpcV2.dll'
+                  KeyPath='yes' />
+         </Component>
+
+         <Component Id='Interop.UIAutomationClient'
+                    Guid='2A0D6CAA-B1B9-4321-84F7-8AED16A4EA2A'
+                    Win64="$(var.Is64bit)">
+            <File Id='Interop.UIAutomationClientDLL'
+                  Name='Interop.UIAutomationClient.dll'
+                  DiskId='1'
+                  Source='Interop.UIAutomationClient.dll'
+                  KeyPath='yes' />
+         </Component>
+
+         <Component Id='Ldtpd'
+                    Guid='4CF67770-784E-4E26-A52A-D60B5C488502'
+                    Win64="$(var.Is64bit)">
+            <File Id='LdtpdDLL'
+                  Name='Ldtpd.dll'
+                  DiskId='1'
+                  Source='Ldtpd.dll'
+                  KeyPath='yes' />
+         </Component>
+
+         <Component Id='UIAComWrapper'
+                    Guid='BFF88604-2741-4BB4-AA81-5FAECE8A727B'
+                    Win64="$(var.Is64bit)">
+            <File Id='UIAComWrapperDLL'
+                  Name='UIAComWrapper.dll'
+                  DiskId='1'
+                  Source='UIAComWrapper.dll'
+                  KeyPath='yes' />
+         </Component>
+
+         <Component Id='WUIATestLibrary'
+                    Guid='BFBC4427-9C93-4719-8AF6-26DB60BAB73C'
+                    Win64="$(var.Is64bit)">
+            <File Id='WUIATestLibraryDLL'
+                  Name='WUIATestLibrary.dll'
+                  DiskId='1'
+                  Source='WUIATestLibrary.dll'
+                  KeyPath='yes' />
+         </Component>
+	 <Component Id="lgpl" Guid="43AFE145-9F81-4EC2-B57B-89F3DCC8685B">
+                <File Id="lgplrtf" KeyPath="yes" Source="lgpl.rtf" />
+         </Component>
+	 <Component Id="README" Guid="99C85611-B9B0-4D1D-A8B4-06B0EBC30B16">
+                <File Id="READMEtxt" KeyPath="yes" Source="README.txt" />
+         </Component>
+      </DirectoryRef>
+
+      <DirectoryRef Id='PYLDTPDIR'>
+         <Component Id="ldtpclient" Guid="0FDAFD39-6362-4864-AC4E-3FB39A5E6BA3">
+            <File Id="ldtpclientpy"
+                  Name="client.py"
+                  KeyPath="yes"
+                  Source="ldtp\client.py" />
+            <RemoveFile Id="ldtpclient" Name="client.pyc" On="uninstall" />
+         </Component>
+         <Component Id="ldtpclientexception" Guid="DBA35B90-2626-4873-A5D8-A97388C0E571">
+            <File Id="ldtpclientexceptionpy"
+                  Name="client_exception.py"
+                  KeyPath="yes"
+                  Source="ldtp\client_exception.py" />
+            <RemoveFile Id="ldtpclientexception" Name="client_exception.pyc" On="uninstall" />
+         </Component>
+         <Component Id="ldtplog" Guid="032C9DAF-DCA7-400D-A5AA-9003CF87D7AB">
+            <File Id="ldtplogpy"
+                  Name="log.py"
+                  KeyPath="yes"
+                  Source="ldtp\log.py" />
+            <RemoveFile Id="ldtplog" Name="log.pyc" On="uninstall" />
+         </Component>
+         <Component Id="ldtpstate" Guid="C79063B2-F628-4C03-9060-4E00C502BF8D">
+            <File Id="ldtpstatepy"
+                  Name="state.py"
+                  KeyPath="yes"
+                  Source="ldtp\state.py" />
+            <RemoveFile Id="ldtpstate" Name="state.pyc" On="uninstall" />
+         </Component>
+         <Component Id="ldtpinit" Guid="5ED6BB3C-3038-498D-8276-82FDDC987AEC">
+            <File Id="ldtpinitpy"
+                  Name="__init__.py"
+                  KeyPath="yes"
+                  Source="ldtp\__init__.py" />
+            <RemoveFile Id="ldtpinit" Name="__init__.pyc" On="uninstall" />
+         </Component>
+      </DirectoryRef>
+
+      <DirectoryRef Id="ProgramMenuDir">
+         <Component Id="ProgramMenuDir"
+                    Guid="F55D9ADD-A4DD-4A47-8137-A8D3B48E4157"
+                    Win64="$(var.Is64bit)">
+		    <!--<RemoveFolder Id="PYLDTPDIR" On='uninstall' />-->
+            <RemoveFolder Id="ProgramMenuDir" On='uninstall' />
+            <RegistryValue Root='HKCU' Key='Software\[Manufacturer]\[ProductName]' Type='string' Value='' KeyPath='yes' />
+         </Component>
+      </DirectoryRef>
+
+      <Feature Id='Complete' Level='1'>
+         <ComponentRef Id='MainExecutable' />
+	 <ComponentRef Id='SetEnvironmentVariable' />
+         <ComponentRef Id='CookComputing.XmlRpcV2' />
+         <ComponentRef Id='Interop.UIAutomationClient' />
+         <ComponentRef Id='Ldtpd' />
+         <ComponentRef Id='UIAComWrapper' />
+         <ComponentRef Id='WUIATestLibrary' />
+         <ComponentRef Id='lgpl' />
+         <ComponentRef Id='README' />
+         <ComponentRef Id="ldtpclient" />
+         <ComponentRef Id="ldtpclientexception" />
+         <ComponentRef Id="ldtplog" />
+         <ComponentRef Id="ldtpstate" />
+         <ComponentRef Id="ldtpinit" />
+         <ComponentRef Id='ProgramMenuDir' />
+      </Feature>
+
+      <!-- Note: I haven't tried this myself, I use Upgrade/UpgradeVersion
+      elements for finer control -->
+      <MajorUpgrade
+         AllowSameVersionUpgrades='yes'
+         Schedule='afterInstallInitialize'
+         DowngradeErrorMessage='A newer version is installed' />
+
+      <!-- You may want to point to a .ico file instead - this will copy the exe for icon caching -->
+      <Icon Id="WinLdtpdService.exe" SourceFile="WinLdtpdService.exe" />
+      <CustomAction Id="LaunchSetEnvironmentVariable"
+                      Directory="INSTALLDIR"
+                      ExeCommand='"[INSTALLDIR]SetEnvironmentVariable.exe"'
+                      Return="check">
+      </CustomAction>
+      <InstallExecuteSequence> 
+         <WriteEnvironmentStrings />
+	 <Custom Action="LaunchSetEnvironmentVariable" After="InstallFinalize">NOT Installed</Custom>
+      </InstallExecuteSequence>
+
+    <UI>
+       <UIRef Id="WixUI_Minimal" />
+    </UI>
+
+   </Product>
+</Wix>
