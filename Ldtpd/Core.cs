@@ -254,7 +254,7 @@ namespace Ldtpd
                 {
                     while (waitTime < guiTimeOut)
                     {
-                        if (GetWindowHandle(windowName) != null)
+                        if (GetWindowHandle(windowName, false) != null)
                             return 1;
                         waitTime++;
                         Wait(1);
@@ -265,7 +265,7 @@ namespace Ldtpd
                     AutomationElement wndHandle;
                     while (waitTime < guiTimeOut)
                     {
-                        if ((wndHandle = GetWindowHandle(windowName)) != null &&
+                        if ((wndHandle = GetWindowHandle(windowName, false)) != null &&
                             GetObjectHandle(wndHandle, objName, null, false) != null)
                         {
                             return 1;
@@ -297,7 +297,7 @@ namespace Ldtpd
                 {
                     while (waitTime < guiTimeOut)
                     {
-                        if (GetWindowHandle(windowName) == null)
+                        if (GetWindowHandle(windowName, false) == null)
                             return 1;
                         waitTime++;
                         Wait(1);
