@@ -30,7 +30,6 @@ import subprocess
 from socket import error as SocketError
 from client_exception import LdtpExecutionError, ERROR_CODE
 from log import logger
-from httplib import CannotSendRequest, ResponseNotReady
 
 _ldtp_windows_env = False
 if 'LDTP_DEBUG' in os.environ:
@@ -87,19 +86,53 @@ class Transport(xmlrpclib.Transport):
             self._daemon = os.spawnlp(os.P_NOWAIT, 'python',
                                       'python', '-c', pycmd)
 
+    # http://www.itkovian.net/base/transport-class-for-pythons-xml-rpc-lib/
+    ##
+    # Connect to server.
+    #
+    # @param host Target host.
+    # @return A connection handle.
+
+    def make_connection(self, host):
+        # create a HTTP connection object from a host descriptor
+        import httplib
+        host, extra_headers, x509 = self.get_host_info(host)
+        return httplib.HTTPConnection(host)
+    ##
+    # Send a complete request, and parse the response.
+    #
+    # @param host Target host.
+    # @param handler Target PRC handler.
+    # @param request_body XML-RPC request body.
+    # @param verbose Debugging flag.
+    # @return XML response.
+
     def request(self, host, handler, request_body, verbose=0):
+        # issue XML-RPC request
         retry_count = 1
         while True:
             try:
-                if hasattr(self, 'close') and \
-                        not re.search('methodName>system.list',
-                                      request_body) and \
-                                      not re.search('methodName>system.method',
-                                                    request_body):
-                    # On Windows XP SP3 / Python 2.5, close doesn't exist
-                                      self.close()
-                return xmlrpclib.Transport.request(
-                    self, host, handler, request_body, verbose=verbose)
+                h = self.make_connection(host)
+                if verbose:
+                    h.set_debuglevel(1)
+
+                self.send_request(h, handler, request_body)
+                self.send_host(h, host)
+                self.send_user_agent(h)
+                self.send_content(h, request_body)
+
+                response = h.getresponse()
+
+                if response.status != 200:
+                    raise ProtocolError(host + handler, response.status,
+                                        response.reason, response.msg.headers)
+
+                payload = response.read()
+                parser, unmarshaller = self.getparser()
+                parser.feed(payload)
+                parser.close()
+
+                return unmarshaller.close()
             except SocketError, e:
                 if ((_ldtp_windows_env and e[0] == 10061) or \
                         (not _ldtp_windows_env and (e.errno == 111 or \
@@ -132,26 +165,11 @@ class Transport(xmlrpclib.Transport):
                 raise
             except xmlrpclib.Fault, e:
                 if hasattr(self, 'close'):
-                    # On Windows XP SP3 / Python 2.5, close doesn't exist
                     self.close()
                 if e.faultCode == ERROR_CODE:
                     raise LdtpExecutionError(e.faultString.encode('utf-8'))
                 else:
                     raise e
-            except (CannotSendRequest, ResponseNotReady):
-                # Use a clean connection and retry
-                if retry_count < 10:
-                    # In python 2.7 / Ubuntu Natty 11.04
-                    # it fails, if this is not handled
-                    # bug 638229
-                    if hasattr(self, 'close'):
-                        # On Windows XP SP3 / Python 2.5, close doesn't exist
-                        self.close()
-                    retry_count += 1
-                    # Wait a second before retry
-                    time.sleep(1)
-                else:
-                    raise
 
     def __del__(self):
         try:
