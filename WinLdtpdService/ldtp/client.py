@@ -31,6 +31,9 @@ from socket import error as SocketError
 from client_exception import LdtpExecutionError, ERROR_CODE
 from log import logger
 
+_python25 = False
+if sys.version_info[:2] <= (2, 5):
+    _python25 = True
 _ldtp_windows_env = False
 if 'LDTP_DEBUG' in os.environ:
     _ldtp_debug = os.environ['LDTP_DEBUG']
@@ -93,11 +96,12 @@ class Transport(xmlrpclib.Transport):
     # @param host Target host.
     # @return A connection handle.
 
-    def make_connection(self, host):
-        # create a HTTP connection object from a host descriptor
-        import httplib
-        host, extra_headers, x509 = self.get_host_info(host)
-        return httplib.HTTPConnection(host)
+    if not _python25:
+        def make_connection(self, host):
+            # create a HTTP connection object from a host descriptor
+            import httplib
+            host, extra_headers, x509 = self.get_host_info(host)
+            return httplib.HTTPConnection(host)
     ##
     # Send a complete request, and parse the response.
     #
@@ -112,6 +116,13 @@ class Transport(xmlrpclib.Transport):
         retry_count = 1
         while True:
             try:
+                if _python25:
+                    # Noticed this in Hutlab environment (Windows 7 SP1)
+                    # Activestate python 2.5, use the old method
+                    return xmlrpclib.Transport.request(
+                        self, host, handler, request_body, verbose=verbose)
+		# Follwing implementation not supported in Python <= 2.5
+		# FIXME: Verify with Python 2.6
                 h = self.make_connection(host)
                 if verbose:
                     h.set_debuglevel(1)
@@ -124,7 +135,7 @@ class Transport(xmlrpclib.Transport):
                 response = h.getresponse()
 
                 if response.status != 200:
-                    raise ProtocolError(host + handler, response.status,
+                    raise xmlrpclib.ProtocolError(host + handler, response.status,
                                         response.reason, response.msg.headers)
 
                 payload = response.read()
@@ -208,3 +219,4 @@ class LdtpClient(xmlrpclib.ServerProxy):
         setattr(self, '_ServerProxy__host', host)
 
 _client = LdtpClient('http://%s:%s/' % (_ldtp_server_addr, _ldtp_server_port))
+
