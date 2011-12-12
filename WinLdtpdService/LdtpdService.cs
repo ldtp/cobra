@@ -63,6 +63,8 @@ namespace WinLdtpdService
             ///*
             XmlRpcListenerService svc = new Core(debug);
             HttpListener listener = new HttpListener();
+            listener.Prefixes.Add("http://localhost:4118/");
+            listener.Prefixes.Add("http://+:4118/");
             // Listen on all possible IP address
             if (listenAllInterface != null && listenAllInterface.Length > 0)
             {
@@ -72,12 +74,10 @@ namespace WinLdtpdService
             }
             else
             {
+                // For Windows 8, still you need to add firewall rules
+                // Refer: README.txt
                 if (debug)
                     Console.WriteLine("Listening only on local interface");
-                // For Windows 8, you need to add firewall rules
-                // Refer: README.txt
-                listener.Prefixes.Add("http://localhost:4118/");
-                listener.Prefixes.Add("http://+:4118/");
             }
             listener.Start();
             try
