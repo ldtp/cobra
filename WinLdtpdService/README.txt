@@ -41,10 +41,12 @@ WinLDTP works based on Microsoft accessibility layer.
 Verified with Windows 8 developer edition
 
 Minimum requirement .NET4.0
+To compile for Windows 8 environment (You can compile it from Windows 7, Visual studio 2010), but make sure you change target framework as .NET 4.0 for Windows 8 and .NET 3.5 for Windows XP/7
+NOTE: Don't select client profile
 
-netsh http add urlacl url=http://localhost:4118/MyUri user=User
-netsh http add urlacl url=http://+:4118/MyUri user=User
+netsh http add urlacl url=http://localhost:4118/ user=User
+netsh http add urlacl url=http://+:4118/ user=User
 
 If you run WinLDTP where you have logged in as a domain user
-netsh http add urlacl url=http://localhost:4118/MyUri user=DOMAIN\User
-netsh http add urlacl url=http://+:4118/MyUri user=DOMAIN\User
+netsh http add urlacl url=http://localhost:4118/ user=DOMAIN\User
+netsh http add urlacl url=http://+:4118/ user=DOMAIN\User
