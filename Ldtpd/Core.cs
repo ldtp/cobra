@@ -38,7 +38,6 @@ using System.Runtime.InteropServices;
 //[assembly: CLSCompliant(true)]
 namespace Ldtpd
 {
-    [XmlRpcService(XmlEncoding = "ISO-8859-1", Indentation = 1)]
     public class Core : Utils
     {
         //Hashtable objectHT = new Hashtable();
@@ -2100,7 +2099,9 @@ namespace Ldtpd
             {
                 if (childHandle.TryGetCurrentPattern(ValuePattern.Pattern,
                     out pattern))
+                {
                     return ((ValuePattern)pattern).Current.Value;
+                }
                 else if (childHandle.TryGetCurrentPattern(TextPattern.Pattern,
                     out pattern))
                 {
