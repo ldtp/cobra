@@ -599,9 +599,29 @@ namespace Ldtpd
             //int retry = waitForObj ? 1 : 1;
             for (int i = 0; i < retry; i++)
             {
-                o = InternalGetWindowHandle(windowName);
-                if (o != null)
-                    return o;
+                Thread thread = new Thread(delegate()
+                {
+                    o = InternalGetWindowHandle(windowName);
+                });
+                thread.Start();
+                // Wait 1 minute (60 seconds * 1000 milli seconds)
+                if (!thread.Join(60000))
+                {
+                    // Windows automation library hanged
+                    LogMessage("WARNING: Thread aborting, as the program" +
+                    " unable to find window within 1 minute");
+                    // This is an unsafe operation so use as a last resort.
+                    // Aborting only the current thread
+                    thread.Abort();
+                }
+                else
+                {
+                    if (o != null)
+                    {
+                        LogMessage("object is non null: " + o.Current.Name);
+                        return o;
+                    }
+                }
             }
             return o;
         }
