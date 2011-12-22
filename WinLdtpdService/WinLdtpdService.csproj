@@ -54,8 +54,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>.\CookComputing.XmlRpcV2.dll</HintPath>
     </Reference>
-    <Reference Include="Ldtpd">
-      <HintPath>.\Ldtpd.dll</HintPath>
+    <Reference Include="Ldtpd, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Ldtpd\bin\Debug\Ldtpd.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Runtime.Remoting" />
