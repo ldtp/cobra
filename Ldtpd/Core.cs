@@ -3168,10 +3168,9 @@ namespace Ldtpd
         }
         [XmlRpcMethod("grabfocus",
             Description = "Grab focus of given element.")]
-        public int GrabFocus(String windowName, String objName)
+        public int GrabFocus(String windowName, String objName = null)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (windowName == null || windowName.Length == 0)
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
@@ -3179,6 +3178,12 @@ namespace Ldtpd
             if (windowHandle == null)
             {
                 throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
+            }
+            if (objName == null || objName.Length == 0)
+            {
+                // If objName is not provided, just grab window focus
+                windowHandle.SetFocus();
+                return 1;
             }
             AutomationElement childHandle = GetObjectHandle(windowHandle, objName);
             if (childHandle == null)
@@ -3395,15 +3400,15 @@ namespace Ldtpd
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
+                LogMessage("Unable to find window: " + windowName);
+                return 0;
             }
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, null, false);
             if (childHandle == null)
             {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
+                LogMessage("Unable to find Object: " + objName);
+                return 0;
             }
             try
             {
@@ -3414,7 +3419,10 @@ namespace Ldtpd
                 AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
                     Condition.TrueCondition);
                 if (c == null)
-                    throw new XmlRpcFaultException(123, "Unable to get row count.");
+                {
+                    LogMessage("Unable to get row count.");
+                    return 0;
+                }
                 Object pattern;
                 do
                 {
@@ -3474,11 +3482,8 @@ namespace Ldtpd
             catch (Exception ex)
             {
                 LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                if (!(ex is XmlRpcFaultException))
+                    LogMessage("Unhandled exception: " + ex.Message);
             }
             return 0;
         }
@@ -4098,6 +4103,11 @@ namespace Ldtpd
                 Thread.Sleep(200);
             }
             return 1;
+        }
+        [XmlRpcMethod("mouseleftclick", Description = "Mouse left click on an object.")]
+        public int MouseLeftClick(String windowName, String objName)
+        {
+            return Click(windowName, objName);
         }
     }
 }
