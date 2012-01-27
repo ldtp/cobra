@@ -148,6 +148,9 @@
 	 <Component Id="README" Guid="99C85611-B9B0-4D1D-A8B4-06B0EBC30B16">
                 <File Id="READMEtxt" KeyPath="yes" Source="README.txt" />
          </Component>
+	 <Component Id="FAQ" Guid="2EAB177A-540B-4DC5-8D60-EEF551063A53">
+                <File Id="FAQtxt" KeyPath="yes" Source="FAQ.txt" />
+         </Component>
       </DirectoryRef>
 
       <DirectoryRef Id='PYLDTPDIR'>
@@ -208,6 +211,7 @@
          <ComponentRef Id='WUIATestLibrary' />
          <ComponentRef Id='lgpl' />
          <ComponentRef Id='README' />
+         <ComponentRef Id='FAQ' />
          <ComponentRef Id="ldtpclient" />
          <ComponentRef Id="ldtpclientexception" />
          <ComponentRef Id="ldtplog" />
