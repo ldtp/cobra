@@ -2,8 +2,8 @@
 WinLDTP 1.0
 
 @author: Nagappan Alagappan <nalagappan@vmware.com>
-@copyright: Copyright (c) 2011 VMware Inc.,
-@license: LGPL
+@copyright: Copyright (c) 2011-12 VMware Inc.,
+@license: LGPLv2
 
 http://ldtp.freedesktop.org
 
