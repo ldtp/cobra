@@ -2,8 +2,8 @@
 WinLDTP 1.0
 
 @author: Nagappan Alagappan <nalagappan@vmware.com>
-@copyright: Copyright (c) 2011 VMware Inc.,
-@license: LGPL
+@copyright: Copyright (c) 2011-12 VMware Inc.,
+@license: LGPLv2
 
 http://ldtp.freedesktop.org
 
@@ -604,8 +604,8 @@ namespace Ldtpd
                     o = InternalGetWindowHandle(windowName);
                 });
                 thread.Start();
-                // Wait 1 minute (60 seconds * 1000 milli seconds)
-                if (!thread.Join(60000))
+                // Wait 30 seconds (30 seconds * 1000 milli seconds)
+                if (!thread.Join(30000))
                 {
                     // Windows automation library hanged
                     LogMessage("WARNING: Thread aborting, as the program" +
@@ -618,7 +618,17 @@ namespace Ldtpd
                 {
                     if (o != null)
                     {
-                        LogMessage("object is non null: " + o.Current.Name);
+                        try
+                        {
+                            LogMessage("object is non null: " + o.Current.Name);
+                        }
+                        catch (System.Runtime.InteropServices.COMException ex)
+                        {
+                            // Noticed this with Notepad
+                            LogMessage("Error HRESULT E_FAIL has been returned from a call to a COM component.");
+                            LogMessage(ex.StackTrace);
+                            continue;
+                        }
                         return o;
                     }
                 }
@@ -635,7 +645,7 @@ namespace Ldtpd
             AutomationElement o = null;
             if (e == null)
             {
-                LogMessage("Child handle NULL");
+                LogMessage("GetObjectHandle: Child handle NULL");
                 return null;
             }
             ObjInfo objInfo = new ObjInfo(false);
@@ -667,7 +677,7 @@ namespace Ldtpd
         {
             if (childHandle == null)
             {
-                LogMessage("Child handle NULL");
+                LogMessage("InternalGetObjectHandle: Child handle NULL");
                 return null;
             }
             int index;
@@ -1009,6 +1019,441 @@ namespace Ldtpd
                 Thread.Sleep(1000);
             }
             return false;
+        }
+        protected int InternalWait(object waitTime)
+        {
+            int time;
+            try
+            {
+                time = Convert.ToInt32(waitTime, CultureInfo.CurrentCulture);
+            }
+            catch (Exception ex)
+            {
+                time = 5;
+                LogMessage(ex);
+            }
+            if (time < 1)
+                time = 1;
+            Thread.Sleep(time * 1000);
+            return 1;
+        }
+        protected int InternalWaitTillGuiExist(String windowName,
+            String objName = null, int guiTimeOut = 30)
+        {
+            if (windowName == null || windowName.Length == 0)
+            {
+                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+            }
+            try
+            {
+                int waitTime = 0;
+                if (objName == null)
+                {
+                    while (waitTime < guiTimeOut)
+                    {
+                        if (GetWindowHandle(windowName, false) != null)
+                            return 1;
+                        waitTime++;
+                        InternalWait(1);
+                    }
+                }
+                else
+                {
+                    AutomationElement wndHandle;
+                    while (waitTime < guiTimeOut)
+                    {
+                        if ((wndHandle = GetWindowHandle(windowName, false)) != null &&
+                            GetObjectHandle(wndHandle, objName, null, false) != null)
+                        {
+                            return 1;
+                        }
+                        waitTime++;
+                        InternalWait(1);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+            }
+            return 0;
+        }
+        protected int InternalWaitTillGuiNotExist(String windowName,
+            String objName = null, int guiTimeOut = 30)
+        {
+            if (windowName == null || windowName.Length == 0)
+            {
+                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+            }
+            try
+            {
+                int waitTime = 0;
+                if (objName == null)
+                {
+                    while (waitTime < guiTimeOut)
+                    {
+                        if (GetWindowHandle(windowName, false) == null)
+                            return 1;
+                        waitTime++;
+                        InternalWait(1);
+                    }
+                }
+                else
+                {
+                    AutomationElement wndHandle;
+                    while (waitTime < guiTimeOut)
+                    {
+                        if ((wndHandle = GetWindowHandle(windowName, false)) == null)
+                            // If window doesn't exist, no Point in checking for object
+                            // inside the window
+                            return 1;
+                        if (GetObjectHandle(wndHandle, objName, null, false) == null)
+                        {
+                            return 1;
+                        }
+                        waitTime++;
+                        InternalWait(1);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+            }
+            return 0;
+        }
+        protected int InternalGuiExist(String windowName, String objName = null)
+        {
+            if (windowName == null || windowName.Length == 0)
+            {
+                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+            }
+            try
+            {
+                AutomationElement windowHandle = GetWindowHandle(windowName, false);
+                if (windowHandle == null)
+                {
+                    return 0;
+                }
+                windowHandle.SetFocus();
+                if (objName != null && objName != "")
+                {
+                    AutomationElement childHandle = GetObjectHandle(windowHandle,
+                        objName, null, false);
+                    if (childHandle == null)
+                    {
+                        LogMessage("Unable to find Object: " + objName);
+                        return 0;
+                    }
+                }
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                return 0;
+            }
+        }
+        protected int InternalMenuHandler(String windowName, String objName,
+            ref ArrayList menuList, String actionType = "Select")
+        {
+            if (windowName == null || objName == null ||
+                windowName.Length == 0 || objName.Length == 0)
+            {
+                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+            }
+            String currObjName = null;
+            AutomationElement firstObjHandle = null;
+            try
+            {
+                AutomationElement windowHandle = GetWindowHandle(windowName);
+                if (windowHandle == null)
+                {
+                    throw new XmlRpcFaultException(123,
+                        "Unable to find window: " + windowName);
+                }
+                windowHandle.SetFocus();
+                LogMessage("Window name: " + windowHandle + " : " +
+                    windowHandle.Current.Name +
+                    " : " + windowHandle.Current.ControlType.ProgrammaticName);
+                bool bContextNavigated = false;
+                AutomationElement prevObjHandle = null;
+                AutomationElement childHandle = windowHandle;
+                /*
+                // element is an AutomationElement.
+                AutomationPattern[] patterns = childHandle.GetSupportedPatterns();
+                foreach (AutomationPattern pattern1 in patterns)
+                {
+                    Console.WriteLine("ProgrammaticName: " + pattern1.ProgrammaticName);
+                    Console.WriteLine("PatternName: " + Automation.PatternName(pattern1));
+                }
+                /**/
+                while (true)
+                {
+                    if (objName.Contains(";"))
+                    {
+                        int index = objName.IndexOf(";",
+                            StringComparison.CurrentCulture);
+                        currObjName = objName.Substring(0, index);
+                        objName = objName.Substring(index + 1);
+                    }
+                    else
+                    {
+                        currObjName = objName;
+                    }
+                    childHandle = GetObjectHandle(childHandle,
+                        currObjName, null, false);
+                    if (childHandle == null)
+                    {
+                        if (currObjName == objName)
+                        {
+                            throw new XmlRpcFaultException(123,
+                                "Unable to find Object: " + objName);
+                        }
+                        else
+                        {
+                            throw new XmlRpcFaultException(123,
+                                "Unable to find Object: " + currObjName);
+                        }
+                    }
+                    // Store previous handle for later use
+                    prevObjHandle = childHandle;
+                    if (firstObjHandle == null)
+                        // Save it for later use
+                        firstObjHandle = childHandle;
+                    if (!IsEnabled(childHandle))
+                    {
+                        throw new XmlRpcFaultException(123,
+                            "Object state is disabled");
+                    }
+                    if (childHandle.Current.ControlType != ControlType.Menu &&
+                        childHandle.Current.ControlType != ControlType.MenuItem)
+                    {
+                        throw new XmlRpcFaultException(123,
+                            "Object type should be menu or menu item");
+                    }
+                    childHandle.SetFocus();
+                    Object invokePattern = null;
+                    AutomationElementCollection c = null;
+                    if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern,
+                        out invokePattern))
+                    {
+                        if (actionType == "Select" || currObjName != objName ||
+                             actionType == "SubMenu")
+                        {
+                            LogMessage("Invoking menu item: " + currObjName + " : " + objName +
+                                " : " + childHandle.Current.ControlType.ProgrammaticName + " : "
+                                + childHandle.Current.Name);
+                            Rect rect = childHandle.Current.BoundingRectangle;
+                            Point pt = new Point(rect.X + rect.Width / 2,
+                                rect.Y + rect.Height / 2);
+                            Input.MoveToAndClick(pt);
+                            try
+                            {
+                                // Invoke doesn't work for VMware Workstation
+                                // But they work for Notepad
+                                // MoveToAndClick works for VMware Workstation
+                                // But not for Notepad (on first time)
+                                // Requires 2 clicks !
+                                ((InvokePattern)invokePattern).Invoke();
+                                InternalWait(1);
+                                c = childHandle.FindAll(TreeScope.Children,
+                                    Condition.TrueCondition);
+                            }
+                            catch (System.NotImplementedException ex)
+                            {
+                                // Noticed with VMware Workstation
+                                //    System.Runtime.InteropServices.COMException (0x80040200):
+                                //       Exception from HRESULT: 0x80040200
+                                LogMessage("NotImplementedException");
+                                LogMessage(ex);
+                            }
+                            catch (System.Windows.Automation.ElementNotEnabledException ex)
+                            {
+                                // Noticed with VMware Workstation
+                                //    System.Runtime.InteropServices.COMException (0x80040200):
+                                //       Exception from HRESULT: 0x80040200
+                                LogMessage("Element not enabled");
+                                LogMessage(ex);
+                            }
+                            catch (Exception ex)
+                            {
+                                LogMessage(ex);
+                            }
+                        }
+                    }
+                    if (currObjName == objName && actionType != "SubMenu")
+                    {
+                        switch (actionType)
+                        {
+                            case "Select":
+                                // No child menu item to be processed
+                                return 1;
+                            case "Exist":
+                            case "Enabled":
+                                int state = IsEnabled(childHandle) == true ? 1 : 0;
+                                LogMessage("IsEnabled(childHandle): " + childHandle.Current.Name + " : " + state);
+                                LogMessage("IsEnabled(childHandle): " + childHandle.Current.ControlType.ProgrammaticName);
+                                // Set it back to old state, else the menu selection left there
+                                Rect rect = firstObjHandle.Current.BoundingRectangle;
+                                Point pt = new Point(rect.X + rect.Width / 2,
+                                    rect.Y + rect.Height / 2);
+                                Input.MoveToAndClick(pt);
+                                // Don't process the last item
+                                if (actionType == "Enabled")
+                                    return state;
+                                else if (actionType == "Exist")
+                                    return 1;
+                                break;
+                            case "SubMenu":
+                                string matchedKey = null;
+                                Hashtable objectHT = new Hashtable();
+                                ObjInfo objInfo = new ObjInfo(false);
+                                menuList.Clear();
+                                InternalGetObjectList(walker.GetFirstChild(childHandle),
+                                    ref menuList, ref objectHT, ref matchedKey);
+                                if (menuList.Count > 0)
+                                {
+                                    // Set it back to old state, else the menu selection left there
+                                    rect = firstObjHandle.Current.BoundingRectangle;
+                                    pt = new Point(rect.X + rect.Width / 2,
+                                        rect.Y + rect.Height / 2);
+                                    Input.MoveToAndClick(pt);
+                                    // Don't process the last item
+                                    return 1;
+                                }
+                                else
+                                    LogMessage("menuList.Count <= 0: " + menuList.Count);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    else if (!bContextNavigated && InternalWaitTillGuiExist("Context",
+                        null, 3) == 1)
+                    {
+                        AutomationElement tmpWindowHandle;
+                        // Menu item under Menu are listed under Menu Window
+                        tmpWindowHandle = GetWindowHandle("Context");
+                        if (tmpWindowHandle == null)
+                        {
+                            throw new XmlRpcFaultException(123,
+                                "Unable to find window: Context");
+                        }
+                        // Find object from current handle, rather than navigating
+                        // the complete window
+                        childHandle = tmpWindowHandle;
+                        bContextNavigated = true;
+                        LogMessage("bContextNavigated: " + bContextNavigated);
+                        if (actionType != "SubMenu")
+                            continue;
+                        else if (currObjName == objName)
+                        {
+                            switch (actionType)
+                            {
+                                case "SubMenu":
+                                    string matchedKey = null;
+                                    Hashtable objectHT = new Hashtable();
+                                    ObjInfo objInfo = new ObjInfo(false);
+                                    menuList.Clear();
+                                    InternalGetObjectList(walker.GetFirstChild(childHandle),
+                                        ref menuList, ref objectHT, ref matchedKey);
+                                    if (menuList.Count > 0)
+                                    {
+                                        // Set it back to old state, else the menu selection left there
+                                        Rect rect = firstObjHandle.Current.BoundingRectangle;
+                                        Point pt = new Point(rect.X + rect.Width / 2,
+                                            rect.Y + rect.Height / 2);
+                                        Input.MoveToAndClick(pt);
+                                        // Don't process the last item
+                                        return 1;
+                                    }
+                                    else
+                                        LogMessage("menuList.Count <= 0: " + menuList.Count);
+                                    break;
+                            }
+                        }
+                    }
+                    else if (c != null && c.Count > 0)
+                    {
+                        LogMessage("c != null && c.Count > 0");
+                        childHandle = windowHandle;
+                        continue;
+                    }
+                    else if (InternalWaitTillGuiExist(prevObjHandle.Current.Name, null, 3) == 1)
+                    {
+                        // Menu item under Menu are listed under Menu Window
+                        LogMessage("Menu item under Menu are listed under Menu Window: " + prevObjHandle.Current.Name);
+                        AutomationElement tmpWindowHandle;
+                        tmpWindowHandle = GetWindowHandle(prevObjHandle.Current.Name);
+                        if (tmpWindowHandle == null)
+                        {
+                            throw new XmlRpcFaultException(123,
+                                "Unable to find window: " + prevObjHandle.Current.Name);
+                        }
+                        // Find object from current handle, rather than navigating
+                        // the complete window
+                        LogMessage("Assigning tmpWindowHandle as childHandle");
+                        childHandle = tmpWindowHandle;
+                    }
+                    // Required for Notepad like app
+                    if ((c == null || c.Count == 0))
+                    {
+                        LogMessage("Work around for Windows application");
+                        AutomationElement tmpChildHandle = GetObjectHandle(windowHandle, objName);
+                        // Work around for Notepad, as it doesn't find the menuitem
+                        // on clicking any menu
+                        if (tmpChildHandle != null)
+                        {
+                            LogMessage("Work around: tmpChildHandle != null");
+                            if (actionType == "SubMenu" && currObjName == objName)
+                                // Work around for Notepad like app
+                                childHandle = tmpChildHandle;
+                            else
+                                // Work around for Notepad like app,
+                                // but for actionType other than SubMenu
+                                childHandle = windowHandle;
+                        }
+                    }
+                    if (currObjName == objName)
+                    {
+                        switch (actionType)
+                        {
+                            case "SubMenu":
+                                string matchedKey = null;
+                                Hashtable objectHT = new Hashtable();
+                                ObjInfo objInfo = new ObjInfo(false);
+                                menuList.Clear();
+                                InternalGetObjectList(walker.GetFirstChild(childHandle),
+                                    ref menuList, ref objectHT, ref matchedKey);
+                                // Set it back to old state, else the menu selection left there
+                                Rect rect = firstObjHandle.Current.BoundingRectangle;
+                                Point pt = new Point(rect.X + rect.Width / 2,
+                                    rect.Y + rect.Height / 2);
+                                Input.MoveToAndClick(pt);
+                                // Don't process the last item
+                                return 1;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                if (firstObjHandle != null)
+                {
+                    // Set it back to old state, else the menu selection left there
+                    Rect rect = firstObjHandle.Current.BoundingRectangle;
+                    Point pt = new Point(rect.X + rect.Width / 2,
+                        rect.Y + rect.Height / 2);
+                    Input.MoveToAndClick(pt);
+                }
+                if (ex is XmlRpcFaultException)
+                    throw;
+                else
+                    throw new XmlRpcFaultException(123,
+                                    "Unhandled exception: " + ex.Message);
+            }
         }
     }
 }
