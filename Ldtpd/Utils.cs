@@ -946,24 +946,42 @@ namespace Ldtpd
             }
             return false;
         }
-        protected bool SelectListItem(AutomationElement element, String itemText)
+        protected bool SelectListItem(AutomationElement element, String itemText,
+            bool verify = false)
         {
             if (element == null || itemText == null || itemText.Length == 0)
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be null or empty.");
             }
-            element.SetFocus();
+            LogMessage("SelectListItem Element: " + element.Current.Name +
+                " - Type: " + element.Current.ControlType.ProgrammaticName);
+            Object pattern = null;
             AutomationElement elementItem;
             try
             {
-                elementItem = GetObjectHandle(element.FindFirst(TreeScope.Children,
-                    Condition.TrueCondition), itemText);
+                elementItem = GetObjectHandle(element, itemText);
                 if (elementItem != null)
                 {
                     LogMessage(elementItem.Current.Name + " : " +
                         elementItem.Current.ControlType.ProgrammaticName);
-                    Object pattern = null;
+                    if (verify)
+                    {
+                        bool status = false;
+                        if (elementItem.TryGetCurrentPattern(SelectionItemPattern.Pattern,
+                            out pattern))
+                        {
+                            status = ((SelectionItemPattern)pattern).Current.IsSelected;
+                        }
+                        if (element.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
+                            out pattern))
+                        {
+                            LogMessage("ExpandCollapsePattern");
+                            element.SetFocus();
+                            ((ExpandCollapsePattern)pattern).Collapse();
+                        }
+                        return status;
+                    }
                     if (elementItem.TryGetCurrentPattern(SelectionItemPattern.Pattern,
                         out pattern))
                     {
@@ -1005,6 +1023,64 @@ namespace Ldtpd
             throw new XmlRpcFaultException(123,
                 "Unable to find item in the list: " + itemText);
         }
+        protected int InternalComboSelect(String windowName, String objName,
+            String item, bool verify)
+        {
+            AutomationElement windowHandle = GetWindowHandle(windowName);
+            if (windowHandle == null)
+            {
+                throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
+            }
+            windowHandle.SetFocus();
+            ControlType[] type = new ControlType[3] { ControlType.ComboBox,
+                ControlType.ListItem, ControlType.List/*, ControlType.Text */ };
+            AutomationElement childHandle = GetObjectHandle(windowHandle, objName,
+                type, true);
+            if (childHandle == null)
+            {
+                throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
+            }
+            try
+            {
+                LogMessage("Handle name: " + childHandle.Current.Name +
+                    " - " + childHandle.Current.ControlType.ProgrammaticName);
+                if (!IsEnabled(childHandle))
+                {
+                    throw new XmlRpcFaultException(123, "Object state is disabled");
+                }
+                Object pattern = null;
+                if (childHandle.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
+                        out pattern))
+                {
+                    LogMessage("ExpandCollapsePattern");
+                    for (int i = 0; i < 5; i++)
+                    {
+                        ((ExpandCollapsePattern)pattern).Expand();
+                        InternalWait(1);
+                        if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
+                            ExpandCollapseState.Expanded)
+                        {
+                            // Selecting same combobox multiple time consequtively
+                            // fails. Check for the state and retry to expand
+                            LogMessage("Expaneded");
+                            break;
+                        }
+                        LogMessage("Collapsed");
+                    }
+                }
+                childHandle.SetFocus();
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                if (ex is XmlRpcFaultException)
+                    throw;
+                else
+                    throw new XmlRpcFaultException(123,
+                        "Unhandled exception: " + ex.Message);
+            }
+            return SelectListItem(childHandle, item, verify) ? 1 : 0;
+        }
         protected bool IsEnabled(AutomationElement e)
         {
             if (e == null)
@@ -1018,6 +1094,7 @@ namespace Ldtpd
                 // Wait 1 second before retrying
                 Thread.Sleep(1000);
             }
+            LogMessage("e.Current.IsEnabled: " + e.Current.IsEnabled);
             return false;
         }
         protected int InternalWait(object waitTime)

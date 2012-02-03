@@ -929,46 +929,21 @@ namespace Ldtpd
             Description = "Select combo box / layered pane item based on name.")]
         public int ComboSelect(String windowName, String objName, String item)
         {
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
-            }
-            windowHandle.SetFocus();
-            ControlType[] type = new ControlType[4] { ControlType.ComboBox,
-                ControlType.ListItem, ControlType.List, ControlType.Text };
-            AutomationElement childHandle = GetObjectHandle(windowHandle, objName,
-                type, true);
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
-            }
+            return InternalComboSelect(windowName, objName, item, false);
+        }
+        [XmlRpcMethod("verifyselect",
+            Description = "Select combo box / layered pane item based on name.")]
+        public int VerifyComboSelect(String windowName, String objName, String item)
+        {
             try
             {
-                LogMessage("Handle name: " + childHandle.Current.Name +
-                    " - " + childHandle.Current.ControlType.ProgrammaticName);
-                if (!IsEnabled(childHandle))
-                {
-                    throw new XmlRpcFaultException(123, "Object state is disabled");
-                }
-                Object pattern = null;
-                if (childHandle.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                        out pattern))
-                {
-                    ((ExpandCollapsePattern)pattern).Expand();
-                }
-                childHandle.SetFocus();
+                return InternalComboSelect(windowName, objName, item, true);
             }
             catch (Exception ex)
             {
                 LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return 0;
             }
-            return SelectListItem(childHandle, item) ? 1 : 0;
         }
         [XmlRpcMethod("settextvalue",
             Description = "Type string sequence.")]
@@ -2353,6 +2328,7 @@ namespace Ldtpd
                 LogMessage("Unable to find window: " + windowName);
                 return 0;
             }
+            windowHandle.SetFocus();
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, null, false);
             if (childHandle == null)
@@ -2364,6 +2340,9 @@ namespace Ldtpd
             {
                 if (!IsEnabled(childHandle))
                 {
+                    // Let us not grab the focus which is enabled
+                    // will be helpful during verification
+                    LogMessage("childHandle.SetFocus");
                     childHandle.SetFocus();
                 }
                 AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
@@ -2376,6 +2355,7 @@ namespace Ldtpd
                 Object pattern;
                 do
                 {
+                    LogMessage("State: " + state);
                     switch (state.ToLower(CultureInfo.CurrentCulture))
                     {
                         case "visible":
@@ -2384,10 +2364,12 @@ namespace Ldtpd
                                 return 1;
                             break;
                         case "enabled":
-                            if (childHandle.Current.IsEnabled)
+                            if (IsEnabled(childHandle))
                                 return 1;
                             break;
                         case "focused":
+                            LogMessage("childHandle.Current.HasKeyboardFocus: " +
+                                childHandle.Current.HasKeyboardFocus);
                             if (childHandle.Current.HasKeyboardFocus)
                                 return 1;
                             break;
@@ -2411,7 +2393,7 @@ namespace Ldtpd
                             }
                             break;
                         case "selectable":
-                            if (childHandle.Current.IsEnabled &&
+                            if (IsEnabled(childHandle) &&
                                 childHandle.TryGetCurrentPattern(SelectionItemPattern.Pattern,
                                 out pattern))
                             {
@@ -2462,7 +2444,7 @@ namespace Ldtpd
             }
             try
             {
-                if (childHandle.Current.IsEnabled)
+                if (IsEnabled(childHandle))
                 {
                     childHandle.SetFocus();
                 }
@@ -2478,7 +2460,7 @@ namespace Ldtpd
                     stateList.Add("visible");
                     stateList.Add("showing");
                 }
-                if (childHandle.Current.IsEnabled)
+                if (IsEnabled(childHandle))
                     stateList.Add("enabled");
                 if (childHandle.Current.HasKeyboardFocus)
                     stateList.Add("focused");
@@ -2499,7 +2481,7 @@ namespace Ldtpd
                         //stateList.Add("checked");
                     }
                 }
-                if (childHandle.Current.IsEnabled &&
+                if (IsEnabled(childHandle) &&
                     childHandle.TryGetCurrentPattern(SelectionItemPattern.Pattern,
                             out pattern))
                 {
