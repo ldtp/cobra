@@ -292,6 +292,33 @@ namespace Ldtpd
             ArrayList menuList = new ArrayList();
             return InternalMenuHandler(windowName, objName, ref menuList, "Select");
         }
+        [XmlRpcMethod("maximizewindow",
+            Description = "Maximize window.")]
+        public int MaximizeWindow(String windowName)
+        {
+            ArrayList menuList = new ArrayList();
+            // Need to see how this is going to be for i18n / l10n
+            return InternalMenuHandler(windowName, "mnuSystem;mnuMaximize",
+                ref menuList, "Select");
+        }
+        [XmlRpcMethod("minimizewindow",
+            Description = "Minimize window.")]
+        public int MinimizeWindow(String windowName)
+        {
+            ArrayList menuList = new ArrayList();
+            // Need to see how this is going to be for i18n / l10n
+            return InternalMenuHandler(windowName, "mnuSystem;mnuMinimize",
+                ref menuList, "Select");
+        }
+        [XmlRpcMethod("closewindow",
+            Description = "Close window.")]
+        public int CloseWindow(String windowName)
+        {
+            ArrayList menuList = new ArrayList();
+            // Need to see how this is going to be for i18n / l10n
+            return InternalMenuHandler(windowName, "mnuSystem;mnuClose",
+                ref menuList, "Select");
+        }
         [XmlRpcMethod("menucheck",
             Description = "Check (click) a menuitem.")]
         public int MenuCheck(String windowName, String objName)

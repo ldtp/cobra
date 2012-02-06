@@ -1298,13 +1298,15 @@ namespace Ldtpd
                     if (firstObjHandle == null)
                         // Save it for later use
                         firstObjHandle = childHandle;
-                    if (!IsEnabled(childHandle))
+                    if ((actionType == "Select" || actionType == "SubMenu") &&
+                        !IsEnabled(childHandle))
                     {
                         throw new XmlRpcFaultException(123,
                             "Object state is disabled");
                     }
                     if (childHandle.Current.ControlType != ControlType.Menu &&
-                        childHandle.Current.ControlType != ControlType.MenuItem)
+                        childHandle.Current.ControlType != ControlType.MenuItem &&
+                        childHandle.Current.ControlType != ControlType.MenuBar)
                     {
                         throw new XmlRpcFaultException(123,
                             "Object type should be menu or menu item");
