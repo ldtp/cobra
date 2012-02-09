@@ -161,7 +161,7 @@ namespace Ldtpd
         {
             try
             {
-                switch (key)
+                switch (key.ToLower())
                 {
                     case "ctrl":
                     case "ctrll":
@@ -1241,6 +1241,8 @@ namespace Ldtpd
             }
             String currObjName = null;
             AutomationElement firstObjHandle = null;
+            ControlType[] type = new ControlType[3] { ControlType.Menu,
+                ControlType.MenuBar, ControlType.MenuItem };
             try
             {
                 AutomationElement windowHandle = GetWindowHandle(windowName);
@@ -1279,7 +1281,7 @@ namespace Ldtpd
                         currObjName = objName;
                     }
                     childHandle = GetObjectHandle(childHandle,
-                        currObjName, null, false);
+                        currObjName, type, false);
                     if (childHandle == null)
                     {
                         if (currObjName == objName)
@@ -1303,13 +1305,6 @@ namespace Ldtpd
                     {
                         throw new XmlRpcFaultException(123,
                             "Object state is disabled");
-                    }
-                    if (childHandle.Current.ControlType != ControlType.Menu &&
-                        childHandle.Current.ControlType != ControlType.MenuItem &&
-                        childHandle.Current.ControlType != ControlType.MenuBar)
-                    {
-                        throw new XmlRpcFaultException(123,
-                            "Object type should be menu or menu item");
                     }
                     childHandle.SetFocus();
                     Object invokePattern = null;
@@ -1371,8 +1366,10 @@ namespace Ldtpd
                             case "Exist":
                             case "Enabled":
                                 int state = IsEnabled(childHandle) == true ? 1 : 0;
-                                LogMessage("IsEnabled(childHandle): " + childHandle.Current.Name + " : " + state);
-                                LogMessage("IsEnabled(childHandle): " + childHandle.Current.ControlType.ProgrammaticName);
+                                LogMessage("IsEnabled(childHandle): " +
+                                    childHandle.Current.Name + " : " + state);
+                                LogMessage("IsEnabled(childHandle): " +
+                                    childHandle.Current.ControlType.ProgrammaticName);
                                 // Set it back to old state, else the menu selection left there
                                 Rect rect = firstObjHandle.Current.BoundingRectangle;
                                 Point pt = new Point(rect.X + rect.Width / 2,
@@ -1409,7 +1406,7 @@ namespace Ldtpd
                         }
                     }
                     else if (!bContextNavigated && InternalWaitTillGuiExist("Context",
-                        null, 3) == 1)
+                        null, 1) == 1)
                     {
                         AutomationElement tmpWindowHandle;
                         // Menu item under Menu are listed under Menu Window
@@ -1459,27 +1456,28 @@ namespace Ldtpd
                         childHandle = windowHandle;
                         continue;
                     }
-                    else if (InternalWaitTillGuiExist(prevObjHandle.Current.Name, null, 3) == 1)
+                    else if (InternalWaitTillGuiExist(prevObjHandle.Current.Name, null, 1) == 1)
                     {
                         // Menu item under Menu are listed under Menu Window
-                        LogMessage("Menu item under Menu are listed under Menu Window: " + prevObjHandle.Current.Name);
+                        LogMessage("Menu item under Menu are listed under Menu Window: " +
+                            prevObjHandle.Current.Name);
                         AutomationElement tmpWindowHandle;
                         tmpWindowHandle = GetWindowHandle(prevObjHandle.Current.Name);
-                        if (tmpWindowHandle == null)
+                        if (tmpWindowHandle != null)
                         {
-                            throw new XmlRpcFaultException(123,
-                                "Unable to find window: " + prevObjHandle.Current.Name);
+                            // Find object from current handle, rather than navigating
+                            // the complete window
+                            LogMessage("Assigning tmpWindowHandle as childHandle");
+                            childHandle = tmpWindowHandle;
                         }
-                        // Find object from current handle, rather than navigating
-                        // the complete window
-                        LogMessage("Assigning tmpWindowHandle as childHandle");
-                        childHandle = tmpWindowHandle;
                     }
                     // Required for Notepad like app
                     if ((c == null || c.Count == 0))
                     {
                         LogMessage("Work around for Windows application");
-                        AutomationElement tmpChildHandle = GetObjectHandle(windowHandle, objName);
+                        LogMessage(windowHandle.Current.Name + " : " + objName);
+                        AutomationElement tmpChildHandle = GetObjectHandle(windowHandle, objName,
+                            type, false);
                         // Work around for Notepad, as it doesn't find the menuitem
                         // on clicking any menu
                         if (tmpChildHandle != null)
