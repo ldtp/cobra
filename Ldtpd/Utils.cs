@@ -1023,8 +1023,8 @@ namespace Ldtpd
             throw new XmlRpcFaultException(123,
                 "Unable to find item in the list: " + itemText);
         }
-        protected int InternalComboSelect(String windowName, String objName,
-            String item, bool verify)
+        protected int InternalComboHandler(String windowName, String objName,
+            String item, String actionType = "Select")
         {
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
@@ -1050,25 +1050,52 @@ namespace Ldtpd
                 }
                 Object pattern = null;
                 if (childHandle.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                        out pattern))
+                    out pattern))
                 {
                     LogMessage("ExpandCollapsePattern");
+                    // Retry max 5 times
                     for (int i = 0; i < 5; i++)
                     {
-                        ((ExpandCollapsePattern)pattern).Expand();
-                        InternalWait(1);
-                        if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
-                            ExpandCollapseState.Expanded)
+                        switch (actionType)
                         {
-                            // Selecting same combobox multiple time consequtively
-                            // fails. Check for the state and retry to expand
-                            LogMessage("Expaneded");
-                            break;
+                            case "Hide":
+                                ((ExpandCollapsePattern)pattern).Collapse();
+                                // Required to wait 1 second, before checking the state and retry collapsing
+                                InternalWait(1);
+                                if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
+                                    ExpandCollapseState.Collapsed)
+                                {
+                                    // Hiding same combobox multiple time consecutively
+                                    // fails. Check for the state and retry to collapse
+                                    LogMessage("Collapsed");
+                                    return 1;
+                                }
+                                break;
+                            case "Show":
+                            case "Select":
+                            case "Verify":
+                                ((ExpandCollapsePattern)pattern).Expand();
+                                // Required to wait 1 second, before checking the state and retry expanding
+                                InternalWait(1);
+                                if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
+                                    ExpandCollapseState.Expanded)
+                                {
+                                    // Selecting same combobox multiple time consecutively
+                                    // fails. Check for the state and retry to expand
+                                    LogMessage("Expaneded");
+                                    if (actionType == "Show")
+                                        return 1;
+                                    else
+                                    {
+                                        childHandle.SetFocus();
+                                        bool verify = actionType == "Verify" ? true : false;
+                                        return SelectListItem(childHandle, item, verify) ? 1 : 0;
+                                    }
+                                }
+                                break;
                         }
-                        LogMessage("Collapsed");
                     }
                 }
-                childHandle.SetFocus();
             }
             catch (Exception ex)
             {
@@ -1079,7 +1106,7 @@ namespace Ldtpd
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
             }
-            return SelectListItem(childHandle, item, verify) ? 1 : 0;
+            return 0;
         }
         protected bool IsEnabled(AutomationElement e)
         {

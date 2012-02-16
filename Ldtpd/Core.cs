@@ -952,11 +952,23 @@ namespace Ldtpd
         {
             return ComboSelect(windowName, objName, item);
         }
+        [XmlRpcMethod("showlist",
+            Description = "Show combo box item based on name.")]
+        public int ShowList(String windowName, String objName)
+        {
+            return InternalComboHandler(windowName, objName, null, "Show");
+        }
+        [XmlRpcMethod("hidelist",
+            Description = "Hide combo box item based on name.")]
+        public int HideList(String windowName, String objName)
+        {
+            return InternalComboHandler(windowName, objName, null, "Hide");
+        }
         [XmlRpcMethod("comboselect",
             Description = "Select combo box / layered pane item based on name.")]
         public int ComboSelect(String windowName, String objName, String item)
         {
-            return InternalComboSelect(windowName, objName, item, false);
+            return InternalComboHandler(windowName, objName, item, "Select");
         }
         [XmlRpcMethod("verifyselect",
             Description = "Select combo box / layered pane item based on name.")]
@@ -964,7 +976,7 @@ namespace Ldtpd
         {
             try
             {
-                return InternalComboSelect(windowName, objName, item, true);
+                return InternalComboHandler(windowName, objName, item, "Verify");
             }
             catch (Exception ex)
             {
