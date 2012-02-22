@@ -151,6 +151,9 @@
 	 <Component Id="FAQ" Guid="2EAB177A-540B-4DC5-8D60-EEF551063A53">
                 <File Id="FAQtxt" KeyPath="yes" Source="FAQ.txt" />
          </Component>
+	 <Component Id="AUTHORS" Guid="DF606170-5DA8-11E1-B86C-0800200C9A66">
+                <File Id="AUTHORStxt" KeyPath="yes" Source="AUTHORS.txt" />
+         </Component>
       </DirectoryRef>
 
       <DirectoryRef Id='PYLDTPDIR'>
@@ -212,6 +215,7 @@
          <ComponentRef Id='lgpl' />
          <ComponentRef Id='README' />
          <ComponentRef Id='FAQ' />
+         <ComponentRef Id='AUTHORS' />
          <ComponentRef Id="ldtpclient" />
          <ComponentRef Id="ldtpclientexception" />
          <ComponentRef Id="ldtplog" />
