@@ -249,31 +249,30 @@ namespace Ldtpd
             if (windowName == null || objName == null ||
                 windowName.Length == 0 || objName.Length == 0)
             {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+                LogMessage("Argument cannot be empty.");
+                return 0;
             }
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
+                LogMessage("Unable to find window: " + windowName);
+                return 0;
             }
             try
             {
                 windowHandle.SetFocus();
                 AutomationElement childHandle = GetObjectHandle(windowHandle,
                     objName, null, false);
-                if (childHandle == null)
-                {
-                    LogMessage("Unable to find Object: " + objName);
-                    return 0;
-                }
-                return 1;
+                if (childHandle != null)
+                    return 1;
+                LogMessage("Unable to find Object: " + objName);
+                return 0;
             }
             catch (Exception ex)
             {
                 LogMessage(ex);
-                return 0;
             }
+            return 0;
         }
         [XmlRpcMethod("objtimeout ",
             Description = "Object timeout period, default 5 seconds.")]
@@ -343,14 +342,15 @@ namespace Ldtpd
             if (windowName == null || objName == null ||
                 windowName.Length == 0 || objName.Length == 0)
             {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+                LogMessage("Argument cannot be empty.");
+                return 0;
             }
             String currObjName = null;
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
+                LogMessage("Unable to find window: " + windowName);
+                return 0;
             }
             windowHandle.SetFocus();
             LogMessage("Window name: " + windowHandle + " : " +
@@ -515,14 +515,15 @@ namespace Ldtpd
             if (windowName == null || objName == null ||
                 windowName.Length == 0 || objName.Length == 0)
             {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+                LogMessage("Argument cannot be empty.");
+                return 0;
             }
             String currObjName = null;
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
+                LogMessage("Unable to find window: " + windowName);
+                return 0;
             }
             windowHandle.SetFocus();
             LogMessage("Window name: " + windowHandle + " : " +
@@ -727,13 +728,14 @@ namespace Ldtpd
             if (windowName == null || objName == null ||
                 windowName.Length == 0 || objName.Length == 0)
             {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+                LogMessage("Argument cannot be empty.");
+                return 0;
             }
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
+                LogMessage("Unable to find window: " + windowName);
+                return 0;
             }
             try
             {
@@ -742,8 +744,8 @@ namespace Ldtpd
                     objName, null, false);
                 if (childHandle == null)
                 {
-                    throw new XmlRpcFaultException(123,
-                        "Unable to find Object: " + objName);
+                    LogMessage("Unable to find Object: " + objName);
+                    return 0;
                 }
                 if (IsEnabled(childHandle))
                     return 1;
@@ -1294,18 +1296,21 @@ namespace Ldtpd
             if (windowName == null || objName == null ||
                 windowName.Length == 0 || objName.Length == 0)
             {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+                LogMessage("Argument cannot be empty.");
+                return 0;
             }
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
-                throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
+                LogMessage("Unable to find window: " + windowName);
+                return 0;
             }
             ControlType[] type = new ControlType[2] { ControlType.CheckBox, ControlType.RadioButton };
             AutomationElement childHandle = GetObjectHandle(windowHandle, objName, type, true);
             if (childHandle == null)
             {
-                throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
+                LogMessage("Unable to find Object: " + objName);
+                return 0;
             }
             try
             {
@@ -1330,18 +1335,21 @@ namespace Ldtpd
             if (windowName == null || objName == null ||
                 windowName.Length == 0 || objName.Length == 0)
             {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+                LogMessage("Argument cannot be empty.");
+                return 0;
             }
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
-                throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
+                LogMessage("Unable to find window: " + windowName);
+                return 0;
             }
             ControlType[] type = new ControlType[2] { ControlType.CheckBox, ControlType.RadioButton };
             AutomationElement childHandle = GetObjectHandle(windowHandle, objName, type, true);
             if (childHandle == null)
             {
-                throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
+                LogMessage("Unable to find Object: " + objName);
+                return 0;
             }
             try
             {
@@ -1648,26 +1656,27 @@ namespace Ldtpd
             if (windowName == null || objName == null || windowName.Length == 0 ||
                 objName.Length == 0 || tabName == null || tabName.Length == 0)
             {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
+                LogMessage("Argument cannot be empty.");
+                return 0;
             }
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
+                LogMessage("Unable to find window: " + windowName);
+                return 0;
             }
             ControlType[] type = new ControlType[1] { ControlType.Tab };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
             if (childHandle == null)
             {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
+                LogMessage("Unable to find Object: " + objName);
+                return 0;
             }
             if (!IsEnabled(childHandle))
             {
-                throw new XmlRpcFaultException(123, "Object state is disabled");
+                LogMessage("Object state is disabled");
+                return 0;
             }
             try
             {
@@ -1685,22 +1694,15 @@ namespace Ldtpd
                         LogMessage("SelectionItemPattern");
                         return ((SelectionItemPattern)pattern).Current.IsSelected ? 1 : 0;
                     }
-                    else
-                    {
-                        throw new XmlRpcFaultException(123, "Unsupported pattern.");
-                    }
                 }
             }
             catch (Exception ex)
             {
                 LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return 0;
             }
-            throw new XmlRpcFaultException(123, "Unable to find the item in tab list: " + tabName);
+            LogMessage("Unable to find the item in tab list: " + tabName);
+            return 0;
         }
         [XmlRpcMethod("doesrowexist",
             Description = "Does the given row text exist in tree item or list item.")]
@@ -1710,14 +1712,14 @@ namespace Ldtpd
             if (windowName == null || objName == null || windowName.Length == 0 ||
                 objName.Length == 0 || text == null || text.Length == 0)
             {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
+                LogMessage("Argument cannot be empty.");
+                return 0;
             }
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
+                LogMessage("Unable to find window: " + windowName);
+                return 0;
             }
             ControlType[] type = new ControlType[2] { ControlType.Tree,
                 ControlType.List };
@@ -1725,13 +1727,13 @@ namespace Ldtpd
                 objName, type, true);
             if (childHandle == null)
             {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
+                LogMessage("Unable to find Object: " + objName);
+                return 0;
             }
             if (!IsEnabled(childHandle))
             {
-                throw new XmlRpcFaultException(123,
-                    "Object state is disabled");
+                LogMessage("Object state is disabled");
+                return 0;
             }
             try
             {
@@ -1750,11 +1752,6 @@ namespace Ldtpd
             catch (Exception ex)
             {
                 LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
             }
             return 0;
         }
@@ -2359,7 +2356,8 @@ namespace Ldtpd
             if (windowName == null || objName == null || windowName.Length == 0
                 || objName.Length == 0 || state == null || state.Length == 0)
             {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+                LogMessage("Argument cannot be empty.");
+                return 0;
             }
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
@@ -2453,8 +2451,6 @@ namespace Ldtpd
             catch (Exception ex)
             {
                 LogMessage(ex);
-                if (!(ex is XmlRpcFaultException))
-                    LogMessage("Unhandled exception: " + ex.Message);
             }
             return 0;
         }

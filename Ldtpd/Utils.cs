@@ -1146,7 +1146,8 @@ namespace Ldtpd
         {
             if (windowName == null || windowName.Length == 0)
             {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+                LogMessage("Argument cannot be empty.");
+                return 0;
             }
             try
             {
@@ -1187,7 +1188,8 @@ namespace Ldtpd
         {
             if (windowName == null || windowName.Length == 0)
             {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+                LogMessage("Argument cannot be empty.");
+                return 0;
             }
             try
             {
@@ -1230,7 +1232,8 @@ namespace Ldtpd
         {
             if (windowName == null || windowName.Length == 0)
             {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+                LogMessage("Argument cannot be empty.");
+                return 0;
             }
             try
             {
