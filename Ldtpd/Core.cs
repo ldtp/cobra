@@ -972,6 +972,108 @@ namespace Ldtpd
         {
             return InternalComboHandler(windowName, objName, item, "Select");
         }
+        [XmlRpcMethod("verifydropdown",
+            Description = "Verify if combo box drop down list in the current dialog is visible.")]
+        public int VerifyDropDown(String windowName, String objName)
+        {
+            AutomationElement windowHandle = GetWindowHandle(windowName);
+            if (windowHandle == null)
+            {
+                LogMessage("Unable to find window: " + windowName);
+                return 0;
+            }
+            windowHandle.SetFocus();
+            ControlType[] type = new ControlType[3] { ControlType.ComboBox,
+                ControlType.ListItem, ControlType.List };
+            AutomationElement childHandle = GetObjectHandle(windowHandle, objName,
+                type, true);
+            if (childHandle == null)
+            {
+                LogMessage("Unable to find Object: " + objName);
+                return 0;
+            }
+            try
+            {
+                LogMessage("Handle name: " + childHandle.Current.Name +
+                    " - " + childHandle.Current.ControlType.ProgrammaticName);
+                if (!IsEnabled(childHandle))
+                {
+                    LogMessage("Object state is disabled");
+                    return 0;
+                }
+                Object pattern = null;
+                if (childHandle.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
+                    out pattern))
+                {
+                    LogMessage("ExpandCollapsePattern");
+                    if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
+                        ExpandCollapseState.Expanded)
+                    {
+                        LogMessage("Expaneded");
+                        return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+            }
+            return 0;
+        }
+        [XmlRpcMethod("verifyshowlist",
+            Description = "Verify if combo box drop down list in the current dialog is visible.")]
+        public int VerifyShowList(String windowName, String objName)
+        {
+            return VerifyDropDown(windowName, objName);
+        }
+        [XmlRpcMethod("verifyhidelist",
+            Description = "Verify if combo box drop down list in the current dialog is not visible.")]
+        public int VerifyHideList(String windowName, String objName)
+        {
+            AutomationElement windowHandle = GetWindowHandle(windowName);
+            if (windowHandle == null)
+            {
+                LogMessage("Unable to find window: " + windowName);
+                return 0;
+            }
+            windowHandle.SetFocus();
+            ControlType[] type = new ControlType[3] { ControlType.ComboBox,
+                ControlType.ListItem, ControlType.List };
+            AutomationElement childHandle = GetObjectHandle(windowHandle, objName,
+                type, true);
+            if (childHandle == null)
+            {
+                LogMessage("Unable to find Object: " + objName);
+                return 0;
+            }
+            try
+            {
+                LogMessage("Handle name: " + childHandle.Current.Name +
+                    " - " + childHandle.Current.ControlType.ProgrammaticName);
+                if (!IsEnabled(childHandle))
+                {
+                    LogMessage("Object state is disabled");
+                    return 0;
+                }
+                Object pattern = null;
+                if (childHandle.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
+                    out pattern))
+                {
+                    LogMessage("ExpandCollapsePattern");
+                    if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
+                        ExpandCollapseState.Collapsed)
+                    {
+                        LogMessage("Collapsed");
+                        return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+            }
+            return 0;
+        }
         [XmlRpcMethod("verifyselect",
             Description = "Select combo box / layered pane item based on name.")]
         public int VerifyComboSelect(String windowName, String objName, String item)
