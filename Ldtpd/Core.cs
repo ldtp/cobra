@@ -322,18 +322,19 @@ namespace Ldtpd
             Description = "Check (click) a menuitem.")]
         public int MenuCheck(String windowName, String objName)
         {
-            // For now call SelectMenuItem, due to underlying bug in
-            // accessibility menu check/uncheck
-            LogMessage("calling SelectMenuItem due to underlying accessibility bug");
-            return SelectMenuItem(windowName, objName);
+            ArrayList menuList = new ArrayList();
+            // Works for "Notepad" like app,
+            //  but fails for "VMware Workstation" like app
+            return InternalMenuHandler(windowName, objName, ref menuList, "Check");
         }
         [XmlRpcMethod("menuuncheck",
             Description = "Uncheck (click) a menuitem.")]
         public int MenuUnCheck(String windowName, String objName)
         {
-            // For now call SelectMenuItem, due to underlying bug in
-            // accessibility menu check/uncheck
-            return SelectMenuItem(windowName, objName);
+            ArrayList menuList = new ArrayList();
+            // Works for "Notepad" like app,
+            //  but fails for "VMware Workstation" like app
+            return InternalMenuHandler(windowName, objName, ref menuList, "UnCheck");
         }
         [XmlRpcMethod("verifymenucheck",
             Description = "Verify a menuitem is unchecked.")]
