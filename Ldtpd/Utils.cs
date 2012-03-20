@@ -377,7 +377,9 @@ namespace Ldtpd
             try
             {
                 Process ps = (Process)data;
+                // Wait for the application to quit
                 ps.WaitForExit();
+                // Close the handle, so that we won't leak memory
                 ps.Close();
                 ps = null;
             }
