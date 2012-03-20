@@ -89,6 +89,8 @@ namespace Ldtpd
                         LogMessage("Children: " + child);
                 }
             }
+            objectHT = null;
+            matchedKey = null;
             return objectList.ToArray(typeof(string)) as string[];
         }
         [XmlRpcMethod("getwindowlist", Description = "Get window list")]
@@ -2372,9 +2374,12 @@ namespace Ldtpd
 
                 psi.UseShellExecute = true;
                 ps.StartInfo = psi;
-
                 ps.Start();
+                Thread thread = new Thread(new ParameterizedThreadStart(InternalLaunchApp));
+                // Clean up in different thread
+                thread.Start(ps);
                 Wait(delay);
+                ps = null;
                 return 1;
             }
             catch (Exception ex)
@@ -2719,6 +2724,11 @@ namespace Ldtpd
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
             }
+            finally
+            {
+                objectHT = null;
+                objectList = null;
+            }
             throw new XmlRpcFaultException(123, "Unable to find Object info: " + objName);
         }
         [XmlRpcMethod("getobjectproperty", Description = "Get object property.")]
@@ -2808,6 +2818,11 @@ namespace Ldtpd
                 else
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                objectHT = null;
+                objectList = null;
             }
             throw new XmlRpcFaultException(123, "Unable to find Object property: " +
                 property + " of object: " + objName);
@@ -2950,6 +2965,11 @@ namespace Ldtpd
                 else
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                objectHT = null;
+                objectList = null;
             }
             throw new XmlRpcFaultException(123, "Unsupported parameter type passed");
         }

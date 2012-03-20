@@ -26,7 +26,8 @@ using System.Collections;
 using System.Diagnostics;
 using CookComputing.XmlRpc;
 using System.Globalization;
-using System.Windows.Forms;using System.Windows.Automation;
+using System.Windows.Forms;
+using System.Windows.Automation;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
@@ -371,6 +372,21 @@ namespace Ldtpd
             // Clean up in different thread
             thread.Start();
         }
+        internal void InternalLaunchApp(object data)
+        {
+            try
+            {
+                Process ps = (Process)data;
+                ps.WaitForExit();
+                ps.Close();
+                ps = null;
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                throw;
+            }
+        }
         private void OnWindowDelete(object sender, AutomationEventArgs e)
         {
             /*
@@ -462,6 +478,7 @@ namespace Ldtpd
                             rx.Match(actualString).Success)
                         {
                             LogMessage(windowName + " - Window found");
+                            objectList = null;
                             return e;
                         }
                     }
@@ -588,6 +605,10 @@ namespace Ldtpd
             {
                 LogMessage(ex);
             }
+            finally
+            {
+                objectList = null;
+            }
             // Unable to find window
             return null;
         }
@@ -653,9 +674,10 @@ namespace Ldtpd
             int retry = waitForObj ? objectTimeOut : 1;
             // For debugging use the following value
             //int retry = waitForObj ? 1 : 1;
+            ArrayList objectList = new ArrayList();
             for (int i = 0; i < retry; i++)
             {
-                ArrayList objectList = new ArrayList();
+                objectList.Clear();
                 try
                 {
                     o = InternalGetObjectHandle(walker.GetFirstChild(e), objName,
@@ -667,10 +689,14 @@ namespace Ldtpd
                     o = null;
                 }
                 if (o != null)
+                {
+                    objectList = null;
                     return o;
+                }
                 // Wait 1 second, rescan for object
                 Thread.Sleep(1000);
             }
+            objectList = null;
             return o;
         }
         private AutomationElement InternalGetObjectHandle(AutomationElement childHandle,
@@ -1262,283 +1288,6 @@ namespace Ldtpd
                 return 0;
             }
         }
-        ///---------------------------------------------------------------------------
-        /// <summary>
-        /// Gets WindowHandle from an AutomationElement
-        /// Copied from http://uiautomationverify.codeplex.com/
-        /// </summary>
-        ///---------------------------------------------------------------------------
-        internal IntPtr GetWindowHandleFromAutomationElement(AutomationElement element)
-        {
-            if (element == null)
-                throw new ArgumentException("Automation Element cannot be null");
-
-            object objHwnd = element.GetCurrentPropertyValue(AutomationElement.NativeWindowHandleProperty);
-            LogMessage("GetWindowHandleFromAutomationElement: " + element.Current.Name +
-                " - 0x" + element.Current.NativeWindowHandle.ToString());
-            IntPtr ptr = IntPtr.Zero;
-
-            if (objHwnd is IntPtr)
-                ptr = (IntPtr)objHwnd;
-            else
-                ptr = new IntPtr(Convert.ToInt64(objHwnd, CultureInfo.CurrentCulture));
-
-            return ptr;
-        }
-        [StructLayout(LayoutKind.Sequential)]
-        public struct MENUITEMINFO
-        {
-            public uint cbSize;
-            public uint fMask;
-            public uint fType;
-            public uint fState;
-            public uint wID;
-            public IntPtr hSubMenu;
-            public IntPtr hbmpChecked;
-            public IntPtr hbmpUnchecked;
-            public IntPtr dwItemData;
-            public string dwTypeData;
-            public uint cch;
-            public IntPtr hbmpItem;
-        }
-        internal const uint MIIM_ID = 0x00000002, MIIM_STRING = 0x00000040;
-        internal const uint MIIM_SUBMENU = 0x00000004, MIIM_TYPE = 0x00000010;
-        internal const uint MIIM_CHECKMARKS = 0x00000008, MIIM_STATE = 0x00000001;
-        internal const UInt32 MF_CHECKED = 0x00000008;
-        internal const UInt32 MFS_CHECKED = MF_CHECKED;
-        [DllImport("user32.dll", CharSet = CharSet.Auto)]
-        static extern IntPtr GetMenu(IntPtr hWnd);
-        [DllImport("user32.dll", SetLastError = true)]
-        static extern bool GetMenuItemInfo(IntPtr hMenu, int uItem,
-                                          bool fByPosition, ref MENUITEMINFO lpmii);
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        static extern int GetMenuItemCount(IntPtr hMenu);
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        static extern IntPtr GetSubMenu(IntPtr hMenu, int nPos);
-        internal bool GetWin32MenuItemInfo(IntPtr menuHandle, int i, ref MENUITEMINFO itemInfo)
-        {
-            itemInfo.cbSize = (uint)Marshal.SizeOf(itemInfo);
-            itemInfo.fMask = MIIM_CHECKMARKS | MIIM_ID | MIIM_STATE | MIIM_SUBMENU | MIIM_TYPE;
-            itemInfo.dwTypeData = null;
-            // Get size of menu string
-            if (!GetMenuItemInfo(menuHandle, i, true, ref itemInfo))
-            {
-                LogMessage("Error: " + Marshal.GetLastWin32Error());
-                LogMessage("Unable to GetMenuItemInfo");
-                return false;
-            }
-            else
-            {
-                // Get the menu string
-                itemInfo.fMask = MIIM_STRING | MIIM_SUBMENU | MIIM_STATE;
-                // Create dobule the size of menu string buffer
-                itemInfo.dwTypeData = new string(' ', (int)itemInfo.cch * 2);
-                // Changing the size of string is important
-                // though it can be incremented by 1 character
-                // Just incase doubling the size
-                itemInfo.cch *= 2;
-                if (!GetMenuItemInfo(menuHandle, i, true, ref itemInfo))
-                {
-                    LogMessage("Error: " + Marshal.GetLastWin32Error());
-                    LogMessage("Unable to GetMenuItemInfo 2nd time");
-                    return false;
-                }
-                else
-                {
-                    LogMessage("*" + itemInfo.dwTypeData + "* Length: " + (itemInfo.cch + 1));
-                    return true;
-                }
-            }
-        }
-        internal bool FindMenu(string menuName, string data)
-        {
-            if (menuName == null || menuName.Length == 0 ||
-                data == null || data.Length == 0)
-            {
-                LogMessage("Argument should not be NULL");
-                return false;
-            }
-            string tmpMenu = menuName;
-            tmpMenu = "mnu" + Regex.Replace(data, @"(&|\s?)", @"");
-            LogMessage("*" + tmpMenu + "* Length: " + (data.Length + 1) + " - " + tmpMenu.Length);
-            // Trying to mimic python fnmatch.translate
-            String tmp = Regex.Replace(menuName, @"\*", @".*");
-            tmp = Regex.Replace(tmp, " ", "");
-            Regex rx = new Regex(tmp, RegexOptions.Compiled |
-                RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline |
-                RegexOptions.CultureInvariant);
-            LogMessage("FindMenu: " + menuName + " : " + rx.Match(tmpMenu).Success);
-            return (rx.Match(tmpMenu).Success);
-        }
-        internal int GetWin32SubMenuIndex(IntPtr wi32MenuHandle, int index,
-            string menuName, ref bool menuChecked)
-        {
-            if (wi32MenuHandle == IntPtr.Zero)
-            {
-                LogMessage("Invalid menu handle");
-                return -1;
-            }
-            IntPtr subMenuHandle;
-            int n = GetMenuItemCount(wi32MenuHandle);
-            if (n == -1)
-            {
-                LogMessage("Unable to get sub menuitem count");
-                return -1;
-            }
-            MENUITEMINFO itemInfo = new MENUITEMINFO();
-            LogMessage("menu count: " + n + " : index " + index);
-            subMenuHandle = GetSubMenu(wi32MenuHandle, index);
-            if (subMenuHandle == IntPtr.Zero)
-            {
-                LogMessage("Unable to get sub menu handle");
-            }
-            else
-            {
-                LogMessage("Found matching");
-                if (GetWin32MenuItemInfo(subMenuHandle, 0, ref itemInfo))
-                {
-                    LogMessage("Menu name: " + itemInfo.dwTypeData);
-                }
-            }
-            n = GetMenuItemCount(subMenuHandle);
-            if (n == -1)
-            {
-                LogMessage("Unable to get sub menuitem count");
-                return -1;
-            }
-            LogMessage("Sub menuitem count: " + n + " : menuName: " + menuName);
-            for (int i = 0; i < n; i++)
-            {
-                if (GetWin32MenuItemInfo(subMenuHandle, i, ref itemInfo))
-                {
-                    if (FindMenu(menuName, itemInfo.dwTypeData))
-                    {
-                        LogMessage("Found menu: " + menuName);
-                        if ((itemInfo.fState & MF_CHECKED) == MF_CHECKED)
-                        {
-                            LogMessage("SubMenu checked");
-                            menuChecked = true;
-                        }
-                        else
-                        {
-                            LogMessage("SubMenu Unchecked");
-                            menuChecked = false;
-                        }
-                        return i;
-                    }
-                    continue;
-                }
-                LogMessage("Unable to get menu item info");
-            }
-            return -1;
-        }
-        internal int GetWin32MainMenuIndex(IntPtr wi32WindowHandle, string menuName)
-        {
-            if (wi32WindowHandle == IntPtr.Zero)
-            {
-                LogMessage("Invalid window handle");
-                return -1;
-            }
-            IntPtr menuHandle = GetMenu(wi32WindowHandle);
-            if (menuHandle == IntPtr.Zero)
-            {
-                LogMessage("Unable to get main menu handle");
-                return -1;
-            }
-            int n = GetMenuItemCount(menuHandle);
-            if (n == -1)
-            {
-                LogMessage("Unable to get menuitem count");
-                return -1;
-            }
-            MENUITEMINFO itemInfo = new MENUITEMINFO();
-            LogMessage("menu count: " + n);
-            for (int i = 0; i < n; i++)
-            {
-                if (GetWin32MenuItemInfo(menuHandle, i, ref itemInfo))
-                {
-                    if (FindMenu(menuName, itemInfo.dwTypeData))
-                    {
-                        LogMessage("Found menu: " + menuName);
-                        return i;
-                    }
-                }
-                LogMessage("Unable to get menu item info");
-            }
-            return -1;
-        }
-        internal IntPtr GetWin32WindowHandle(AutomationElement windowHandle)
-        {
-            return GetWindowHandleFromAutomationElement(windowHandle);
-        }
-        /*
-         * Return value: -1 Failed to get handle, 0 Unchecked, 1 Checked
-         * */
-        internal int IsMenuChecked(AutomationElement windowHandle, string menuHierarchy)
-        {
-            int index = -1, menuIndex = -1;
-            bool menuChecked = false;
-            string mainMenu = null, currObjName = null;
-            IntPtr wi32WindowHandle = GetWin32WindowHandle(windowHandle);
-            IntPtr wi32MenuHandle = IntPtr.Zero;
-            if (wi32WindowHandle == IntPtr.Zero)
-            {
-                LogMessage("Invalid wi32WindowHandle");
-                return -1;
-            }
-            else
-                LogMessage("Valid wi32WindowHandle 0x" + wi32WindowHandle.ToString() + " : " + menuHierarchy);
-            while (currObjName != menuHierarchy)
-            {
-                if (menuHierarchy.Contains(";"))
-                {
-                    index = menuHierarchy.IndexOf(";",
-                        StringComparison.CurrentCulture);
-                    currObjName = menuHierarchy.Substring(0, index);
-                    menuHierarchy = menuHierarchy.Substring(index + 1);
-                }
-                else
-                {
-                    currObjName = menuHierarchy;
-                }
-                LogMessage("currObjName: " + currObjName + " : " + menuHierarchy);
-                if (mainMenu == null)
-                {
-                    mainMenu = currObjName;
-                    // Get the main menu handle first time
-                    menuIndex = GetWin32MainMenuIndex(wi32WindowHandle, mainMenu);
-                    // Works for "Notepad" like app,
-                    //  but fails for "VMware Workstation" like app
-                    if (menuIndex == -1)
-                    {
-                        LogMessage("Invalid menuIndex");
-                        return -1;
-                    }
-                    else
-                    {
-                        LogMessage("Valid menuIndex " + menuIndex);
-                    }
-                    continue;
-                }
-                // Works for "Notepad" like app,
-                //  but fails for "VMware Workstation" like app
-                IntPtr menuHandle = GetMenu(wi32WindowHandle);
-                menuIndex = GetWin32SubMenuIndex(menuHandle, menuIndex, currObjName, ref menuChecked);
-                if (index == -1)
-                {
-                    LogMessage("Invalid index");
-                    return -1;
-                }
-                else
-                {
-                    LogMessage("Valid index " + index);
-                    if (currObjName == menuHierarchy)
-                        // If checked return 1, else 0
-                        return menuChecked ? 1 : 0;
-                }
-            }
-            return -1;
-        }
         internal bool ClickMenu(AutomationElement element)
         {
             if (element == null)
@@ -1685,34 +1434,7 @@ namespace Ldtpd
                                 return 1;
                             case "Check":
                             case "UnCheck":
-                                state = IsMenuChecked(windowHandle, mainMenu);
-                                LogMessage("IsMenuChecked(childHandle): " +
-                                    childHandle.Current.Name + " : " + state);
-                                LogMessage("IsMenuChecked(childHandle): " +
-                                    childHandle.Current.ControlType.ProgrammaticName);
-                                LogMessage("actionType: " + actionType + " : state: " + state);
-                                // Don't process the last item
-                                if (actionType == "Check")
-                                {
-                                    if (state == 1)
-                                        // Already checked, just click back the main menu
-                                        ClickMenu(firstObjHandle);
-                                    else
-                                        // Check menu
-                                        ClickMenu(childHandle);
-                                    return 1;
-                                }
-                                else if (actionType == "UnCheck")
-                                {
-                                    if (state == 0)
-                                        // Already unchecked, just click back the main menu
-                                        ClickMenu(firstObjHandle);
-                                    else
-                                        // Uncheck menu
-                                        ClickMenu(childHandle);
-                                    return 1;
-                                }
-                                break;
+                                throw new XmlRpcFaultException(123, "Unhandled exception");
                             case "Exist":
                             case "Enabled":
                                 state = IsEnabled(childHandle) == true ? 1 : 0;
