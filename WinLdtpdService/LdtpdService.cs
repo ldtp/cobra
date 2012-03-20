@@ -96,6 +96,7 @@ namespace WinLdtpdService
                         if (debug)
                             Console.WriteLine("Processing request");
                         svc.ProcessRequest(context);
+                        context = null;
                         GC.Collect();
                     }
                     catch (InvalidOperationException ex)
