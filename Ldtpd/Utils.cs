@@ -424,7 +424,8 @@ namespace Ldtpd
             // Clean up in different thread
             thread.Start();
         }
-        private AutomationElement InternalGetWindowHandle(String windowName)
+        private AutomationElement InternalGetWindowHandle(String windowName,
+            ControlType[] type = null)
         {
             String s;
             int index;
@@ -479,9 +480,24 @@ namespace Ldtpd
                         if ((s != null && rx.Match(s).Success) ||
                             rx.Match(actualString).Success)
                         {
-                            LogMessage(windowName + " - Window found");
-                            objectList = null;
-                            return e;
+                            if (type == null)
+                            {
+                                LogMessage(windowName + " - Window found");
+                                objectList = null;
+                                return e;
+                            }
+                            else
+                            {
+                                foreach (ControlType t in type)
+                                {
+                                    if (debug)
+                                        LogMessage((t == e.Current.ControlType) +
+                                            " : " + e.Current.ControlType.ProgrammaticName);
+                                    if (t == e.Current.ControlType)
+                                        return e;
+                                }
+                                LogMessage("type doesn't match !!!!!!!!!!!!!!");
+                            }
                         }
                     }
                     catch (ElementNotAvailableException ex)
@@ -549,8 +565,24 @@ namespace Ldtpd
                     // FIXME: Handle dlg0 as in Linux
                     if ((s != null && rx.Match(s).Success) || rx.Match(actualString).Success)
                     {
-                        LogMessage(windowName + " - Window found");
-                        return element;
+                        if (type == null)
+                        {
+                            LogMessage(windowName + " - Window found");
+                            objectList = null;
+                            return element;
+                        }
+                        else
+                        {
+                            foreach (ControlType t in type)
+                            {
+                                if (debug)
+                                    LogMessage((t == element.Current.ControlType) +
+                                        " : " + element.Current.ControlType.ProgrammaticName);
+                                if (t == element.Current.ControlType)
+                                    return element;
+                            }
+                            LogMessage("type doesn't match !!!!!!!!!!!!!!");
+                        }
                     }
                     element = walker.GetNextSibling(element);
                 }
@@ -594,8 +626,24 @@ namespace Ldtpd
                             LogMessage("SubWindow: " + actualString + " : " + tmp);
                             if ((s != null && rx.Match(s).Success) || rx.Match(actualString).Success)
                             {
-                                LogMessage(windowName + " - Window found");
-                                return subChild;
+                                if (type == null)
+                                {
+                                    LogMessage(windowName + " - Window found");
+                                    objectList = null;
+                                    return subChild;
+                                }
+                                else
+                                {
+                                    foreach (ControlType t in type)
+                                    {
+                                        if (debug)
+                                            LogMessage((t == subChild.Current.ControlType) +
+                                                " : " + subChild.Current.ControlType.ProgrammaticName);
+                                        if (t == subChild.Current.ControlType)
+                                            return subChild;
+                                    }
+                                    LogMessage("type doesn't match !!!!!!!!!!!!!!");
+                                }
                             }
                         }
                         subChild = walker.GetNextSibling(subChild);
@@ -615,7 +663,7 @@ namespace Ldtpd
             return null;
         }
         internal AutomationElement GetWindowHandle(String windowName,
-            bool waitForObj = true)
+            bool waitForObj = true, ControlType[] type = null)
         {
             AutomationElement o = null;
             int retry = waitForObj ? objectTimeOut : 1;
@@ -625,7 +673,7 @@ namespace Ldtpd
             {
                 Thread thread = new Thread(delegate()
                 {
-                    o = InternalGetWindowHandle(windowName);
+                    o = InternalGetWindowHandle(windowName, type);
                 });
                 thread.Start();
                 // Wait 30 seconds (30 seconds * 1000 milli seconds)
