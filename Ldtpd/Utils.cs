@@ -1173,6 +1173,14 @@ namespace Ldtpd
                         }
                     }
                 }
+                // Handle selectitem and verifyselect on list. Get ExpandCollapsePattern fails on list,
+				// VM Library items are selected and verified correctly on Player with this fix
+                else
+                {
+                    childHandle.SetFocus();
+                    bool verify = actionType == "Verify" ? true : false;
+                    return SelectListItem(childHandle, item, verify) ? 1 : 0;
+                }
             }
             catch (Exception ex)
             {
