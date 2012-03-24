@@ -1356,6 +1356,29 @@ namespace Ldtpd
             Input.MoveToAndClick(pt);
             return true;
         }
+        internal int IsMenuChecked(AutomationElement menuHandle)
+        {
+            if (menuHandle == null)
+            {
+                LogMessage("Invalid menu handle");
+                return 0;
+            }
+            Object pattern = null;
+            if (menuHandle.TryGetCurrentPattern(LegacyIAccessiblePattern.Pattern,
+                                        out pattern))
+            {
+                int ischecked;
+                uint currentstate = ((LegacyIAccessiblePattern)pattern).Current.State;
+                // Use fifth bit of current state to determine menu item is checked or not checked
+                ischecked = (currentstate & 16) == 16 ? 1 : 0;
+                LogMessage("IsMenuChecked: " + menuHandle.Current.Name + " : " + "Checked: " +
+                    ischecked + " : " + "Current State: " + currentstate);
+                return ischecked;
+            }
+            else
+                LogMessage("Unable to get LegacyIAccessiblePattern");
+                return 0;
+        }
         internal int InternalMenuHandler(String windowName, String objName,
             ref ArrayList menuList, String actionType = "Select")
         {
@@ -1369,6 +1392,7 @@ namespace Ldtpd
             AutomationElement firstObjHandle = null;
             ControlType[] type = new ControlType[3] { ControlType.Menu,
                 ControlType.MenuBar, ControlType.MenuItem };
+            ControlType[] controlType = new ControlType[1] { ControlType.Menu };
             try
             {
                 AutomationElement windowHandle = GetWindowHandle(windowName);
@@ -1406,6 +1430,8 @@ namespace Ldtpd
                     {
                         currObjName = objName;
                     }
+                    LogMessage("childHandle: " + childHandle.Current.Name + " : " + currObjName + " : " +
+                            childHandle.Current.ControlType.ProgrammaticName);
                     childHandle = GetObjectHandle(childHandle,
                         currObjName, type, false);
                     if (childHandle == null)
@@ -1429,8 +1455,8 @@ namespace Ldtpd
                         firstObjHandle = childHandle;
                     }
                     if ((actionType == "Select" || actionType == "SubMenu" ||
-                        actionType == "Check" || actionType == "UnCheck") &&
-                        !IsEnabled(childHandle))
+                        actionType == "Check" || actionType == "UnCheck" ||
+                        actionType == "VerifyCheck") && !IsEnabled(childHandle))
                     {
                         throw new XmlRpcFaultException(123,
                             "Object state is disabled");
@@ -1442,12 +1468,16 @@ namespace Ldtpd
                         out invokePattern))
                     {
                         if (actionType == "Select" || currObjName != objName ||
-                             actionType == "SubMenu")
+                             actionType == "SubMenu" || actionType == "VerifyCheck")
                         {
                             LogMessage("Invoking menu item: " + currObjName + " : " + objName +
                                 " : " + childHandle.Current.ControlType.ProgrammaticName + " : "
                                 + childHandle.Current.Name);
-                            ClickMenu(childHandle);
+                            childHandle.SetFocus();
+                            if (!(actionType == "VerifyCheck" && currObjName == objName))
+                            {
+                                ClickMenu(childHandle);
+                            }
                             try
                             {
                                 // Invoke doesn't work for VMware Workstation
@@ -1455,7 +1485,7 @@ namespace Ldtpd
                                 // MoveToAndClick works for VMware Workstation
                                 // But not for Notepad (on first time)
                                 // Requires 2 clicks !
-                                ((InvokePattern)invokePattern).Invoke();
+                                //((InvokePattern)invokePattern).Invoke();
                                 InternalWait(1);
                                 c = childHandle.FindAll(TreeScope.Children,
                                     Condition.TrueCondition);
@@ -1492,7 +1522,32 @@ namespace Ldtpd
                                 return 1;
                             case "Check":
                             case "UnCheck":
-                                throw new XmlRpcFaultException(123, "Unhandled exception");
+                                state = IsMenuChecked(childHandle);
+                                LogMessage("IsMenuChecked(childHandle): " +
+                                    childHandle.Current.ControlType.ProgrammaticName);
+                                LogMessage("actionType: " + actionType);
+                                // Don't process the last item
+                                if (actionType == "Check")
+                                {
+                                    if (state == 1)
+                                        // Already checked, just click back the main menu
+                                        ClickMenu(firstObjHandle);
+                                    else
+                                        // Check menu
+                                        ClickMenu(childHandle);
+                                    return 1;
+                                }
+                                else if (actionType == "UnCheck")
+                                {
+                                    if (state == 0)
+                                        // Already unchecked, just click back the main menu
+                                        ClickMenu(firstObjHandle);
+                                    else
+                                        // Uncheck menu
+                                        ClickMenu(childHandle);
+                                    return 1;
+                                }
+                                break;
                             case "Exist":
                             case "Enabled":
                                 state = IsEnabled(childHandle) == true ? 1 : 0;
@@ -1525,16 +1580,24 @@ namespace Ldtpd
                                 else
                                     LogMessage("menuList.Count <= 0: " + menuList.Count);
                                 break;
+                            case "VerifyCheck":
+                                state = IsMenuChecked(childHandle);
+                                ClickMenu(firstObjHandle);
+                                return state;
                             default:
                                 break;
                         }
                     }
                     else if (!bContextNavigated && InternalWaitTillGuiExist("Context",
-                        null, 1) == 1)
+                        null, 3) == 1)
                     {
+                        LogMessage("Context");
                         AutomationElement tmpWindowHandle;
                         // Menu item under Menu are listed under Menu Window
-                        tmpWindowHandle = GetWindowHandle("Context");
+                        if (actionType == "VerifyCheck")
+                            tmpWindowHandle = GetWindowHandle("Context", true, controlType);
+                        else
+                            tmpWindowHandle = GetWindowHandle("Context");
                         if (tmpWindowHandle == null)
                         {
                             throw new XmlRpcFaultException(123,
@@ -1577,19 +1640,25 @@ namespace Ldtpd
                         childHandle = windowHandle;
                         continue;
                     }
-                    else if (InternalWaitTillGuiExist(prevObjHandle.Current.Name, null, 1) == 1)
+                    else if (InternalWaitTillGuiExist(prevObjHandle.Current.Name, null, 3) == 1)
                     {
+                        LogMessage("prevObjHandle: " + prevObjHandle.Current.Name);
                         // Menu item under Menu are listed under Menu Window
                         LogMessage("Menu item under Menu are listed under Menu Window: " +
                             prevObjHandle.Current.Name);
                         AutomationElement tmpWindowHandle;
-                        tmpWindowHandle = GetWindowHandle(prevObjHandle.Current.Name);
+                        if (actionType == "VerifyCheck")
+                            tmpWindowHandle = GetWindowHandle(prevObjHandle.Current.Name, true, controlType);
+                        else
+                            tmpWindowHandle = GetWindowHandle(prevObjHandle.Current.Name);
                         if (tmpWindowHandle != null)
                         {
                             // Find object from current handle, rather than navigating
                             // the complete window
                             LogMessage("Assigning tmpWindowHandle as childHandle");
                             childHandle = tmpWindowHandle;
+                            LogMessage("childHandle: " + childHandle.Current.Name + " : " +
+                                childHandle.Current.ControlType.ProgrammaticName);
                         }
                     }
                     // Required for Notepad like app
