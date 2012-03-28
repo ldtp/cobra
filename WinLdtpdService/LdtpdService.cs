@@ -61,7 +61,6 @@ namespace WinLdtpdService
             Console.ReadLine();
             /**/
             ///*
-            XmlRpcListenerService svc = new Core(debug);
             HttpListener listener = new HttpListener();
             listener.Prefixes.Add("http://localhost:4118/");
             listener.Prefixes.Add("http://+:4118/");
@@ -80,10 +79,12 @@ namespace WinLdtpdService
                     Console.WriteLine("Listening only on local interface");
             }
             listener.Start();
+            XmlRpcListenerService svc = new Core(debug);
             try
             {
                 while (true)
                 {
+                    GC.Collect();
                     try
                     {
                         if (debug)
@@ -97,20 +98,22 @@ namespace WinLdtpdService
                             Console.WriteLine("Processing request");
                         svc.ProcessRequest(context);
                         context = null;
-                        GC.Collect();
                     }
                     catch (InvalidOperationException ex)
                     {
-                        Console.WriteLine(ex);
+                        if (debug)
+                            Console.WriteLine(ex);
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                if (debug)
+                    Console.WriteLine(ex);
             }
             finally
             {
+                svc = null;
                 listener.Stop();
             }
             /**/

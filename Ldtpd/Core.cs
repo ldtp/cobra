@@ -40,7 +40,6 @@ namespace Ldtpd
 {
     public class Core : Utils
     {
-        //Hashtable objectHT = new Hashtable();
         public Core(bool debug = false)
         {
             this.debug = debug;
@@ -64,16 +63,18 @@ namespace Ldtpd
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
-            ArrayList objectList = new ArrayList();
-            Hashtable objectHT = new Hashtable();
             string matchedKey = null;
             ObjInfo objInfo = new ObjInfo(false);
+            Hashtable objectHT = new Hashtable();
+            ArrayList objectList = new ArrayList();
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
                 throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
             }
-            InternalGetObjectList(walker.GetFirstChild(windowHandle),
+
+            InternalTreeWalker walker = new InternalTreeWalker();
+            InternalGetObjectList(walker.walker.GetFirstChild(windowHandle),
                 ref objectList, ref objectHT, ref matchedKey,
                 true, null, windowHandle.Current.Name);
             if (debug)
@@ -89,9 +90,17 @@ namespace Ldtpd
                         LogMessage("Children: " + child);
                 }
             }
+            walker = null;
             objectHT = null;
-            matchedKey = null;
-            return objectList.ToArray(typeof(string)) as string[];
+            windowHandle = null;
+            try
+            {
+                return objectList.ToArray(typeof(string)) as string[];
+            }
+            finally
+            {
+                objectList = null;
+            }
         }
         [XmlRpcMethod("getwindowlist", Description = "Get window list")]
         public String[] GetWindowList()
@@ -102,8 +111,10 @@ namespace Ldtpd
             CurrentObjInfo currObjInfo;
             ObjInfo objInfo = new ObjInfo(false);
             AutomationElement element;
-            element = walker.GetFirstChild(AutomationElement.RootElement);
-            Condition condition1 = new PropertyCondition(AutomationElement.ControlTypeProperty,
+            InternalTreeWalker w = new InternalTreeWalker();
+            element = w.walker.GetFirstChild(AutomationElement.RootElement);
+            Condition condition = new PropertyCondition(
+                AutomationElement.ControlTypeProperty,
                 ControlType.Window);
             try
             {
@@ -170,12 +181,13 @@ namespace Ldtpd
                         // As the window info already added to the windowArrayList
                         // let us not re-add it
                         LogMessage(element.Current.Name + " already in windowList");
-                        element = walker.GetNextSibling(element);
+                        element = w.walker.GetNextSibling(element);
                         continue;
                     }
                     s = element.Current.Name;
                     LogMessage("Window name: " + s);
-                    currObjInfo = objInfo.GetObjectType(element, element.Current.ControlType);
+                    currObjInfo = objInfo.GetObjectType(element,
+                        element.Current.ControlType);
                     actualString = currObjInfo.objType + s;
                     index = 1;
                     while (true)
@@ -186,10 +198,9 @@ namespace Ldtpd
                         index++;
                     }
                     windowArrayList.Add(actualString);
-                    c = null;
                     try
                     {
-                        c = element.FindAll(TreeScope.Children, condition1);
+                        c = element.FindAll(TreeScope.Children, condition);
                         foreach (AutomationElement e in c)
                         {
                             s = e.Current.Name;
@@ -215,13 +226,19 @@ namespace Ldtpd
                     {
                         LogMessage(ex);
                     }
-                    element = walker.GetNextSibling(element);
+                    element = w.walker.GetNextSibling(element);
                 }
                 return windowArrayList.ToArray(typeof(string)) as string[];
             }
             catch (Exception ex)
             {
                 LogMessage(ex);
+            }
+            finally
+            {
+                w = null;
+                windowList = null;
+                windowArrayList = null;
             }
             // Unable to find window
             return null;
@@ -260,10 +277,11 @@ namespace Ldtpd
                 LogMessage("Unable to find window: " + windowName);
                 return 0;
             }
+            AutomationElement childHandle;
             try
             {
                 windowHandle.SetFocus();
-                AutomationElement childHandle = GetObjectHandle(windowHandle,
+                childHandle = GetObjectHandle(windowHandle,
                     objName, null, false);
                 if (childHandle != null)
                     return 1;
@@ -273,6 +291,10 @@ namespace Ldtpd
             catch (Exception ex)
             {
                 LogMessage(ex);
+            }
+            finally
+            {
+                childHandle = windowHandle = null;
             }
             return 0;
         }
@@ -352,6 +374,10 @@ namespace Ldtpd
                 LogMessage(ex);
                 return 0;
             }
+            finally
+            {
+                menuList = null;
+            }
         }
         [XmlRpcMethod("verifymenuuncheck",
             Description = "Verify a menuitem is unchecked.")]
@@ -366,6 +392,10 @@ namespace Ldtpd
             {
                 LogMessage(ex);
                 return 0;
+            }
+            finally
+            {
+                menuList = null;
             }
         }
         [XmlRpcMethod("menuitemenabled",
@@ -382,6 +412,10 @@ namespace Ldtpd
                 LogMessage(ex);
                 return 0;
             }
+            finally
+            {
+                menuList = null;
+            }
         }
         [XmlRpcMethod("doesmenuitemexist",
             Description = "Does a menu item exist.")]
@@ -397,6 +431,10 @@ namespace Ldtpd
                 LogMessage(ex);
                 return 0;
             }
+            finally
+            {
+                menuList = null;
+            }
         }
         [XmlRpcMethod("listsubmenus",
             Description = "List sub menu item.")]
@@ -404,9 +442,15 @@ namespace Ldtpd
         {
             ArrayList menuList = new ArrayList();
             if (InternalMenuHandler(windowName, objName, ref menuList, "SubMenu") == 1)
+            {
+                menuList = null;
                 return menuList.ToArray(typeof(string)) as string[];
+            }
             else
+            {
+                menuList = null;
                 throw new XmlRpcFaultException(123, "Unable to get sub menuitem.");
+            }
         }
         [XmlRpcMethod("stateenabled",
             Description = "Checks whether an object state enabled.")]
@@ -418,6 +462,7 @@ namespace Ldtpd
                 LogMessage("Argument cannot be empty.");
                 return 0;
             }
+            AutomationElement childHandle;
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
@@ -427,7 +472,7 @@ namespace Ldtpd
             try
             {
                 windowHandle.SetFocus();
-                AutomationElement childHandle = GetObjectHandle(windowHandle,
+                childHandle = GetObjectHandle(windowHandle,
                     objName, null, false);
                 if (childHandle == null)
                 {
@@ -440,6 +485,10 @@ namespace Ldtpd
             catch (Exception ex)
             {
                 LogMessage(ex);
+            }
+            finally
+            {
+                childHandle = windowHandle = null;
             }
             return 0;
         }
@@ -464,6 +513,7 @@ namespace Ldtpd
                 ControlType.MenuItem, ControlType.MenuBar, ControlType.Pane };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123,
@@ -471,6 +521,7 @@ namespace Ldtpd
             }
             if (!IsEnabled(childHandle))
             {
+                windowHandle = null;
                 throw new XmlRpcFaultException(123,
                     "Object state is disabled");
             }
@@ -483,10 +534,7 @@ namespace Ldtpd
                     // NOTE: Work around, as the pane doesn't seem to work
                     // with any actions. Noticed this window, when Windows
                     // Security Warning dialog pop's up
-                    Rect rect = childHandle.Current.BoundingRectangle;
-                    Point pt = new Point(rect.X + rect.Width / 2,
-                        rect.Y + rect.Height / 2);
-                    Input.MoveToAndClick(pt);
+                    InternalClick(childHandle);
                     return 1;
                 }
                 else if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern,
@@ -501,10 +549,7 @@ namespace Ldtpd
                         // NOTE: Work around, as the above doesn't seem to work
                         // with UIAComWrapper and UIAComWrapper is required
                         // to Edit value in Spin control
-                        Rect rect = childHandle.Current.BoundingRectangle;
-                        Point pt = new Point(rect.X + rect.Width / 2,
-                            rect.Y + rect.Height / 2);
-                        Input.MoveToAndClick(pt);
+                        InternalClick(childHandle);
                     }
                     else
                     {
@@ -527,6 +572,11 @@ namespace Ldtpd
                 else
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                pattern = null;
+                childHandle = null;
             }
             throw new XmlRpcFaultException(123, "Unable to perform action");
         }
@@ -554,6 +604,7 @@ namespace Ldtpd
                 ControlType.ListItem, ControlType.List };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123,
@@ -563,6 +614,7 @@ namespace Ldtpd
                 " - " + childHandle.Current.ControlType.ProgrammaticName);
             if (!IsEnabled(childHandle))
             {
+                childHandle = null;
                 throw new XmlRpcFaultException(123,
                     "Object state is disabled");
             }
@@ -575,6 +627,7 @@ namespace Ldtpd
             childHandle.SetFocus();
             AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
                 Condition.TrueCondition);
+            childHandle = null;
             AutomationElement element = null;
             try
             {
@@ -593,6 +646,10 @@ namespace Ldtpd
                 LogMessage(ex);
                 throw new XmlRpcFaultException(123, "Index out of range: " + index);
             }
+            finally
+            {
+                c = null;
+            }
             if (element != null)
             {
                 try
@@ -608,9 +665,7 @@ namespace Ldtpd
                         // NOTE: Work around, as the above doesn't seem to work
                         // with UIAComWrapper and UIAComWrapper is required
                         // to Edit value in Spin control
-                        Rect rect = element.Current.BoundingRectangle;
-                        Point pt = new Point(rect.X + rect.Width / 2, rect.Y + rect.Height / 2);
-                        Input.MoveToAndClick(pt);
+                        InternalClick(element);
                         return 1;
                     }
                     else if (element.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
@@ -630,6 +685,10 @@ namespace Ldtpd
                     else
                         throw new XmlRpcFaultException(123,
                             "Unhandled exception: " + ex.Message);
+                }
+                finally
+                {
+                    element = null;
                 }
             }
             throw new XmlRpcFaultException(123,
@@ -674,11 +733,13 @@ namespace Ldtpd
                 ControlType.ListItem, ControlType.List };
             AutomationElement childHandle = GetObjectHandle(windowHandle, objName,
                 type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 LogMessage("Unable to find Object: " + objName);
                 return 0;
             }
+            Object pattern = null;
             try
             {
                 LogMessage("Handle name: " + childHandle.Current.Name +
@@ -688,7 +749,6 @@ namespace Ldtpd
                     LogMessage("Object state is disabled");
                     return 0;
                 }
-                Object pattern = null;
                 if (childHandle.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
                     out pattern))
                 {
@@ -704,6 +764,11 @@ namespace Ldtpd
             catch (Exception ex)
             {
                 LogMessage(ex);
+            }
+            finally
+            {
+                pattern = null;
+                childHandle = null;
             }
             return 0;
         }
@@ -728,11 +793,13 @@ namespace Ldtpd
                 ControlType.ListItem, ControlType.List };
             AutomationElement childHandle = GetObjectHandle(windowHandle, objName,
                 type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 LogMessage("Unable to find Object: " + objName);
                 return 0;
             }
+            Object pattern = null;
             try
             {
                 LogMessage("Handle name: " + childHandle.Current.Name +
@@ -742,7 +809,6 @@ namespace Ldtpd
                     LogMessage("Object state is disabled");
                     return 0;
                 }
-                Object pattern = null;
                 if (childHandle.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
                     out pattern))
                 {
@@ -758,6 +824,11 @@ namespace Ldtpd
             catch (Exception ex)
             {
                 LogMessage(ex);
+            }
+            finally
+            {
+                pattern = null;
+                childHandle = null;
             }
             return 0;
         }
@@ -793,6 +864,7 @@ namespace Ldtpd
             ControlType[] type = new ControlType[1] { ControlType.Edit };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123,
@@ -800,6 +872,7 @@ namespace Ldtpd
             }
             if (!IsEnabled(childHandle))
             {
+                childHandle = null;
                 throw new XmlRpcFaultException(123,
                     "Object state is disabled");
             }
@@ -825,6 +898,11 @@ namespace Ldtpd
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
             }
+            finally
+            {
+                childHandle = null;
+                valuePattern = null;
+            }
             return 1;
         }
         [XmlRpcMethod("gettextvalue",
@@ -845,6 +923,7 @@ namespace Ldtpd
             ControlType[] type = new ControlType[1] { ControlType.Edit };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, false);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
@@ -881,6 +960,11 @@ namespace Ldtpd
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
             }
+            finally
+            {
+                pattern = null;
+                childHandle = null;
+            }
         }
         [XmlRpcMethod("setvalue",
             Description = "Type string sequence.")]
@@ -903,11 +987,13 @@ namespace Ldtpd
                 ControlType.Spinner };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123,
                     "Unable to find Object: " + objName);
             }
+            object valuePattern = null;
             try
             {
                 if (!IsEnabled(childHandle))
@@ -915,7 +1001,6 @@ namespace Ldtpd
                     throw new XmlRpcFaultException(123,
                         "Object state is disabled");
                 }
-                object valuePattern = null;
                 if (childHandle.TryGetCurrentPattern(RangeValuePattern.Pattern,
                     out valuePattern))
                 {
@@ -931,6 +1016,11 @@ namespace Ldtpd
                 else
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                childHandle = null;
+                valuePattern = null;
             }
             throw new XmlRpcFaultException(123, "Unable to set value");
         }
@@ -949,8 +1039,11 @@ namespace Ldtpd
                 throw new XmlRpcFaultException(123,
                     "Unable to find window: " + windowName);
             }
-            ControlType[] type = new ControlType[2] { ControlType.Slider, ControlType.Spinner };
-            AutomationElement childHandle = GetObjectHandle(windowHandle, objName, type, true);
+            ControlType[] type = new ControlType[2] { ControlType.Slider,
+                ControlType.Spinner };
+            AutomationElement childHandle = GetObjectHandle(windowHandle,
+                objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
@@ -958,7 +1051,8 @@ namespace Ldtpd
             Object pattern = null;
             try
             {
-                if (childHandle.TryGetCurrentPattern(RangeValuePattern.Pattern, out pattern))
+                if (childHandle.TryGetCurrentPattern(RangeValuePattern.Pattern,
+                    out pattern))
                 {
                     return ((RangeValuePattern)pattern).Current.Value;
                 }
@@ -971,6 +1065,11 @@ namespace Ldtpd
                 else
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                pattern = null;
+                childHandle = null;
             }
             throw new XmlRpcFaultException(123, "Unable to get value");
         }
@@ -985,24 +1084,31 @@ namespace Ldtpd
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
-                throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
+                throw new XmlRpcFaultException(123,
+                    "Unable to find window: " + windowName);
             }
-            ControlType[] type = new ControlType[2] { ControlType.CheckBox, ControlType.RadioButton };
-            AutomationElement childHandle = GetObjectHandle(windowHandle, objName, type, true);
+            ControlType[] type = new ControlType[2] { ControlType.CheckBox,
+                ControlType.RadioButton };
+            AutomationElement childHandle = GetObjectHandle(windowHandle,
+                objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
-                throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
+                throw new XmlRpcFaultException(123,
+                    "Unable to find Object: " + objName);
             }
+            Object pattern = null;
             try
             {
                 childHandle.SetFocus();
-                Object pattern = null;
-                if (childHandle.TryGetCurrentPattern(TogglePattern.Pattern, out pattern))
+                if (childHandle.TryGetCurrentPattern(TogglePattern.Pattern,
+                    out pattern))
                 {
                     if (((TogglePattern)pattern).Current.ToggleState == ToggleState.Off)
                     {
                         Object invoke = null;
-                        if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern, out invoke))
+                        if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern,
+                            out invoke))
                             ((InvokePattern)invoke).Invoke();
                         else
                             ((TogglePattern)pattern).Toggle();
@@ -1011,7 +1117,8 @@ namespace Ldtpd
                         LogMessage("Checkbox / Radio button already checked");
                     return 1;
                 }
-                else if (childHandle.TryGetCurrentPattern(SelectionItemPattern.Pattern, out pattern))
+                else if (childHandle.TryGetCurrentPattern(SelectionItemPattern.Pattern,
+                    out pattern))
                 {
                     ((SelectionItemPattern)pattern).Select();
                     return 1;
@@ -1026,8 +1133,14 @@ namespace Ldtpd
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
             }
+            finally
+            {
+                pattern = null;
+                childHandle = null;
+            }
             LogMessage("Unsupported pattern to perform action");
-            throw new XmlRpcFaultException(123, "Unsupported pattern to perform action");
+            throw new XmlRpcFaultException(123,
+                "Unsupported pattern to perform action");
         }
         [XmlRpcMethod("uncheck", Description = "UnCheck radio button / checkbox")]
         public int UnCheck(String windowName, String objName)
@@ -1040,24 +1153,30 @@ namespace Ldtpd
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
-                throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
+                throw new XmlRpcFaultException(123,
+                    "Unable to find window: " + windowName);
             }
             ControlType[] type = new ControlType[1] { ControlType.CheckBox };
-            AutomationElement childHandle = GetObjectHandle(windowHandle, objName, type, true);
+            AutomationElement childHandle = GetObjectHandle(windowHandle,
+                objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
-                throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
+                throw new XmlRpcFaultException(123,
+                    "Unable to find Object: " + objName);
             }
+            Object pattern = null;
             try
             {
                 childHandle.SetFocus();
-                Object pattern = null;
-                if (childHandle.TryGetCurrentPattern(TogglePattern.Pattern, out pattern))
+                if (childHandle.TryGetCurrentPattern(TogglePattern.Pattern,
+                    out pattern))
                 {
                     if (((TogglePattern)pattern).Current.ToggleState == ToggleState.On)
                     {
                         Object invoke = null;
-                        if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern, out invoke))
+                        if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern,
+                            out invoke))
                             ((InvokePattern)invoke).Invoke();
                         else
                             ((TogglePattern)pattern).Toggle();
@@ -1075,6 +1194,11 @@ namespace Ldtpd
                 else
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                pattern = null;
+                childHandle = null;
             }
             throw new XmlRpcFaultException(123, "Unsupported pattern to perform action");
         }
@@ -1094,17 +1218,20 @@ namespace Ldtpd
                 LogMessage("Unable to find window: " + windowName);
                 return 0;
             }
-            ControlType[] type = new ControlType[2] { ControlType.CheckBox, ControlType.RadioButton };
-            AutomationElement childHandle = GetObjectHandle(windowHandle, objName, type, true);
+            ControlType[] type = new ControlType[2] { ControlType.CheckBox,
+                ControlType.RadioButton };
+            AutomationElement childHandle = GetObjectHandle(windowHandle,
+                objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 LogMessage("Unable to find Object: " + objName);
                 return 0;
             }
+            Object pattern = null;
             try
             {
                 childHandle.SetFocus();
-                Object pattern = null;
                 if (childHandle.TryGetCurrentPattern(TogglePattern.Pattern, out pattern))
                 {
                     if (((TogglePattern)pattern).Current.ToggleState == ToggleState.On)
@@ -1114,6 +1241,11 @@ namespace Ldtpd
             catch (Exception ex)
             {
                 LogMessage(ex);
+            }
+            finally
+            {
+                pattern = null;
+                childHandle = null;
             }
             return 0;
         }
@@ -1133,18 +1265,22 @@ namespace Ldtpd
                 LogMessage("Unable to find window: " + windowName);
                 return 0;
             }
-            ControlType[] type = new ControlType[2] { ControlType.CheckBox, ControlType.RadioButton };
-            AutomationElement childHandle = GetObjectHandle(windowHandle, objName, type, true);
+            ControlType[] type = new ControlType[2] { ControlType.CheckBox,
+                ControlType.RadioButton };
+            AutomationElement childHandle = GetObjectHandle(windowHandle,
+                objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 LogMessage("Unable to find Object: " + objName);
                 return 0;
             }
+            Object pattern = null;
             try
             {
                 childHandle.SetFocus();
-                Object pattern = null;
-                if (childHandle.TryGetCurrentPattern(TogglePattern.Pattern, out pattern))
+                if (childHandle.TryGetCurrentPattern(TogglePattern.Pattern,
+                    out pattern))
                 {
                     if (((TogglePattern)pattern).Current.ToggleState == ToggleState.Off)
                         return 1;
@@ -1153,6 +1289,11 @@ namespace Ldtpd
             catch (Exception ex)
             {
                 LogMessage(ex);
+            }
+            finally
+            {
+                pattern = null;
+                childHandle = null;
             }
             return 0;
         }
@@ -1174,8 +1315,10 @@ namespace Ldtpd
                     "Unable to find window: " + windowName);
             }
             ControlType[] type = new ControlType[1] { ControlType.Tab };
+            AutomationElement elementItem;
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123,
@@ -1183,19 +1326,20 @@ namespace Ldtpd
             }
             if (!IsEnabled(childHandle))
             {
+                childHandle = null;
                 throw new XmlRpcFaultException(123,
                     "Object state is disabled");
             }
+            Object pattern;
             try
             {
                 childHandle.SetFocus();
-                AutomationElement elementItem = GetObjectHandle(childHandle,
+                elementItem = GetObjectHandle(childHandle,
                     tabName);
                 if (elementItem != null)
                 {
                     LogMessage(elementItem.Current.Name + " : " +
                         elementItem.Current.ControlType.ProgrammaticName);
-                    Object pattern;
                     if (elementItem.TryGetCurrentPattern(SelectionItemPattern.Pattern,
                         out pattern))
                     {
@@ -1204,10 +1348,7 @@ namespace Ldtpd
                         // NOTE: Work around, as the above doesn't seem to work
                         // with UIAComWrapper and UIAComWrapper is required
                         // to Edit value in Spin control
-                        Rect rect = elementItem.Current.BoundingRectangle;
-                        Point pt = new Point(rect.X + rect.Width / 2,
-                            rect.Y + rect.Height / 2);
-                        Input.MoveToAndClick(pt);
+                        InternalClick(elementItem);
                         return 1;
                     }
                     else if (elementItem.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
@@ -1233,6 +1374,11 @@ namespace Ldtpd
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
             }
+            finally
+            {
+                pattern = null;
+                childHandle = null;
+            }
             throw new XmlRpcFaultException(123,
                 "Unable to find the item in tab list: " + tabName);
         }
@@ -1256,6 +1402,7 @@ namespace Ldtpd
             ControlType[] type = new ControlType[1] { ControlType.Tab };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123,
@@ -1263,13 +1410,14 @@ namespace Ldtpd
             }
             if (!IsEnabled(childHandle))
             {
+                childHandle = null;
                 throw new XmlRpcFaultException(123,
                     "Object state is disabled");
             }
             childHandle.SetFocus();
             AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
                 Condition.TrueCondition);
-            Object pattern;
+            childHandle = null;
             AutomationElement element = null;
             try
             {
@@ -1290,6 +1438,11 @@ namespace Ldtpd
                 LogMessage(ex);
                 throw new XmlRpcFaultException(123, "Index out of range: " + index);
             }
+            finally
+            {
+                c = null;
+            }
+            Object pattern;
             try
             {
                 if (element != null)
@@ -1305,10 +1458,7 @@ namespace Ldtpd
                         // NOTE: Work around, as the above doesn't seem to work
                         // with UIAComWrapper and UIAComWrapper is required
                         // to Edit value in Spin control
-                        Rect rect = element.Current.BoundingRectangle;
-                        Point pt = new Point(rect.X + rect.Width / 2,
-                            rect.Y + rect.Height / 2);
-                        Input.MoveToAndClick(pt);
+                        InternalClick(element);
                         return 1;
                     }
                     else if (element.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
@@ -1329,6 +1479,11 @@ namespace Ldtpd
                 else
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                element = null;
+                pattern = null;
             }
             throw new XmlRpcFaultException(123, "Unable to select item.");
         }
@@ -1351,6 +1506,7 @@ namespace Ldtpd
             ControlType[] type = new ControlType[1] { ControlType.Tab };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123,
@@ -1358,12 +1514,14 @@ namespace Ldtpd
             }
             if (!IsEnabled(childHandle))
             {
+                childHandle = null;
                 throw new XmlRpcFaultException(123,
                     "Object state is disabled");
             }
             childHandle.SetFocus();
             AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
                 Condition.TrueCondition);
+            childHandle = null;
             AutomationElement element = null;
             try
             {
@@ -1385,9 +1543,15 @@ namespace Ldtpd
                 throw new XmlRpcFaultException(123,
                     "Index out of range: " + index);
             }
+            finally
+            {
+                c = null;
+            }
             if (element != null)
             {
-                return element.Current.Name;
+                string s = element.Current.Name;
+                element = null;
+                return s;
             }
             throw new XmlRpcFaultException(123,
                 "Unable to find item.");
@@ -1410,6 +1574,7 @@ namespace Ldtpd
             ControlType[] type = new ControlType[1] { ControlType.Tab };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123,
@@ -1417,6 +1582,7 @@ namespace Ldtpd
             }
             if (!IsEnabled(childHandle))
             {
+                childHandle = null;
                 throw new XmlRpcFaultException(123,
                     "Object state is disabled");
             }
@@ -1435,6 +1601,10 @@ namespace Ldtpd
                 else
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                childHandle = null;
             }
         }
         [XmlRpcMethod("verifytabname",
@@ -1457,6 +1627,7 @@ namespace Ldtpd
             ControlType[] type = new ControlType[1] { ControlType.Tab };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 LogMessage("Unable to find Object: " + objName);
@@ -1464,19 +1635,20 @@ namespace Ldtpd
             }
             if (!IsEnabled(childHandle))
             {
+                childHandle = null;
                 LogMessage("Object state is disabled");
                 return 0;
             }
+            Object pattern;
+            AutomationElement elementItem;
             try
             {
                 childHandle.SetFocus();
-                AutomationElement elementItem = GetObjectHandle(childHandle,
-                    tabName);
+                elementItem = GetObjectHandle(childHandle, tabName);
                 if (elementItem != null)
                 {
                     LogMessage(elementItem.Current.Name + " : " +
                         elementItem.Current.ControlType.ProgrammaticName);
-                    Object pattern;
                     if (elementItem.TryGetCurrentPattern(SelectionItemPattern.Pattern,
                         out pattern))
                     {
@@ -1488,7 +1660,11 @@ namespace Ldtpd
             catch (Exception ex)
             {
                 LogMessage(ex);
-                return 0;
+            }
+            finally
+            {
+                pattern = null;
+                childHandle = elementItem = null;
             }
             LogMessage("Unable to find the item in tab list: " + tabName);
             return 0;
@@ -1514,6 +1690,7 @@ namespace Ldtpd
                 ControlType.List };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 LogMessage("Unable to find Object: " + objName);
@@ -1521,9 +1698,11 @@ namespace Ldtpd
             }
             if (!IsEnabled(childHandle))
             {
+                childHandle = null;
                 LogMessage("Object state is disabled");
                 return 0;
             }
+            AutomationElement elementItem;
             try
             {
                 childHandle.SetFocus();
@@ -1531,7 +1710,7 @@ namespace Ldtpd
                 ControlType.ListItem };
                 if (partialMatch)
                     text += "*";
-                AutomationElement elementItem = GetObjectHandle(childHandle,
+                elementItem = GetObjectHandle(childHandle,
                     text, type, false);
                 if (elementItem != null)
                 {
@@ -1541,6 +1720,10 @@ namespace Ldtpd
             catch (Exception ex)
             {
                 LogMessage(ex);
+            }
+            finally
+            {
+                childHandle = elementItem = null;
             }
             return 0;
         }
@@ -1564,24 +1747,26 @@ namespace Ldtpd
                 ControlType.List };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123,
                     "Unable to find Object: " + objName);
             }
+            Object pattern;
+            AutomationElement elementItem;
             try
             {
                 childHandle.SetFocus();
                 if (partialMatch)
                     text += "*";
-                AutomationElement elementItem = GetObjectHandle(childHandle,
+                elementItem = GetObjectHandle(childHandle,
                     text);
                 if (elementItem != null)
                 {
                     elementItem.SetFocus();
                     LogMessage(elementItem.Current.Name + " : " +
                         elementItem.Current.ControlType.ProgrammaticName);
-                    Object pattern;
                     if (elementItem.TryGetCurrentPattern(SelectionItemPattern.Pattern,
                         out pattern))
                     {
@@ -1590,10 +1775,7 @@ namespace Ldtpd
                         // NOTE: Work around, as the above doesn't seem to work
                         // with UIAComWrapper and UIAComWrapper is required
                         // to Edit value in Spin control
-                        Rect rect = elementItem.Current.BoundingRectangle;
-                        Point pt = new Point(rect.X + rect.Width / 2,
-                            rect.Y + rect.Height / 2);
-                        Input.MoveToAndClick(pt);
+                        InternalClick(elementItem);
                         return 1;
                     }
                     else if (elementItem.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
@@ -1618,6 +1800,11 @@ namespace Ldtpd
                 else
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                pattern = null;
+                elementItem = childHandle = null;
             }
             throw new XmlRpcFaultException(123, "Unable to find the item in list: " + text);
         }
@@ -1649,6 +1836,7 @@ namespace Ldtpd
                 ControlType.List };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123,
@@ -1656,16 +1844,17 @@ namespace Ldtpd
             }
             if (!IsEnabled(childHandle))
             {
+                childHandle = null;
                 throw new XmlRpcFaultException(123,
                     "Object state is disabled");
             }
+            Object pattern;
+            AutomationElement element = null;
             try
             {
                 childHandle.SetFocus();
                 AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
                     Condition.TrueCondition);
-                Object pattern;
-                AutomationElement element = null;
                 try
                 {
                     element = c[index];
@@ -1700,10 +1889,7 @@ namespace Ldtpd
                         // NOTE: Work around, as the above doesn't seem to work
                         // with UIAComWrapper and UIAComWrapper is required
                         // to Edit value in Spin control
-                        Rect rect = element.Current.BoundingRectangle;
-                        Point pt = new Point(rect.X + rect.Width / 2,
-                            rect.Y + rect.Height / 2);
-                        Input.MoveToAndClick(pt);
+                        InternalClick(element);
                         return 1;
                     }
                     else if (element.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
@@ -1724,6 +1910,11 @@ namespace Ldtpd
                 else
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                pattern = null;
+                element = childHandle = null;
             }
             throw new XmlRpcFaultException(123, "Unable to select item.");
         }
@@ -1748,6 +1939,7 @@ namespace Ldtpd
                 ControlType.TreeItem };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123,
@@ -1755,16 +1947,17 @@ namespace Ldtpd
             }
             if (!IsEnabled(childHandle))
             {
+                childHandle = null;
                 throw new XmlRpcFaultException(123,
                     "Object state is disabled");
             }
+            Object pattern;
+            AutomationElement element = null;
             try
             {
                 childHandle.SetFocus();
                 AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
                     Condition.TrueCondition);
-                Object pattern;
-                AutomationElement element = null;
                 try
                 {
                     element = c[index];
@@ -1781,6 +1974,11 @@ namespace Ldtpd
                 {
                     LogMessage(ex);
                     throw new XmlRpcFaultException(123, "Index out of range: " + index);
+                }
+                finally
+                {
+                    c = null;
+                    childHandle = null;
                 }
                 if (element != null)
                 {
@@ -1809,6 +2007,11 @@ namespace Ldtpd
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
             }
+            finally
+            {
+                element = null;
+                pattern = null;
+            }
             throw new XmlRpcFaultException(123, "Unable to expand item.");
         }
         [XmlRpcMethod("getcellvalue",
@@ -1832,6 +2035,7 @@ namespace Ldtpd
                 ControlType.TreeItem };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123,
@@ -1839,16 +2043,18 @@ namespace Ldtpd
             }
             if (!IsEnabled(childHandle))
             {
+                childHandle = null;
                 throw new XmlRpcFaultException(123,
                     "Object state is disabled");
             }
+            AutomationElement element = null;
             try
             {
                 childHandle.SetFocus();
                 AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
                     Condition.TrueCondition);
-                AutomationElement element = null;
                 element = c[index];
+                c = null;
                 if (element != null)
                     return element.Current.Name;
             }
@@ -1864,6 +2070,10 @@ namespace Ldtpd
             {
                 LogMessage(ex);
                 throw new XmlRpcFaultException(123, "Index out of range: " + index);
+            }
+            finally
+            {
+                element = childHandle = null;
             }
             throw new XmlRpcFaultException(123, "Unable to get item value.");
         }
@@ -1886,11 +2096,13 @@ namespace Ldtpd
                 ControlType.TreeItem };
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123,
                     "Unable to find Object: " + objName);
             }
+            AutomationElementCollection c;
             try
             {
                 if (!IsEnabled(childHandle))
@@ -1899,7 +2111,7 @@ namespace Ldtpd
                         "Object state is disabled");
                 }
                 childHandle.SetFocus();
-                AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
+                c = childHandle.FindAll(TreeScope.Children,
                     Condition.TrueCondition);
                 if (c == null)
                     throw new XmlRpcFaultException(123,
@@ -1914,6 +2126,11 @@ namespace Ldtpd
                 else
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                c = null;
+                childHandle = null;
             }
         }
         [XmlRpcMethod("grabfocus",
@@ -1936,6 +2153,7 @@ namespace Ldtpd
                 return 1;
             }
             AutomationElement childHandle = GetObjectHandle(windowHandle, objName);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
@@ -1953,6 +2171,10 @@ namespace Ldtpd
                 else
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                childHandle = null;
             }
         }
         [XmlRpcMethod("handletablecell", Description = "Handle table cell.")]
@@ -2043,9 +2265,9 @@ namespace Ldtpd
         public int LaunchApp(string cmd, string[] args, int delay = 5,
             int env = 1, string lang = null)
         {
+            Process ps = new Process();
             try
             {
-                Process ps = new Process();
                 ProcessStartInfo psi = new ProcessStartInfo();
 
                 psi.FileName = cmd;
@@ -2063,7 +2285,6 @@ namespace Ldtpd
                 // Clean up in different thread
                 thread.Start(ps);
                 Wait(delay);
-                ps = null;
                 return 1;
             }
             catch (Exception ex)
@@ -2071,6 +2292,10 @@ namespace Ldtpd
                 LogMessage(ex);
                 throw new XmlRpcFaultException(123,
                     "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                ps = null;
             }
         }
         [XmlRpcMethod("imagecapture", Description = "Launch application.")]
@@ -2082,6 +2307,7 @@ namespace Ldtpd
         {
             System.Drawing.Bitmap b = null;
             ScreenCapture sc = null;
+            AutomationElement windowHandle;
             try
             {
                 sc = new ScreenCapture();
@@ -2089,7 +2315,7 @@ namespace Ldtpd
                 string path = Path.GetTempPath() + Path.GetRandomFileName() + ".png";
                 if (windowName.Length > 0)
                 {
-                    AutomationElement windowHandle = GetWindowHandle(windowName);
+                    windowHandle = GetWindowHandle(windowName);
                     if (windowHandle == null)
                     {
                         throw new XmlRpcFaultException(123,
@@ -2134,10 +2360,9 @@ namespace Ldtpd
             }
             finally
             {
-                if (b != null)
-                    b = null;
-                if (sc != null)
-                    sc = null;
+                b = null;
+                sc = null;
+                windowHandle = null;
             }
         }
         [XmlRpcMethod("hasstate",
@@ -2160,11 +2385,14 @@ namespace Ldtpd
             windowHandle.SetFocus();
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, null, false);
+            windowHandle = null;
             if (childHandle == null)
             {
                 LogMessage("Unable to find Object: " + objName);
                 return 0;
             }
+            Object pattern;
+            AutomationElementCollection c;
             try
             {
                 if (!IsEnabled(childHandle))
@@ -2174,14 +2402,13 @@ namespace Ldtpd
                     LogMessage("childHandle.SetFocus");
                     childHandle.SetFocus();
                 }
-                AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
+                c = childHandle.FindAll(TreeScope.Children,
                     Condition.TrueCondition);
                 if (c == null)
                 {
                     LogMessage("Unable to get row count.");
                     return 0;
                 }
-                Object pattern;
                 do
                 {
                     LogMessage("State: " + state);
@@ -2244,6 +2471,12 @@ namespace Ldtpd
             {
                 LogMessage(ex);
             }
+            finally
+            {
+                c = null;
+                pattern = null;
+                childHandle = null;
+            }
             return 0;
         }
         [XmlRpcMethod("getallstates",
@@ -2264,24 +2497,26 @@ namespace Ldtpd
             }
             AutomationElement childHandle = GetObjectHandle(windowHandle,
                 objName, null, false);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123,
                     "Unable to find Object: " + objName);
             }
+            Object pattern;
+            AutomationElementCollection c;
+            ArrayList stateList = new ArrayList();
             try
             {
                 if (IsEnabled(childHandle))
                 {
                     childHandle.SetFocus();
                 }
-                AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
+                c = childHandle.FindAll(TreeScope.Children,
                     Condition.TrueCondition);
                 if (c == null)
                     throw new XmlRpcFaultException(123,
                         "Unable to get row count.");
-                Object pattern;
-                ArrayList stateList = new ArrayList();
                 if (childHandle.Current.IsOffscreen == false)
                 {
                     stateList.Add("visible");
@@ -2325,6 +2560,12 @@ namespace Ldtpd
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
             }
+            finally
+            {
+                c = null;
+                pattern = null;
+                childHandle = null;
+            }
         }
         [XmlRpcMethod("getobjectsize", Description = "Get object size.")]
         public int[] GetObjectSize(String windowName, String objName)
@@ -2340,6 +2581,7 @@ namespace Ldtpd
                 throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
             }
             AutomationElement childHandle = GetObjectHandle(windowHandle, objName);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
@@ -2360,6 +2602,10 @@ namespace Ldtpd
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
             }
+            finally
+            {
+                childHandle = null;
+            }
         }
         [XmlRpcMethod("getobjectinfo", Description = "Get object info.")]
         public string[] GetObjectInfo(String windowName, String objName)
@@ -2373,23 +2619,27 @@ namespace Ldtpd
             ArrayList objectList = new ArrayList();
             Hashtable objectHT = new Hashtable();
             ObjInfo objInfo = new ObjInfo(false);
+            InternalTreeWalker w;
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
-                throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
+                throw new XmlRpcFaultException(123,
+                    "Unable to find window: " + windowName);
             }
+            w = new InternalTreeWalker();
+            Hashtable ht;
+            ArrayList keyList = new ArrayList();
             try
             {
-                if (InternalGetObjectList(walker.GetFirstChild(windowHandle),
+                if (InternalGetObjectList(w.walker.GetFirstChild(windowHandle),
                     ref objectList, ref objectHT, ref matchedKey,
                     false, objName, windowHandle.Current.Name))
                 {
                     LogMessage(objectHT.Count + " : " + objectList.Count);
                     LogMessage(objectList[objectList.Count - 1]);
-                    Hashtable ht = (Hashtable)objectHT[matchedKey];
+                    ht = (Hashtable)objectHT[matchedKey];
                     if (ht != null)
                     {
-                        ArrayList keyList = new ArrayList();
                         foreach (string key in ht.Keys)
                         {
                             LogMessage(key);
@@ -2410,8 +2660,10 @@ namespace Ldtpd
             }
             finally
             {
-                objectHT = null;
-                objectList = null;
+                w = null;
+                ht = null;
+                keyList = null;
+                windowHandle = null;
             }
             throw new XmlRpcFaultException(123, "Unable to find Object info: " + objName);
         }
@@ -2429,18 +2681,23 @@ namespace Ldtpd
             ArrayList objectList = new ArrayList();
             Hashtable objectHT = new Hashtable();
             ObjInfo objInfo = new ObjInfo(false);
+            InternalTreeWalker w;
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
-                throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
+                throw new XmlRpcFaultException(123,
+                    "Unable to find window: " + windowName);
             }
+            w = new InternalTreeWalker();
+            Hashtable ht;
+            ArrayList childrenList;
             try
             {
                 if (property == "children")
                     flag = true;
                 else
                     flag = false;
-                if (InternalGetObjectList(walker.GetFirstChild(windowHandle),
+                if (InternalGetObjectList(w.walker.GetFirstChild(windowHandle),
                     ref objectList, ref objectHT, ref matchedKey,
                     flag, objName, windowHandle.Current.Name) || flag)
                 {
@@ -2465,7 +2722,7 @@ namespace Ldtpd
                     LogMessage(objectHT.Count + " : " + objectList.Count);
                     LogMessage(objectList[objectList.Count - 1]);
                     LogMessage("matchedKey: " + matchedKey + " : " + flag);
-                    Hashtable ht = (Hashtable)objectHT[matchedKey];
+                    ht = (Hashtable)objectHT[matchedKey];
                     if (ht != null)
                     {
                         foreach (string key in ht.Keys)
@@ -2475,7 +2732,7 @@ namespace Ldtpd
                             {
                                 if (property == "children")
                                 {
-                                    ArrayList childrenList = (ArrayList)ht[key];
+                                    childrenList = (ArrayList)ht[key];
                                     LogMessage("Count: " + childrenList.Count);
                                     string value = "";
                                     foreach (string child in childrenList)
@@ -2505,8 +2762,9 @@ namespace Ldtpd
             }
             finally
             {
-                objectHT = null;
-                objectList = null;
+                w = null;
+                ht = null;
+                windowHandle = null;
             }
             throw new XmlRpcFaultException(123, "Unable to find Object property: " +
                 property + " of object: " + objName);
@@ -2521,37 +2779,42 @@ namespace Ldtpd
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
+            Hashtable ht;
             string matchedKey = "";
-            ArrayList childList = new ArrayList();
-            ArrayList objectList = new ArrayList();
             Hashtable objectHT = new Hashtable();
             ObjInfo objInfo = new ObjInfo(false);
+            ArrayList childList = new ArrayList();
+            ArrayList objectList = new ArrayList();
+            InternalTreeWalker w;
+            AutomationElement childHandle;
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
             {
                 throw new XmlRpcFaultException(123,
                     "Unable to find window: " + windowName);
             }
+            w = new InternalTreeWalker();
             try
             {
                 if (childName != null && childName.Length > 0 &&
                     role != null && role.Length > 0)
                 {
-                    InternalGetObjectList(walker.GetFirstChild(windowHandle),
+                    InternalGetObjectList(w.walker.GetFirstChild(windowHandle),
                         ref objectList, ref objectHT, ref matchedKey,
                         true, childName, windowHandle.Current.Name);
+                    Regex rx;
                     foreach (string key in objectHT.Keys)
                     {
                         try
                         {
                             if (debug)
                                 LogMessage("Key: " + key);
-                            Hashtable ht = (Hashtable)objectHT[key];
+                            ht = (Hashtable)objectHT[key];
                             String tmp = Regex.Replace(childName, @"\*", @".*");
                             tmp = Regex.Replace(tmp, " ", "");
                             tmp = Regex.Replace(tmp, @"\(", @"\(");
                             tmp = Regex.Replace(tmp, @"\)", @"\)");
-                            Regex rx = new Regex(tmp, RegexOptions.Compiled |
+                            rx = new Regex(tmp, RegexOptions.Compiled |
                                 RegexOptions.IgnorePatternWhitespace |
                                 RegexOptions.Multiline |
                                 RegexOptions.CultureInvariant);
@@ -2579,12 +2842,16 @@ namespace Ldtpd
                         {
                             LogMessage(ex);
                         }
+                        finally
+                        {
+                            rx = null;
+                        }
                     }
                     return childList.ToArray(typeof(string)) as string[];
                 }
                 if (role != null && role.Length > 0)
                 {
-                    AutomationElement childHandle = GetObjectHandle(windowHandle,
+                    childHandle = GetObjectHandle(windowHandle,
                         childName);
                     if (childHandle == null)
                     {
@@ -2592,7 +2859,7 @@ namespace Ldtpd
                             "Unable to find child object: " + childName);
                     }
                     role = Regex.Replace(role, @" ", @"_");
-                    InternalGetObjectList(walker.GetFirstChild(windowHandle),
+                    InternalGetObjectList(w.walker.GetFirstChild(windowHandle),
                         ref objectList, ref objectHT, ref matchedKey,
                         true, null, windowHandle.Current.Name);
                     foreach (string key in objectHT.Keys)
@@ -2601,7 +2868,7 @@ namespace Ldtpd
                         {
                             if (debug)
                                 LogMessage("Key: " + key);
-                            Hashtable ht = (Hashtable)objectHT[key];
+                            ht = (Hashtable)objectHT[key];
                             if ((string)ht["class"] == role)
                                 childList.Add(ht["key"]);
                         }
@@ -2614,14 +2881,14 @@ namespace Ldtpd
                 }
                 if (childName != null && childName.Length > 0)
                 {
-                    AutomationElement childHandle = GetObjectHandle(windowHandle,
+                    childHandle = GetObjectHandle(windowHandle,
                         childName);
                     if (childHandle == null)
                     {
                         throw new XmlRpcFaultException(123,
                             "Unable to find child object: " + childName);
                     }
-                    InternalGetObjectList(walker.GetFirstChild(childHandle),
+                    InternalGetObjectList(w.walker.GetFirstChild(childHandle),
                         ref objectList, ref objectHT, ref matchedKey,
                         true, null, windowHandle.Current.Name);
                     foreach (string key in objectHT.Keys)
@@ -2630,7 +2897,7 @@ namespace Ldtpd
                         {
                             if (debug)
                                 LogMessage("Key: " + key);
-                            Hashtable ht = (Hashtable)objectHT[key];
+                            ht = (Hashtable)objectHT[key];
                             childList.Add(ht["key"]);
                         }
                         catch (Exception ex)
@@ -2652,8 +2919,10 @@ namespace Ldtpd
             }
             finally
             {
-                objectHT = null;
-                objectList = null;
+                w = null;
+                ht = objectHT = null;
+                childHandle = windowHandle = null;
+                childList = objectList = null;
             }
             throw new XmlRpcFaultException(123, "Unsupported parameter type passed");
         }
@@ -2667,6 +2936,7 @@ namespace Ldtpd
                 if (windowHandle != null)
                 {
                     AutomationElement childHandle = GetObjectHandle(windowHandle, objName);
+                    windowHandle = null;
                     try
                     {
                         if (childHandle != null)
@@ -2682,6 +2952,10 @@ namespace Ldtpd
                         else
                             throw new XmlRpcFaultException(123,
                                 "Unhandled exception: " + ex.Message);
+                    }
+                    finally
+                    {
+                        childHandle = null;
                     }
                 }
             }

@@ -124,40 +124,56 @@ namespace Ldtpd
     }
     public class Utils : XmlRpcListenerService
     {
+        Thread backgroundThread;
         public bool debug = false;
+        protected WindowList windowList;
         protected int objectTimeOut = 5;
-        protected TreeWalker walker = null;
         protected bool shiftKeyPressed = false;
-        protected Stack logStack = new Stack();
-        protected List<AutomationElement> windowList;
+        protected Stack logStack = new Stack(100);
         public Utils()
         {
-            // Ignore Ldtpd from list of applications
-            Condition condition1 = new PropertyCondition(AutomationElement.ProcessIdProperty,
-                Process.GetCurrentProcess().Id);
-            Condition condition2 = new AndCondition(new Condition[] {
-                System.Windows.Automation.Automation.ControlViewCondition,
-                new NotCondition(condition1)});
-            walker = new TreeWalker(condition2);
-            windowList = new List<AutomationElement>();
-            /*
-            http://stackoverflow.com/questions/3144751/why-is-this-net-uiautomation-app-leaking-pooling
-            Automation.AddStructureChangedEventHandler(AutomationElement.RootElement,
-                TreeScope.Subtree,
-                new StructureChangedEventHandler(OnStructureChanged));
-             * Let us not use this, as its leaking memory, tested on Windows XP SP3
-             * Windows 7 SP1
-            /* */
-            Automation.AddAutomationEventHandler(WindowPattern.WindowOpenedEvent,
-                AutomationElement.RootElement, TreeScope.Subtree,
-                new AutomationEventHandler(ref this.OnWindowCreate));
-            Automation.AddAutomationEventHandler(WindowPattern.WindowClosedEvent,
-                AutomationElement.RootElement, TreeScope.Subtree,
-                new AutomationEventHandler(ref this.OnWindowDelete));
+            windowList = new WindowList(debug);
+            backgroundThread = new Thread(new ThreadStart(BackgroundThread));
+            // Clean up window handles in different thread
+            backgroundThread.Start();
         }
         ~Utils()
         {
-            Automation.RemoveAllEventHandlers();
+            try
+            {
+                windowList = null;
+                // Stop the cleanup thread
+                backgroundThread.Interrupt();
+                backgroundThread = null;
+                Automation.RemoveAllEventHandlers();
+            }
+            catch (Exception ex)
+            {
+                if (debug)
+                    Console.WriteLine(ex);
+            }
+        }
+        /*
+         * BackgroundThread: GC release
+         */
+        private void BackgroundThread()
+        {
+            while (true)
+            {
+                try
+                {
+                    // Wait 10 second before starting the next
+                    // cleanup cycle
+                    InternalWait(10);
+                    // With GC collect,
+                    // noticed very less memory being used all the time
+                    GC.Collect();
+                }
+                catch (Exception ex)
+                {
+                    LogMessage(ex);
+                }
+            }
         }
         internal KeyInfo GetKey(string key)
         {
@@ -280,103 +296,45 @@ namespace Ldtpd
                 LogMessage(token);
                 keyList.Add(GetKey(token));
             }
-            return keyList.ToArray(typeof(KeyInfo))
-                as KeyInfo[];
+            try
+            {
+                return keyList.ToArray(typeof(KeyInfo))
+                    as KeyInfo[];
+            }
+            finally
+            {
+                keyList = null;
+            }
         }
         public void LogMessage(Object o)
         {
             if (debug)
                 Console.WriteLine(o);
-            logStack.Push("INFO-" + o);
-        }
-        private void CleanUpWindowElements()
-        {
-            /*
-             * Clean up handles that no longer exist
-             * */
-            List<AutomationElement> windowTmpList = new List<AutomationElement>();
             try
             {
-                foreach (AutomationElement el in windowList)
+                if (logStack.Count == 100)
                 {
-                    try
-                    {
-                        LogMessage(el.Current.Name);
-                    }
-                    catch (ElementNotAvailableException ex)
-                    {
-                        // Don't alter the current list, remove it later
-                        windowTmpList.Add(el);
-                        LogMessage(ex);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Don't alter the current list, remove it later
-                        windowTmpList.Add(el);
-                        LogMessage(ex);
-                    }
+                    // Removes 1 log, if it has 100 instances
+                    logStack.Pop();
                 }
+                // Add new log to the stack
+                logStack.Push("INFO-" + o);
             }
             catch (Exception ex)
             {
-                // Since window list is added / removed in different thread
-                // values of windowList might be altered and an exception is thrown
-                // Just handle the global exception
-                LogMessage(ex);
+                if (debug)
+                    Console.WriteLine(ex);
             }
-            try
-            {
-                foreach (AutomationElement el in windowTmpList)
-                    // Remove element from the list
-                    windowList.Remove(el);
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-            }
-            // With GC collect, noticed very less memory being used all the time
-            GC.Collect();
         }
-        private void OnWindowCreate(object sender, AutomationEventArgs e)
-        {
-            /*
-             * Add all newly created window handle to the list on window create event
-             * */
-            try
-            {
-                AutomationElement element;
-                element = sender as AutomationElement;
-                if (e.EventId == WindowPattern.WindowOpenedEvent)
-                {
-                    if (element != null &&
-                        element.Current.Name != null &&
-                        element.Current.Name.Length > 0)
-                    {
-                        // Add window handle that have name !
-                        int[] rid = element.GetRuntimeId();
-                        LogMessage("Added: " +
-                            element.Current.ControlType.ProgrammaticName +
-                            " : " + element.Current.Name + " : " + rid);
-                        if (windowList.IndexOf(element) == -1)
-                            windowList.Add(element);
-                        LogMessage("Window list count: " +
-                            this.windowList.Count);
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                // Do nothing
-            }
-            Thread thread = new Thread(new ThreadStart(CleanUpWindowElements));
-            // Clean up in different thread
-            thread.Start();
-        }
+        /*
+         * InternalLaunchApp: Waits for the process to complete
+         * and closes the handle, to avoid memory
+         */
         internal void InternalLaunchApp(object data)
         {
             try
             {
-                Process ps = (Process)data;
+                Process ps = data as Process;
                 // Wait for the application to quit
                 ps.WaitForExit();
                 // Close the handle, so that we won't leak memory
@@ -388,41 +346,9 @@ namespace Ldtpd
                 LogMessage(ex);
                 throw;
             }
-        }
-        private void OnWindowDelete(object sender, AutomationEventArgs e)
-        {
-            /*
-             * Delete window handle that exist in the list on window close event
-             * */
-            try
-            {
-                AutomationElement element;
-                element = sender as AutomationElement;
-                if (e.EventId == WindowPattern.WindowClosedEvent)
-                {
-                    if (element != null &&
-                        element.Current.Name != null)
-                    {
-                        int[] rid = element.GetRuntimeId();
-                        LogMessage("Removed: " +
-                            element.Current.ControlType.ProgrammaticName +
-                            " : " + element.Current.Name + " : " + rid);
-                        if (windowList.IndexOf(element) != -1)
-                            this.windowList.Remove(element);
-                        LogMessage("Removed - Window list count: " +
-                            this.windowList.Count);
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                // Since window list is added / removed in different thread
-                // values of windowList might be altered and an exception is thrown
-                // Just handle the global exception
-            }
-            Thread thread = new Thread(new ThreadStart(CleanUpWindowElements));
-            // Clean up in different thread
-            thread.Start();
+            // With GC collect,
+            // noticed very less memory being used all the time
+            GC.Collect();
         }
         private AutomationElement InternalGetWindowHandle(String windowName,
             ControlType[] type = null)
@@ -442,20 +368,23 @@ namespace Ldtpd
                 RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline |
                 RegexOptions.CultureInvariant);
             List<AutomationElement> windowTmpList = new List<AutomationElement>();
+            InternalTreeWalker w = new InternalTreeWalker();
             try
             {
                 foreach (AutomationElement e in windowList)
                 {
                     try
                     {
-                        currObjInfo = objInfo.GetObjectType(e, e.Current.ControlType);
+                        currObjInfo = objInfo.GetObjectType(e,
+                            e.Current.ControlType);
                         s = e.Current.Name;
                         if (s != null)
                             s = (new Regex(" ")).Replace(s, "");
                         if (s == null || s.Length == 0)
                         {
                             // txt0, txt1
-                            actualString = currObjInfo.objType + currObjInfo.objCount;
+                            actualString = currObjInfo.objType +
+                                currObjInfo.objCount;
                         }
                         else
                         {
@@ -483,7 +412,10 @@ namespace Ldtpd
                             if (type == null)
                             {
                                 LogMessage(windowName + " - Window found");
+                                w = null;
+                                rx = null;
                                 objectList = null;
+                                windowTmpList = null;
                                 return e;
                             }
                             else
@@ -494,7 +426,13 @@ namespace Ldtpd
                                         LogMessage((t == e.Current.ControlType) +
                                             " : " + e.Current.ControlType.ProgrammaticName);
                                     if (t == e.Current.ControlType)
+                                    {
+                                        w = null;
+                                        rx = null;
+                                        objectList = null;
+                                        windowTmpList = null;
                                         return e;
+                                    }
                                 }
                                 LogMessage("type doesn't match !!!!!!!!!!!!!!");
                             }
@@ -521,27 +459,38 @@ namespace Ldtpd
             try
             {
                 foreach (AutomationElement e in windowTmpList)
-                    // Remove element from the list
-                    windowList.Remove(e);
+                    try
+                    {
+                        // Remove element from the list
+                        windowList.Remove(e);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogMessage(ex);
+                    }
             }
             catch (Exception ex)
             {
                 LogMessage(ex);
             }
+            windowTmpList = null;
+            objectList.Clear();
             objInfo = new ObjInfo(false);
-            element = walker.GetFirstChild(AutomationElement.RootElement);
+            element = w.walker.GetFirstChild(AutomationElement.RootElement);
             try
             {
                 while (null != element)
                 {
-                    currObjInfo = objInfo.GetObjectType(element, element.Current.ControlType);
+                    currObjInfo = objInfo.GetObjectType(element,
+                        element.Current.ControlType);
                     s = element.Current.Name;
                     if (s != null)
                         s = (new Regex(" ")).Replace(s, "");
                     if (s == null || s == "")
                     {
                         // txt0, txt1
-                        actualString = currObjInfo.objType + currObjInfo.objCount;
+                        actualString = currObjInfo.objType +
+                            currObjInfo.objCount;
                     }
                     else
                     {
@@ -563,12 +512,12 @@ namespace Ldtpd
                     LogMessage("Window: " + actualString + " : " + tmp);
                     objectList.Add(actualString);
                     // FIXME: Handle dlg0 as in Linux
-                    if ((s != null && rx.Match(s).Success) || rx.Match(actualString).Success)
+                    if ((s != null && rx.Match(s).Success) ||
+                        rx.Match(actualString).Success)
                     {
                         if (type == null)
                         {
                             LogMessage(windowName + " - Window found");
-                            objectList = null;
                             return element;
                         }
                         else
@@ -579,32 +528,39 @@ namespace Ldtpd
                                     LogMessage((t == element.Current.ControlType) +
                                         " : " + element.Current.ControlType.ProgrammaticName);
                                 if (t == element.Current.ControlType)
+                                {
                                     return element;
+                                }
                             }
                             LogMessage("type doesn't match !!!!!!!!!!!!!!");
                         }
                     }
-                    element = walker.GetNextSibling(element);
+                    element = w.walker.GetNextSibling(element);
                 }
-                element = walker.GetFirstChild(AutomationElement.RootElement);
+                element = w.walker.GetFirstChild(
+                    AutomationElement.RootElement);
                 // Reset object info
                 objInfo = new ObjInfo(false);
                 objectList.Clear();
+                AutomationElement subChild;
                 while (null != element)
                 {
-                    AutomationElement subChild = walker.GetFirstChild(element);
+                    subChild = w.walker.GetFirstChild(
+                        element);
                     while (subChild != null)
                     {
                         if (subChild.Current.Name != null)
                         {
-                            currObjInfo = objInfo.GetObjectType(subChild, subChild.Current.ControlType);
+                            currObjInfo = objInfo.GetObjectType(subChild,
+                                subChild.Current.ControlType);
                             s = subChild.Current.Name;
                             if (s != null)
                                 s = (new Regex(" ")).Replace(s, "");
                             if (s == null || s == "")
                             {
                                 // txt0, txt1
-                                actualString = currObjInfo.objType + currObjInfo.objCount;
+                                actualString = currObjInfo.objType +
+                                    currObjInfo.objCount;
                             }
                             else
                             {
@@ -624,12 +580,12 @@ namespace Ldtpd
                                 }
                             }
                             LogMessage("SubWindow: " + actualString + " : " + tmp);
-                            if ((s != null && rx.Match(s).Success) || rx.Match(actualString).Success)
+                            if ((s != null && rx.Match(s).Success) ||
+                                rx.Match(actualString).Success)
                             {
                                 if (type == null)
                                 {
                                     LogMessage(windowName + " - Window found");
-                                    objectList = null;
                                     return subChild;
                                 }
                                 else
@@ -640,15 +596,18 @@ namespace Ldtpd
                                             LogMessage((t == subChild.Current.ControlType) +
                                                 " : " + subChild.Current.ControlType.ProgrammaticName);
                                         if (t == subChild.Current.ControlType)
+                                        {
+                                            LogMessage(windowName + " - Window found");
                                             return subChild;
+                                        }
                                     }
                                     LogMessage("type doesn't match !!!!!!!!!!!!!!");
                                 }
                             }
                         }
-                        subChild = walker.GetNextSibling(subChild);
+                        subChild = w.walker.GetNextSibling(subChild);
                     }
-                    element = walker.GetNextSibling(element);
+                    element = w.walker.GetNextSibling(element);
                 }
             }
             catch (Exception ex)
@@ -657,6 +616,8 @@ namespace Ldtpd
             }
             finally
             {
+                w = null;
+                rx = null;
                 objectList = null;
             }
             // Unable to find window
@@ -681,13 +642,15 @@ namespace Ldtpd
                 {
                     // Windows automation library hanged
                     LogMessage("WARNING: Thread aborting, as the program" +
-                    " unable to find window within 1 minute");
+                    " unable to find window within 30 seconds");
                     // This is an unsafe operation so use as a last resort.
                     // Aborting only the current thread
                     thread.Abort();
                 }
                 else
                 {
+                    // Collect all generations of memory.
+                    GC.Collect();
                     if (o != null)
                     {
                         try
@@ -697,7 +660,8 @@ namespace Ldtpd
                         catch (System.Runtime.InteropServices.COMException ex)
                         {
                             // Noticed this with Notepad
-                            LogMessage("Error HRESULT E_FAIL has been returned from a call to a COM component.");
+                            LogMessage("Error HRESULT E_FAIL has been" +
+                                " returned from a call to a COM component.");
                             LogMessage(ex.StackTrace);
                             continue;
                         }
@@ -720,6 +684,7 @@ namespace Ldtpd
                 LogMessage("GetObjectHandle: Child handle NULL");
                 return null;
             }
+            InternalTreeWalker w = new InternalTreeWalker();
             ObjInfo objInfo = new ObjInfo(false);
             int retry = waitForObj ? objectTimeOut : 1;
             // For debugging use the following value
@@ -727,25 +692,32 @@ namespace Ldtpd
             ArrayList objectList = new ArrayList();
             for (int i = 0; i < retry; i++)
             {
-                objectList.Clear();
                 try
                 {
-                    o = InternalGetObjectHandle(walker.GetFirstChild(e), objName,
-                        type, ref objectList);
+                    o = InternalGetObjectHandle(w.walker.GetFirstChild(e),
+                        objName, type, ref objectList);
                 }
                 catch (Exception ex)
                 {
                     LogMessage(ex);
                     o = null;
                 }
+                finally
+                {
+                    objectList.Clear();
+                    // Collect all generations of memory.
+                    GC.Collect();
+                }
                 if (o != null)
                 {
+                    w = null;
                     objectList = null;
                     return o;
                 }
                 // Wait 1 second, rescan for object
                 Thread.Sleep(1000);
             }
+            w = null;
             objectList = null;
             return o;
         }
@@ -759,16 +731,12 @@ namespace Ldtpd
             }
             int index;
             String s = null;
-            String actualString1 = null;
-            ObjInfo objInfo = new ObjInfo(false);
             AutomationElement element;
             CurrentObjInfo currObjInfo;
-            /*
-            Condition condition1 = new PropertyCondition(AutomationElement.ProcessIdProperty,
-                Process.GetCurrentProcess().Id);
-            Condition condition2 = new OrCondition(new Condition[] { Automation.ControlViewCondition,
-                Automation.ContentViewCondition, new NotCondition(condition1) });
-            /**/
+            String actualString = null;
+            ObjInfo objInfo = new ObjInfo(false);
+
+            InternalTreeWalker w = new InternalTreeWalker();
             // Trying to mimic python fnmatch.translate
             String tmp = Regex.Replace(objName, @"\*", @".*");
             tmp = Regex.Replace(tmp, " ", "");
@@ -797,7 +765,6 @@ namespace Ldtpd
                             LogMessage("Obj name: " + s + " : " +
                                 element.Current.ControlType.ProgrammaticName);
                     }
-                    actualString1 = null;
                     if (currObjInfo.objType != null)
                     {
                         if (s != null)
@@ -805,36 +772,37 @@ namespace Ldtpd
                         if (s == null || s.Length == 0)
                         {
                             // txt0, txt1
-                            actualString1 = currObjInfo.objType + currObjInfo.objCount;
+                            actualString = currObjInfo.objType +
+                                currObjInfo.objCount;
                         }
                         else
                         {
                             // txtName, txtPassword
-                            actualString1 = currObjInfo.objType + s;
+                            actualString = currObjInfo.objType + s;
                             index = 1;
                             while (true)
                             {
-                                if (objectList.IndexOf(actualString1) < 0)
+                                if (objectList.IndexOf(actualString) < 0)
                                 {
                                     // Object doesn't exist, assume this is the first
                                     // element with the name and type
                                     break;
                                 }
-                                actualString1 = currObjInfo.objType + s + index;
+                                actualString = currObjInfo.objType + s + index;
                                 index++;
                             }
                         }
                         if (debug)
                         {
-                            LogMessage(objName + " : " + actualString1 + " : " + s + " : " +
+                            LogMessage(objName + " : " + actualString + " : " + s + " : " +
                                 tmp);
                             LogMessage((s != null && rx.Match(s).Success) + " : " +
-                                (actualString1 != null && rx.Match(actualString1).Success));
+                                (rx.Match(actualString).Success));
                         }
-                        objectList.Add(actualString1);
+                        objectList.Add(actualString);
                     }
                     if ((s != null && rx.Match(s).Success) ||
-                        (actualString1 != null && rx.Match(actualString1).Success))
+                        (actualString != null && rx.Match(actualString).Success))
                     {
                         if (type == null)
                             return element;
@@ -852,14 +820,15 @@ namespace Ldtpd
                         }
                     }
                     // If any subchild exist for the current element navigate to it
-                    AutomationElement subChild = InternalGetObjectHandle(walker.GetFirstChild(element),
+                    AutomationElement subChild = InternalGetObjectHandle(
+                        w.walker.GetFirstChild(element),
                         objName, type, ref objectList);
                     if (subChild != null)
                     {
                         // Object found, don't loop further
                         return subChild;
                     }
-                    element = walker.GetNextSibling(element);
+                    element = w.walker.GetNextSibling(element);
                 }
             }
             catch (ElementNotAvailableException ex)
@@ -869,6 +838,11 @@ namespace Ldtpd
             catch (Exception ex)
             {
                 LogMessage(ex);
+            }
+            finally
+            {
+                w = null;
+                rx = null;
             }
             return null;
         }
@@ -881,11 +855,13 @@ namespace Ldtpd
             Regex rx = null;
             String s = null;
             ObjInfo objInfo = new ObjInfo(false);
-            String actualString1 = null;
+            String actualString = null;
             CurrentObjInfo currObjInfo;
             Hashtable propertyHT;
             // Trying to mimic python fnmatch.translate
             String tmp = null;
+
+            InternalTreeWalker w = new InternalTreeWalker();
             if (objName != null)
             {
                 tmp = Regex.Replace(objName, @"\*", @".*");
@@ -915,37 +891,37 @@ namespace Ldtpd
                             LogMessage("Obj name: " + s + " : " +
                                 element.Current.ControlType.ProgrammaticName);
                     }
-                    actualString1 = null;
+                    actualString = null;
                     if (s != null)
                         s = (new Regex(" ")).Replace(s, "");
                     if (s == null || s.Length == 0)
                     {
                         // txt0, txt1
-                        actualString1 = currObjInfo.objType + currObjInfo.objCount;
+                        actualString = currObjInfo.objType + currObjInfo.objCount;
                     }
                     else
                     {
                         // txtName, txtPassword
-                        actualString1 = currObjInfo.objType + s;
+                        actualString = currObjInfo.objType + s;
                         index = 1;
                         while (true)
                         {
-                            if (objectList.IndexOf(actualString1) < 0)
+                            if (objectList.IndexOf(actualString) < 0)
                             {
                                 // Object doesn't exist, assume this is the first
                                 // element with the name and type
                                 break;
                             }
-                            actualString1 = currObjInfo.objType + s + index;
+                            actualString = currObjInfo.objType + s + index;
                             index++;
                         }
                     }
-                    objectList.Add(actualString1);
+                    objectList.Add(actualString);
                     if (objName != null || needAll)
                     {
                         //needAll - Required for GetChild
                         propertyHT = new Hashtable();
-                        propertyHT.Add("key", actualString1);
+                        propertyHT.Add("key", actualString);
                         try
                         {
                             LogMessage(element.Current.LocalizedControlType);
@@ -972,7 +948,7 @@ namespace Ldtpd
                         {
                             LogMessage("parentName NOT NULL");
                             // Add current child to the parent
-                            ((ArrayList)((Hashtable)objectHT[parentName])["children"]).Add(actualString1);
+                            ((ArrayList)((Hashtable)objectHT[parentName])["children"]).Add(actualString);
                         }
                         else
                             LogMessage("parentName NULL");
@@ -987,18 +963,18 @@ namespace Ldtpd
                             propertyHT.Add("key_binding",
                                 element.Current.AcceleratorKey);
                         // Add individual property to object property
-                        objectHT.Add(actualString1, propertyHT);
+                        objectHT.Add(actualString, propertyHT);
                         if (debug && rx != null)
                         {
-                            LogMessage(objName + " : " + actualString1 + " : " + s
+                            LogMessage(objName + " : " + actualString + " : " + s
                                 + " : " + tmp);
                             LogMessage((s != null && rx.Match(s).Success) + " : " +
-                                (actualString1 != null && rx.Match(actualString1).Success));
+                                (actualString != null && rx.Match(actualString).Success));
                         }
                         if ((s != null && rx != null && rx.Match(s).Success) ||
-                        (actualString1 != null && rx != null && rx.Match(actualString1).Success))
+                        (actualString != null && rx != null && rx.Match(actualString).Success))
                         {
-                            matchedKey = actualString1;
+                            matchedKey = actualString;
                             LogMessage("String matched: " + needAll);
                             if (!needAll)
                                 return true;
@@ -1006,11 +982,11 @@ namespace Ldtpd
                     }
 
                     // If any subchild exist for the current element navigate to it
-                    if (InternalGetObjectList(walker.GetFirstChild(element),
+                    if (InternalGetObjectList(w.walker.GetFirstChild(element),
                         ref objectList, ref objectHT, ref matchedKey,
-                        needAll, objName, actualString1))
+                        needAll, objName, actualString))
                         return true;
-                    element = walker.GetNextSibling(element);
+                    element = w.walker.GetNextSibling(element);
                 }
             }
             catch (ElementNotAvailableException ex)
@@ -1020,6 +996,12 @@ namespace Ldtpd
             catch (Exception ex)
             {
                 LogMessage("Exception: " + ex);
+            }
+            finally
+            {
+                w = null;
+                rx = null;
+                propertyHT = null;
             }
             return false;
         }
@@ -1067,11 +1049,7 @@ namespace Ldtpd
                         // NOTE: Work around, as the above doesn't seem to work
                         // with UIAComWrapper and UIAComWrapper is required
                         // to Edit value in Spin control
-                        Rect rect = elementItem.Current.BoundingRectangle;
-                        Point pt = new Point(rect.X + rect.Width / 2,
-                            rect.Y + rect.Height / 2);
-                        Input.MoveToAndClick(pt);
-                        return true;
+                        return InternalClick(elementItem);
                     }
                     else if (elementItem.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
                         out pattern))
@@ -1097,6 +1075,11 @@ namespace Ldtpd
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
             }
+            finally
+            {
+                pattern = null;
+                elementItem = null;
+            }
             throw new XmlRpcFaultException(123,
                 "Unable to find item in the list: " + itemText);
         }
@@ -1113,10 +1096,12 @@ namespace Ldtpd
                 ControlType.ListItem, ControlType.List/*, ControlType.Text */ };
             AutomationElement childHandle = GetObjectHandle(windowHandle, objName,
                 type, true);
+            windowHandle = null;
             if (childHandle == null)
             {
                 throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
             }
+            Object pattern = null;
             try
             {
                 LogMessage("Handle name: " + childHandle.Current.Name +
@@ -1125,7 +1110,6 @@ namespace Ldtpd
                 {
                     throw new XmlRpcFaultException(123, "Object state is disabled");
                 }
-                Object pattern = null;
                 if (childHandle.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
                     out pattern))
                 {
@@ -1174,7 +1158,7 @@ namespace Ldtpd
                     }
                 }
                 // Handle selectitem and verifyselect on list. Get ExpandCollapsePattern fails on list,
-				// VM Library items are selected and verified correctly on Player with this fix
+                // VM Library items are selected and verified correctly on Player with this fix
                 else
                 {
                     childHandle.SetFocus();
@@ -1190,6 +1174,11 @@ namespace Ldtpd
                 else
                     throw new XmlRpcFaultException(123,
                         "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                pattern = null;
+                childHandle = null;
             }
             return 0;
         }
@@ -1224,6 +1213,8 @@ namespace Ldtpd
             if (time < 1)
                 time = 1;
             Thread.Sleep(time * 1000);
+            // Collect all generations of memory.
+            GC.Collect();
             return 1;
         }
         internal int InternalWaitTillGuiExist(String windowName,
@@ -1234,26 +1225,16 @@ namespace Ldtpd
                 LogMessage("Argument cannot be empty.");
                 return 0;
             }
+            AutomationElement windowHandle, childHandle;
             try
             {
                 int waitTime = 0;
-                if (objName == null)
+                if (objName == null || objName.Length == 0)
                 {
                     while (waitTime < guiTimeOut)
                     {
-                        if (GetWindowHandle(windowName, false) != null)
-                            return 1;
-                        waitTime++;
-                        InternalWait(1);
-                    }
-                }
-                else
-                {
-                    AutomationElement wndHandle;
-                    while (waitTime < guiTimeOut)
-                    {
-                        if ((wndHandle = GetWindowHandle(windowName, false)) != null &&
-                            GetObjectHandle(wndHandle, objName, null, false) != null)
+                        windowHandle = GetWindowHandle(windowName, false);
+                        if (windowHandle != null)
                         {
                             return 1;
                         }
@@ -1261,10 +1242,31 @@ namespace Ldtpd
                         InternalWait(1);
                     }
                 }
+                else
+                {
+                    while (waitTime < guiTimeOut)
+                    {
+                        windowHandle = GetWindowHandle(windowName,
+                            false);
+                        if (windowHandle != null &&
+                            (childHandle = GetObjectHandle(windowHandle, objName,
+                            null, false)) != null)
+                        {
+                            return 1;
+                        }
+                        waitTime++;
+                        InternalWait(1);
+                        windowHandle = null;
+                    }
+                }
             }
             catch (Exception ex)
             {
                 LogMessage(ex);
+            }
+            finally
+            {
+                windowHandle = childHandle = null;
             }
             return 0;
         }
@@ -1276,34 +1278,41 @@ namespace Ldtpd
                 LogMessage("Argument cannot be empty.");
                 return 0;
             }
+            AutomationElement windowHandle, childHandle;
             try
             {
                 int waitTime = 0;
-                if (objName == null)
+                if (objName == null || objName.Length == 0)
                 {
                     while (waitTime < guiTimeOut)
                     {
-                        if (GetWindowHandle(windowName, false) == null)
+                        windowHandle = GetWindowHandle(windowName, false);
+                        if (windowHandle == null)
                             return 1;
                         waitTime++;
                         InternalWait(1);
+                        windowHandle = null;
                     }
                 }
                 else
                 {
-                    AutomationElement wndHandle;
                     while (waitTime < guiTimeOut)
                     {
-                        if ((wndHandle = GetWindowHandle(windowName, false)) == null)
+                        windowHandle = GetWindowHandle(windowName, false);
+                        if (windowHandle == null)
                             // If window doesn't exist, no Point in checking for object
                             // inside the window
                             return 1;
-                        if (GetObjectHandle(wndHandle, objName, null, false) == null)
+                        childHandle = GetObjectHandle(windowHandle, objName,
+                            null, false);
+                        if (childHandle == null)
                         {
+                            windowHandle = null;
                             return 1;
                         }
                         waitTime++;
                         InternalWait(1);
+                        childHandle = windowHandle = null;
                     }
                 }
             }
@@ -1320,17 +1329,18 @@ namespace Ldtpd
                 LogMessage("Argument cannot be empty.");
                 return 0;
             }
+            AutomationElement windowHandle, childHandle;
             try
             {
-                AutomationElement windowHandle = GetWindowHandle(windowName, false);
+                windowHandle = GetWindowHandle(windowName, false);
                 if (windowHandle == null)
                 {
                     return 0;
                 }
                 windowHandle.SetFocus();
-                if (objName != null && objName != "")
+                if (objName != null && objName.Length > 0)
                 {
-                    AutomationElement childHandle = GetObjectHandle(windowHandle,
+                    childHandle = GetObjectHandle(windowHandle,
                         objName, null, false);
                     if (childHandle == null)
                     {
@@ -1345,8 +1355,12 @@ namespace Ldtpd
                 LogMessage(ex);
                 return 0;
             }
+            finally
+            {
+                childHandle = windowHandle = null;
+            }
         }
-        internal bool ClickMenu(AutomationElement element)
+        internal bool InternalClick(AutomationElement element)
         {
             if (element == null)
                 return false;
@@ -1373,6 +1387,7 @@ namespace Ldtpd
                 ischecked = (currentstate & 16) == 16 ? 1 : 0;
                 LogMessage("IsMenuChecked: " + menuHandle.Current.Name + " : " + "Checked: " +
                     ischecked + " : " + "Current State: " + currentstate);
+                pattern = null;
                 return ischecked;
             }
             else
@@ -1389,13 +1404,19 @@ namespace Ldtpd
             }
             String mainMenu = objName;
             String currObjName = null;
-            AutomationElement firstObjHandle = null;
+            Object invokePattern = null;
+            AutomationElementCollection c = null;
             ControlType[] type = new ControlType[3] { ControlType.Menu,
                 ControlType.MenuBar, ControlType.MenuItem };
             ControlType[] controlType = new ControlType[1] { ControlType.Menu };
+            bool bContextNavigated = false;
+            AutomationElement windowHandle, childHandle;
+            AutomationElement prevObjHandle = null, firstObjHandle = null;
+
+            InternalTreeWalker w = new InternalTreeWalker();
             try
             {
-                AutomationElement windowHandle = GetWindowHandle(windowName);
+                windowHandle = GetWindowHandle(windowName);
                 if (windowHandle == null)
                 {
                     throw new XmlRpcFaultException(123,
@@ -1405,9 +1426,7 @@ namespace Ldtpd
                 LogMessage("Window name: " + windowHandle + " : " +
                     windowHandle.Current.Name +
                     " : " + windowHandle.Current.ControlType.ProgrammaticName);
-                bool bContextNavigated = false;
-                AutomationElement prevObjHandle = null;
-                AutomationElement childHandle = windowHandle;
+                childHandle = windowHandle;
                 /*
                 // element is an AutomationElement.
                 AutomationPattern[] patterns = childHandle.GetSupportedPatterns();
@@ -1462,8 +1481,6 @@ namespace Ldtpd
                             "Object state is disabled");
                     }
                     childHandle.SetFocus();
-                    Object invokePattern = null;
-                    AutomationElementCollection c = null;
                     if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern,
                         out invokePattern))
                     {
@@ -1476,7 +1493,7 @@ namespace Ldtpd
                             childHandle.SetFocus();
                             if (!(actionType == "VerifyCheck" && currObjName == objName))
                             {
-                                ClickMenu(childHandle);
+                                InternalClick(childHandle);
                             }
                             try
                             {
@@ -1531,20 +1548,20 @@ namespace Ldtpd
                                 {
                                     if (state == 1)
                                         // Already checked, just click back the main menu
-                                        ClickMenu(firstObjHandle);
+                                        InternalClick(firstObjHandle);
                                     else
                                         // Check menu
-                                        ClickMenu(childHandle);
+                                        InternalClick(childHandle);
                                     return 1;
                                 }
                                 else if (actionType == "UnCheck")
                                 {
                                     if (state == 0)
                                         // Already unchecked, just click back the main menu
-                                        ClickMenu(firstObjHandle);
+                                        InternalClick(firstObjHandle);
                                     else
                                         // Uncheck menu
-                                        ClickMenu(childHandle);
+                                        InternalClick(childHandle);
                                     return 1;
                                 }
                                 break;
@@ -1556,7 +1573,7 @@ namespace Ldtpd
                                 LogMessage("IsEnabled(childHandle): " +
                                     childHandle.Current.ControlType.ProgrammaticName);
                                 // Set it back to old state, else the menu selection left there
-                                ClickMenu(firstObjHandle);
+                                InternalClick(firstObjHandle);
                                 // Don't process the last item
                                 if (actionType == "Enabled")
                                     return state;
@@ -1568,12 +1585,15 @@ namespace Ldtpd
                                 Hashtable objectHT = new Hashtable();
                                 ObjInfo objInfo = new ObjInfo(false);
                                 menuList.Clear();
-                                InternalGetObjectList(walker.GetFirstChild(childHandle),
+                                InternalGetObjectList(
+                                    w.walker.GetFirstChild(childHandle),
                                     ref menuList, ref objectHT, ref matchedKey);
+                                objectHT = null;
                                 if (menuList.Count > 0)
                                 {
-                                    // Set it back to old state, else the menu selection left there
-                                    ClickMenu(firstObjHandle);
+                                    // Set it back to old state,
+                                    // else the menu selection left there
+                                    InternalClick(firstObjHandle);
                                     // Don't process the last item
                                     return 1;
                                 }
@@ -1582,7 +1602,7 @@ namespace Ldtpd
                                 break;
                             case "VerifyCheck":
                                 state = IsMenuChecked(childHandle);
-                                ClickMenu(firstObjHandle);
+                                InternalClick(firstObjHandle);
                                 return state;
                             default:
                                 break;
@@ -1619,12 +1639,14 @@ namespace Ldtpd
                                     Hashtable objectHT = new Hashtable();
                                     ObjInfo objInfo = new ObjInfo(false);
                                     menuList.Clear();
-                                    InternalGetObjectList(walker.GetFirstChild(childHandle),
+                                    InternalGetObjectList(
+                                        w.walker.GetFirstChild(childHandle),
                                         ref menuList, ref objectHT, ref matchedKey);
                                     if (menuList.Count > 0)
                                     {
-                                        // Set it back to old state, else the menu selection left there
-                                        ClickMenu(firstObjHandle);
+                                        // Set it back to old state,
+                                        // else the menu selection left there
+                                        InternalClick(firstObjHandle);
                                         // Don't process the last item
                                         return 1;
                                     }
@@ -1691,10 +1713,12 @@ namespace Ldtpd
                                 Hashtable objectHT = new Hashtable();
                                 ObjInfo objInfo = new ObjInfo(false);
                                 menuList.Clear();
-                                InternalGetObjectList(walker.GetFirstChild(childHandle),
+                                InternalGetObjectList(w.walker.GetFirstChild(childHandle),
                                     ref menuList, ref objectHT, ref matchedKey);
-                                // Set it back to old state, else the menu selection left there
-                                ClickMenu(firstObjHandle);
+                                // Set it back to old state,
+                                // else the menu selection left there
+                                InternalClick(firstObjHandle);
+                                objectHT = null;
                                 // Don't process the last item
                                 return 1;
                         }
@@ -1707,13 +1731,20 @@ namespace Ldtpd
                 if (firstObjHandle != null)
                 {
                     // Set it back to old state, else the menu selection left there
-                    ClickMenu(firstObjHandle);
+                    InternalClick(firstObjHandle);
                 }
                 if (ex is XmlRpcFaultException)
                     throw;
                 else
                     throw new XmlRpcFaultException(123,
                                     "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                c = null;
+                w = null;
+                windowHandle = childHandle = null;
+                prevObjHandle = firstObjHandle = null;
             }
         }
     }
