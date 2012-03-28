@@ -61,6 +61,7 @@ namespace WinLdtpdService
             Console.ReadLine();
             /**/
             ///*
+            WindowList windowList = new WindowList(debug);
             HttpListener listener = new HttpListener();
             listener.Prefixes.Add("http://localhost:4118/");
             listener.Prefixes.Add("http://+:4118/");
@@ -79,7 +80,7 @@ namespace WinLdtpdService
                     Console.WriteLine("Listening only on local interface");
             }
             listener.Start();
-            XmlRpcListenerService svc = new Core(debug);
+            XmlRpcListenerService svc = new Core(windowList, debug);
             try
             {
                 while (true)
@@ -114,6 +115,7 @@ namespace WinLdtpdService
             finally
             {
                 svc = null;
+                windowList = null;
                 listener.Stop();
             }
             /**/

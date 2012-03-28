@@ -40,9 +40,11 @@ namespace Ldtpd
 {
     public class Core : Utils
     {
-        public Core(bool debug = false)
+        WindowList windowList;
+        public Core(WindowList windowList, bool debug = false) : base(windowList)
         {
             this.debug = debug;
+            this.windowList = windowList;
         }
         [XmlRpcMethod("getlastlog", Description = "Get last log from the stack.")]
         public string GetLastLog()
