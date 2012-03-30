@@ -28,11 +28,9 @@ namespace Ldtpd
     {
         bool debug;
         Thread backgroundThread;
-        public List<AutomationElement> windowList;
         public WindowList(bool debug)
         {
             this.debug = debug;
-            windowList = new List<AutomationElement>();
             /*
             http://stackoverflow.com/questions/3144751/why-is-this-net-uiautomation-app-leaking-pooling
             Automation.AddStructureChangedEventHandler(AutomationElement.RootElement,
@@ -50,18 +48,6 @@ namespace Ldtpd
             backgroundThread = new Thread(new ThreadStart(BackgroundThread));
             // Clean up window handles in different thread
             backgroundThread.Start();
-        }
-        ~WindowList()
-        {
-            try
-            {
-                windowList = null;
-            }
-            catch (Exception ex)
-            {
-                if (debug)
-                    Console.WriteLine(ex);
-            }
         }
         internal void InternalWait(int waitTime)
         {
