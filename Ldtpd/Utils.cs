@@ -124,14 +124,15 @@ namespace Ldtpd
     }
     public class Utils : XmlRpcListenerService
     {
-        WindowList windowList;
         Thread backgroundThread;
         public bool debug = false;
+        protected WindowList windowList;
         protected int objectTimeOut = 5;
         protected bool shiftKeyPressed = false;
         protected Stack logStack = new Stack(100);
-        public Utils(WindowList windowList)
+        public Utils(WindowList windowList, bool debug)
         {
+            this.debug = debug;
             this.windowList = windowList;
             backgroundThread = new Thread(new ThreadStart(BackgroundThread));
             // Clean up window handles in different thread

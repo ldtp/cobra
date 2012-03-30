@@ -40,11 +40,9 @@ namespace Ldtpd
 {
     public class Core : Utils
     {
-        WindowList windowList;
-        public Core(WindowList windowList, bool debug = false) : base(windowList)
+        public Core(WindowList windowList, bool debug = false)
+            : base(windowList, debug)
         {
-            this.debug = debug;
-            this.windowList = windowList;
         }
         [XmlRpcMethod("getlastlog", Description = "Get last log from the stack.")]
         public string GetLastLog()
@@ -122,7 +120,7 @@ namespace Ldtpd
             {
                 AutomationElementCollection c;
                 List<AutomationElement> windowTmpList = new List<AutomationElement>();
-                LogMessage("GetWindowList - Window list count: " + this.windowList.Count);
+                LogMessage("GetWindowList - Window list count: " + windowList.Count);
                 try
                 {
                     foreach (AutomationElement e in windowList)
@@ -239,7 +237,6 @@ namespace Ldtpd
             finally
             {
                 w = null;
-                windowList = null;
                 windowArrayList = null;
             }
             // Unable to find window

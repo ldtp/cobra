@@ -82,7 +82,7 @@ namespace Ldtpd
             List<AutomationElement> windowTmpList = new List<AutomationElement>();
             try
             {
-                foreach (AutomationElement el in windowList)
+                foreach (AutomationElement el in this)
                 {
                     try
                     {
@@ -116,7 +116,7 @@ namespace Ldtpd
                     try
                     {
                         // Remove element from the list
-                        windowList.Remove(el);
+                        this.Remove(el);
                     }
                     catch (Exception ex)
                     {
@@ -175,10 +175,10 @@ namespace Ldtpd
                         LogMessage("Added: " +
                             element.Current.ControlType.ProgrammaticName +
                             " : " + element.Current.Name + " : " + rid);
-                        if (windowList.IndexOf(element) == -1)
-                            windowList.Add(element);
+                        if (this.IndexOf(element) == -1)
+                            this.Add(element);
                         LogMessage("Window list count: " +
-                            this.windowList.Count);
+                            this.Count);
                     }
                 }
             }
@@ -204,10 +204,10 @@ namespace Ldtpd
                         LogMessage("Removed: " +
                             element.Current.ControlType.ProgrammaticName +
                             " : " + element.Current.Name + " : " + rid);
-                        if (windowList.IndexOf(element) != -1)
-                            this.windowList.Remove(element);
+                        if (this.IndexOf(element) != -1)
+                            this.Remove(element);
                         LogMessage("Removed - Window list count: " +
-                            this.windowList.Count);
+                            this.Count);
                     }
                 }
             }
