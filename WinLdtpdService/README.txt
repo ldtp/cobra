@@ -33,7 +33,6 @@ netsh http add urlacl url=http://*:4118/ user=User
 WinLDTP source files are distributed under LGPLv2.1 license
 Following files are re-distributed as-is
 Microsoft DLL's (Interop.UIAutomationClient.dll, UIAComWrapper.dll, WUIATestLibrary.dll) - http://uiautomationverify.codeplex.com/ - MS-PL license
-ScreenCapture.cs, which doesn't have any license info (Only author name, web site info) - http://www.farooqazam.net/screen-capture-class-for-c-sharp/
 XML RPC .NET library (CookComputing.XmlRpcV2.dll) - http://www.xml-rpc.net/ - MIT X11 license
 
 WinLDTP works based on Microsoft accessibility layer.
