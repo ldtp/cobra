@@ -17,8 +17,6 @@ See 'README.txt' in the source distribution for more information.
 Headers in this file shall remain intact.
 */
 using System;
-using System.Collections.Generic;
-
 using ATGTestInput;
 using System.Windows;
 using System.Threading;
@@ -28,100 +26,12 @@ using CookComputing.XmlRpc;
 using System.Globalization;
 using System.Windows.Forms;
 using System.Windows.Automation;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace Ldtpd
 {
-    public struct CurrentObjInfo
-    {
-        public string objType;
-        public int objCount;
-        public CurrentObjInfo(String objType, int objCount)
-        {
-            this.objType = objType;
-            this.objCount = objCount;
-        }
-    }
-    public struct KeyInfo
-    {
-        public System.Windows.Input.Key key;
-        public bool shift;
-        public bool nonPrintKey;
-        public KeyInfo(System.Windows.Input.Key key, bool shift,
-            bool nonPrintKey = false)
-        {
-            this.key = key;
-            this.shift = shift;
-            this.nonPrintKey = nonPrintKey;
-        }
-    }
-    public struct ObjInfo
-    {
-        public int cbo, txt, btn, rbtn, chk, mnu;
-        public int lbl, slider, ukn, lst, frm, header, headeritem, dlg;
-        public int tab, tabitem, tbar, tree, tblc, tbl;
-        public ObjInfo(bool dummyValue)
-        {
-            cbo = txt = btn = rbtn = chk = mnu = 0;
-            lbl = slider = ukn = lst = frm = header = headeritem = 0;
-            tab = tabitem = tbar = tree = tblc = tbl = dlg = 0;
-        }
-        public CurrentObjInfo GetObjectType(AutomationElement e, ControlType type)
-        {
-            if (type == ControlType.Edit ||
-                type == ControlType.Document)
-                return new CurrentObjInfo("txt", txt++);
-            else if (type == ControlType.Text)
-                return new CurrentObjInfo("lbl", lbl++);
-            else if (type == ControlType.ComboBox)
-                return new CurrentObjInfo("cbo", cbo++);
-            else if (type == ControlType.Button)
-                return new CurrentObjInfo("btn", btn++);
-            else if (type == ControlType.RadioButton)
-                return new CurrentObjInfo("rbtn", rbtn++);
-            else if (type == ControlType.CheckBox)
-                return new CurrentObjInfo("chk", chk++);
-            else if (type == ControlType.Slider ||
-                type == ControlType.Spinner)
-                return new CurrentObjInfo("sldr", slider++);
-            else if (type == ControlType.Menu || type == ControlType.MenuBar ||
-                type == ControlType.MenuItem)
-                return new CurrentObjInfo("mnu", mnu++);
-            else if (type == ControlType.List || type == ControlType.ListItem)
-                return new CurrentObjInfo("lst", lst++);
-            else if (type == ControlType.Window)
-            {
-                if (e.Current.LocalizedControlType == "dialog")
-                    // Might need a fix for other languages: Ex: French / Germany
-                    // as the localized control name could be different than dialog
-                    return new CurrentObjInfo("dlg", dlg++);
-                else
-                    return new CurrentObjInfo("frm", frm++);
-            }
-            else if (type == ControlType.Header)
-                return new CurrentObjInfo("hdr", header++);
-            else if (type == ControlType.HeaderItem)
-                return new CurrentObjInfo("hdri", headeritem++);
-            else if (type == ControlType.ToolBar)
-                return new CurrentObjInfo("tbar", tbar++);
-            else if (type == ControlType.Tree)
-                return new CurrentObjInfo("tree", tree++);
-            else if (type == ControlType.TreeItem)
-                // For Linux compatibility
-                return new CurrentObjInfo("tblc", tblc++);
-            else if (type == ControlType.Tab)
-                // For Linux compatibility
-                return new CurrentObjInfo("ptl", tab++);
-            else if (type == ControlType.TabItem)
-                // For Linux compatibility
-                return new CurrentObjInfo("ptab", tabitem++);
-            else if (type == ControlType.Table)
-                // For Linux compatibility
-                return new CurrentObjInfo("tbl", tbl++);
-            return new CurrentObjInfo("ukn", ukn++);
-        }
-    }
     public class Utils : XmlRpcListenerService
     {
         Thread backgroundThread;
@@ -376,8 +286,7 @@ namespace Ldtpd
                 {
                     try
                     {
-                        currObjInfo = objInfo.GetObjectType(e,
-                            e.Current.ControlType);
+                        currObjInfo = objInfo.GetObjectType(e);
                         s = e.Current.Name;
                         if (s != null)
                             s = (new Regex(" ")).Replace(s, "");
@@ -482,8 +391,7 @@ namespace Ldtpd
             {
                 while (null != element)
                 {
-                    currObjInfo = objInfo.GetObjectType(element,
-                        element.Current.ControlType);
+                    currObjInfo = objInfo.GetObjectType(element);
                     s = element.Current.Name;
                     if (s != null)
                         s = (new Regex(" ")).Replace(s, "");
@@ -552,8 +460,7 @@ namespace Ldtpd
                     {
                         if (subChild.Current.Name != null)
                         {
-                            currObjInfo = objInfo.GetObjectType(subChild,
-                                subChild.Current.ControlType);
+                            currObjInfo = objInfo.GetObjectType(subChild);
                             s = subChild.Current.Name;
                             if (s != null)
                                 s = (new Regex(" ")).Replace(s, "");
@@ -754,7 +661,7 @@ namespace Ldtpd
                 while (null != element)
                 {
                     s = element.Current.Name;
-                    currObjInfo = objInfo.GetObjectType(element, element.Current.ControlType);
+                    currObjInfo = objInfo.GetObjectType(element);
                     if (s == null)
                     {
                         LogMessage("Current object Name is null");
@@ -850,7 +757,8 @@ namespace Ldtpd
         internal bool InternalGetObjectList(AutomationElement windowHandle,
             ref ArrayList objectList, ref Hashtable objectHT,
             ref string matchedKey, bool needAll = false,
-            string objName = null, string parentName = null)
+            string objName = null, string parentName = null,
+            ControlType type = null)
         {
             int index;
             Regex rx = null;
@@ -880,7 +788,7 @@ namespace Ldtpd
                 while (null != element)
                 {
                     s = element.Current.Name;
-                    currObjInfo = objInfo.GetObjectType(element, element.Current.ControlType);
+                    currObjInfo = objInfo.GetObjectType(element);
                     if (s == null)
                     {
                         LogMessage("Current object Name is null");
@@ -917,7 +825,10 @@ namespace Ldtpd
                             index++;
                         }
                     }
-                    objectList.Add(actualString);
+                    if (type == null || type == element.Current.ControlType)
+                        // Add if ControlType is null
+                        // or only matching type, if available
+                        objectList.Add(actualString);
                     if (objName != null || needAll)
                     {
                         //needAll - Required for GetChild
@@ -1085,7 +996,8 @@ namespace Ldtpd
                 "Unable to find item in the list: " + itemText);
         }
         internal int InternalComboHandler(String windowName, String objName,
-            String item, String actionType = "Select")
+            String item, String actionType = "Select",
+            ArrayList childList = null)
         {
             AutomationElement windowHandle = GetWindowHandle(windowName);
             if (windowHandle == null)
@@ -1155,6 +1067,25 @@ namespace Ldtpd
                                     }
                                 }
                                 break;
+                            case "GetAllItem":
+                                string matchedKey = null;
+                                Hashtable objectHT = new Hashtable();
+                                InternalTreeWalker w = new InternalTreeWalker();
+                                InternalGetObjectList(w.walker.GetFirstChild(childHandle),
+                                    ref childList, ref objectHT, ref matchedKey,
+                                    false, null, null, ControlType.ListItem);
+                                w = null;
+                                objectHT = null;
+                                if (childList.Count > 0)
+                                {
+                                    // Don't process the last item
+                                    return 1;
+                                }
+                                else
+                                {
+                                    LogMessage("childList.Count <= 0: " + childList.Count);
+                                }
+                                return 0;
                         }
                     }
                 }
@@ -1584,7 +1515,6 @@ namespace Ldtpd
                             case "SubMenu":
                                 string matchedKey = null;
                                 Hashtable objectHT = new Hashtable();
-                                ObjInfo objInfo = new ObjInfo(false);
                                 menuList.Clear();
                                 InternalGetObjectList(
                                     w.walker.GetFirstChild(childHandle),
@@ -1638,7 +1568,6 @@ namespace Ldtpd
                                 case "SubMenu":
                                     string matchedKey = null;
                                     Hashtable objectHT = new Hashtable();
-                                    ObjInfo objInfo = new ObjInfo(false);
                                     menuList.Clear();
                                     InternalGetObjectList(
                                         w.walker.GetFirstChild(childHandle),
@@ -1712,7 +1641,6 @@ namespace Ldtpd
                             case "SubMenu":
                                 string matchedKey = null;
                                 Hashtable objectHT = new Hashtable();
-                                ObjInfo objInfo = new ObjInfo(false);
                                 menuList.Clear();
                                 InternalGetObjectList(w.walker.GetFirstChild(childHandle),
                                     ref menuList, ref objectHT, ref matchedKey);
@@ -1747,6 +1675,113 @@ namespace Ldtpd
                 windowHandle = childHandle = null;
                 prevObjHandle = firstObjHandle = null;
             }
+        }
+        internal int InternalCheckObject(string windowName, string objName,
+					 string actionType)
+        {
+            if (windowName == null || objName == null ||
+                windowName.Length == 0 || objName.Length == 0 ||
+                actionType == null || actionType.Length == 0)
+            {
+                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+            }
+            AutomationElement windowHandle = GetWindowHandle(windowName);
+            if (windowHandle == null)
+            {
+                throw new XmlRpcFaultException(123,
+                    "Unable to find window: " + windowName);
+            }
+            ControlType[] type = new ControlType[2] { ControlType.CheckBox,
+                ControlType.RadioButton };
+            AutomationElement childHandle = GetObjectHandle(windowHandle,
+                objName, type, true);
+            windowHandle = null;
+            if (childHandle == null)
+            {
+                throw new XmlRpcFaultException(123,
+                    "Unable to find Object: " + objName);
+            }
+            AutomationPattern[] patterns = childHandle.GetSupportedPatterns();
+            Object pattern = null;
+            try
+            {
+                if (childHandle.TryGetCurrentPattern(TogglePattern.Pattern,
+                    out pattern))
+                {
+                    switch (actionType)
+                    {
+                        case "VerifyCheck":
+                            if (((TogglePattern)pattern).Current.ToggleState == ToggleState.On)
+                                return 1;
+                            return 0;
+                        case "VerifyUncheck":
+                            if (((TogglePattern)pattern).Current.ToggleState == ToggleState.Off)
+                                return 1;
+                            return 0;
+                        case "Check":
+                            if (((TogglePattern)pattern).Current.ToggleState == ToggleState.On)
+                            {
+                                LogMessage("Checkbox / Radio button already checked");
+                                return 1;
+                            }
+                            break;
+                        case "UnCheck":
+                            if (((TogglePattern)pattern).Current.ToggleState == ToggleState.Off)
+                            {
+                                LogMessage("Checkbox / Radio button already unchecked");
+                                return 1;
+                            }
+                            break;
+                        default:
+                            throw new XmlRpcFaultException(123, "Unsupported actionType");
+                    }
+                    Object invoke = null;
+                    childHandle.SetFocus();
+                    if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern,
+                                     out invoke))
+                        ((InvokePattern)invoke).Invoke();
+                    else
+                        ((TogglePattern)pattern).Toggle();
+                    invoke = null;
+                    return 1;
+                }
+                else if (childHandle.TryGetCurrentPattern(SelectionItemPattern.Pattern,
+                    out pattern))
+                {
+                    switch (actionType)
+                    {
+                        case "VerifyCheck":
+                            if (((SelectionItemPattern)pattern).Current.IsSelected)
+                                return 1;
+                            return 0;
+                        case "VerifyUncheck":
+                            if (((SelectionItemPattern)pattern).Current.IsSelected == false)
+                                return 1;
+                            return 0;
+                        case "Check":
+                            childHandle.SetFocus();
+                            ((SelectionItemPattern)pattern).Select();
+                            return 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                if (ex is XmlRpcFaultException)
+                    throw;
+                else
+                    throw new XmlRpcFaultException(123,
+                        "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                pattern = null;
+                childHandle = null;
+            }
+            LogMessage("Unsupported pattern to perform action");
+            throw new XmlRpcFaultException(123,
+                "Unsupported pattern to perform action");
         }
     }
 }
