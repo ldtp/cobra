@@ -53,10 +53,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommonStruct.cs" />
     <Compile Include="Core.cs" />
     <Compile Include="InternalTreeWalker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ScreenCapture.cs" />
+    <Compile Include="Screenshot.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="WindowList.cs" />
   </ItemGroup>
