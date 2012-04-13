@@ -18,9 +18,11 @@ Headers in this file shall remain intact.
 */
 using System;
 using System.Threading;
+using System.Collections;
 using System.Globalization;
 using System.Windows.Automation;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Ldtpd
 {
@@ -28,9 +30,13 @@ namespace Ldtpd
     {
         bool debug;
         Thread backgroundThread;
+        ArrayList watchWindowList;
+        internal ArrayList windowCallbackEvent;
         public WindowList(bool debug)
         {
             this.debug = debug;
+            watchWindowList = new ArrayList();
+            windowCallbackEvent = new ArrayList();
             /*
             http://stackoverflow.com/questions/3144751/why-is-this-net-uiautomation-app-leaking-pooling
             Automation.AddStructureChangedEventHandler(AutomationElement.RootElement,
@@ -59,6 +65,15 @@ namespace Ldtpd
         {
             if (debug)
                 Console.WriteLine(o);
+        }
+        public void WatchWindow(string windowName)
+        {
+            watchWindowList.Add(windowName);
+        }
+        public void UnwatchWindow(string windowName)
+        {
+            if (watchWindowList.Contains(windowName))
+                watchWindowList.Remove(windowName);
         }
         private void CleanUpWindowElements()
         {
@@ -141,6 +156,34 @@ namespace Ldtpd
                 }
             }
         }
+        private bool DoesWindowNameMatched(AutomationElement e, string windowName)
+        {
+            if (e == null || windowName == null || windowName.Length == 0)
+                return false;
+            String s1, s2;
+            CurrentObjInfo currObjInfo;
+            // Trying to mimic python fnmatch.translate
+            String tmp = Regex.Replace(windowName, @"\*", @".*");
+            tmp = Regex.Replace(tmp, " ", "");
+            //tmp += @"\Z(?ms)";
+            Regex rx = new Regex(tmp, RegexOptions.Compiled |
+                RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline |
+                RegexOptions.CultureInvariant);
+            s1 = e.Current.Name;
+            if (s1 != null)
+                s1 = (new Regex(" ")).Replace(s1, "");
+            if (s1 == null || s1.Length == 0)
+            {
+                return false;
+            }
+            ObjInfo objInfo = new ObjInfo(false);
+            currObjInfo = objInfo.GetObjectType(e);
+            // LDTP format object name
+            s2 = currObjInfo.objType + s1;
+            if (rx.Match(s1).Success || rx.Match(s2).Success)
+                return true;
+            return false;
+        }
         private void OnWindowCreate(object sender, AutomationEventArgs e)
         {
             /*
@@ -165,6 +208,13 @@ namespace Ldtpd
                             this.Add(element);
                         LogMessage("Window list count: " +
                             this.Count);
+                        foreach (string windowName in watchWindowList)
+                        {
+                            if (DoesWindowNameMatched(element, windowName))
+                            {
+                                windowCallbackEvent.Add("onwindowcreate-" + windowName);
+                            }
+                        }
                     }
                 }
             }
@@ -183,13 +233,13 @@ namespace Ldtpd
                 AutomationElement element = sender as AutomationElement;
                 if (e.EventId == WindowPattern.WindowClosedEvent)
                 {
-                    if (element != null &&
-                        element.Current.Name != null)
+                    if (element != null)
                     {
+                        string windowName = element.Current.Name;
                         int[] rid = element.GetRuntimeId();
                         LogMessage("Removed: " +
                             element.Current.ControlType.ProgrammaticName +
-                            " : " + element.Current.Name + " : " + rid);
+                            " : " + windowName + " : " + rid);
                         if (this.IndexOf(element) != -1)
                             this.Remove(element);
                         LogMessage("Removed - Window list count: " +
@@ -197,7 +247,7 @@ namespace Ldtpd
                     }
                 }
             }
-            catch (Exception)
+            catch
             {
                 // Since window list is added / removed in different thread
                 // values of windowList might be altered and an exception is thrown
