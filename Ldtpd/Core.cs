@@ -26,9 +26,9 @@ using ATGTestInput;
 using System.Windows;
 using System.Threading;
 using System.Diagnostics;
+using CookComputing.XmlRpc;
 using System.Globalization;
 using System.Windows.Forms;
-using CookComputing.XmlRpc;
 using System.Windows.Automation;
 using System.Collections.Generic;
 using System.Windows.Automation.Text;
@@ -129,7 +129,7 @@ namespace Ldtpd
                         {
                             s = e.Current.Name;
                             LogMessage("Cached window name: " + s);
-                            currObjInfo = objInfo.GetObjectType(e, e.Current.ControlType);
+                            currObjInfo = objInfo.GetObjectType(e);
                             actualString = currObjInfo.objType + s;
                             index = 1;
                             while (true)
@@ -186,8 +186,7 @@ namespace Ldtpd
                     }
                     s = element.Current.Name;
                     LogMessage("Window name: " + s);
-                    currObjInfo = objInfo.GetObjectType(element,
-                        element.Current.ControlType);
+                    currObjInfo = objInfo.GetObjectType(element);
                     actualString = currObjInfo.objType + s;
                     index = 1;
                     while (true)
@@ -204,7 +203,7 @@ namespace Ldtpd
                         foreach (AutomationElement e in c)
                         {
                             s = e.Current.Name;
-                            currObjInfo = objInfo.GetObjectType(e, e.Current.ControlType);
+                            currObjInfo = objInfo.GetObjectType(e);
                             if (s == null || s == "")
                                 actualString = currObjInfo.objType + currObjInfo.objCount;
                             else
@@ -693,8 +692,19 @@ namespace Ldtpd
             throw new XmlRpcFaultException(123,
                 "Unable to select item.");
         }
+        [XmlRpcMethod("getallitem",
+            Description = "Get all combo box item based on name.")]
+        public string[] GetAllItem(String windowName, String objName)
+        {
+            ArrayList childList = new ArrayList();
+            InternalComboHandler(windowName, objName, null, "Show");
+            InternalComboHandler(windowName, objName, null,
+                "GetAllItem", childList);
+            InternalComboHandler(windowName, objName, null, "Hide");
+            return childList.ToArray(typeof(string)) as string[];
+        }
         [XmlRpcMethod("selectitem",
-            Description = "Select combo box / layered pane item based on name.")]
+            Description = "Select combo box item based on name.")]
         public int SelectItem(String windowName, String objName, String item)
         {
             return ComboSelect(windowName, objName, item);
@@ -1075,176 +1085,24 @@ namespace Ldtpd
         [XmlRpcMethod("check", Description = "Check radio button / checkbox")]
         public int Check(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[2] { ControlType.CheckBox,
-                ControlType.RadioButton };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            Object pattern = null;
-            try
-            {
-                childHandle.SetFocus();
-                if (childHandle.TryGetCurrentPattern(TogglePattern.Pattern,
-                    out pattern))
-                {
-                    if (((TogglePattern)pattern).Current.ToggleState == ToggleState.Off)
-                    {
-                        Object invoke = null;
-                        if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern,
-                            out invoke))
-                            ((InvokePattern)invoke).Invoke();
-                        else
-                            ((TogglePattern)pattern).Toggle();
-                    }
-                    else
-                        LogMessage("Checkbox / Radio button already checked");
-                    return 1;
-                }
-                else if (childHandle.TryGetCurrentPattern(SelectionItemPattern.Pattern,
-                    out pattern))
-                {
-                    ((SelectionItemPattern)pattern).Select();
-                    return 1;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
-            }
-            finally
-            {
-                pattern = null;
-                childHandle = null;
-            }
-            LogMessage("Unsupported pattern to perform action");
-            throw new XmlRpcFaultException(123,
-                "Unsupported pattern to perform action");
+	    return InternalCheckObject(windowName, objName, "Check");
         }
         [XmlRpcMethod("uncheck", Description = "UnCheck radio button / checkbox")]
         public int UnCheck(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[1] { ControlType.CheckBox };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            Object pattern = null;
-            try
-            {
-                childHandle.SetFocus();
-                if (childHandle.TryGetCurrentPattern(TogglePattern.Pattern,
-                    out pattern))
-                {
-                    if (((TogglePattern)pattern).Current.ToggleState == ToggleState.On)
-                    {
-                        Object invoke = null;
-                        if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern,
-                            out invoke))
-                            ((InvokePattern)invoke).Invoke();
-                        else
-                            ((TogglePattern)pattern).Toggle();
-                    }
-                    else
-                        LogMessage("Checkbox already unchecked");
-                    return 1;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
-            }
-            finally
-            {
-                pattern = null;
-                childHandle = null;
-            }
-            throw new XmlRpcFaultException(123, "Unsupported pattern to perform action");
+	    return InternalCheckObject(windowName, objName, "UnCheck");
         }
         [XmlRpcMethod("verifycheck",
             Description = "Verify radio button / checkbox is checked")]
         public int VerifyCheck(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                LogMessage("Argument cannot be empty.");
-                return 0;
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
-            ControlType[] type = new ControlType[2] { ControlType.CheckBox,
-                ControlType.RadioButton };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                LogMessage("Unable to find Object: " + objName);
-                return 0;
-            }
-            Object pattern = null;
             try
             {
-                childHandle.SetFocus();
-                if (childHandle.TryGetCurrentPattern(TogglePattern.Pattern, out pattern))
-                {
-                    if (((TogglePattern)pattern).Current.ToggleState == ToggleState.On)
-                        return 1;
-                }
+                return InternalCheckObject(windowName, objName, "VerifyCheck");
             }
             catch (Exception ex)
             {
                 LogMessage(ex);
-            }
-            finally
-            {
-                pattern = null;
-                childHandle = null;
             }
             return 0;
         }
@@ -1252,47 +1110,13 @@ namespace Ldtpd
             Description = "Verify radio button / checkbox is unchecked")]
         public int VerifyUnCheck(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                LogMessage("Argument cannot be empty.");
-                return 0;
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
-            ControlType[] type = new ControlType[2] { ControlType.CheckBox,
-                ControlType.RadioButton };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                LogMessage("Unable to find Object: " + objName);
-                return 0;
-            }
-            Object pattern = null;
             try
             {
-                childHandle.SetFocus();
-                if (childHandle.TryGetCurrentPattern(TogglePattern.Pattern,
-                    out pattern))
-                {
-                    if (((TogglePattern)pattern).Current.ToggleState == ToggleState.Off)
-                        return 1;
-                }
+                return InternalCheckObject(windowName, objName, "VerifyUncheck");
             }
             catch (Exception ex)
             {
                 LogMessage(ex);
-            }
-            finally
-            {
-                pattern = null;
-                childHandle = null;
             }
             return 0;
         }
@@ -2305,11 +2129,11 @@ namespace Ldtpd
             int x = 0, int y = 0, int width = -1, int height = -1)
         {
             System.Drawing.Bitmap b = null;
-            ScreenCapture sc = null;
+            ScreenShot ss = null;
             AutomationElement windowHandle;
             try
             {
-                sc = new ScreenCapture();
+                ss = new ScreenShot();
                 // capture entire screen, and save it to a file
                 string path = Path.GetTempPath() + Path.GetRandomFileName() + ".png";
                 if (windowName.Length > 0)
@@ -2324,17 +2148,17 @@ namespace Ldtpd
                     Rect rect = windowHandle.Current.BoundingRectangle;
                     System.Drawing.Rectangle rectangle = new System.Drawing.Rectangle(
                         (int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
-                    b = sc.CaptureRectangle(rectangle, path);
+                    b = ss.CaptureSize(path, rectangle);
                 }
                 else if (width != -1 && height != -1)
                 {
                     System.Drawing.Rectangle rectangle = new System.Drawing.Rectangle(
                         x, y, width, height);
-                    b = sc.CaptureRectangle(rectangle, path);
+                    b = ss.CaptureSize(path, rectangle);
                 }
                 else
                 {
-                    b = sc.CaptureScreen(path);
+                    b = ss.Capture(path);
                 }
                 string encodedText = "";
                 using (FileStream fs = File.Open(path, FileMode.Open,
@@ -2360,7 +2184,7 @@ namespace Ldtpd
             finally
             {
                 b = null;
-                sc = null;
+                ss = null;
                 windowHandle = null;
             }
         }
@@ -3155,6 +2979,87 @@ namespace Ldtpd
         public int MouseLeftClick(String windowName, String objName)
         {
             return Click(windowName, objName);
+        }
+        [XmlRpcMethod("getapplist",
+            Description = "Get the current running application list.")]
+        public string[] GetAppList()
+        {
+            Process process;
+            ArrayList appList = new ArrayList();
+            foreach (AutomationElement e in windowList)
+            {
+                // Get a process using the process id.
+                try
+                {
+                    process = Process.GetProcessById(e.Current.ProcessId);
+                }
+                catch
+                {
+                    continue;
+                }
+                appList.Add(process.ProcessName);
+            }
+            InternalTreeWalker w = new InternalTreeWalker();
+            AutomationElement element = w.walker.GetFirstChild(AutomationElement.RootElement);
+            try
+            {
+                while (null != element)
+                {
+
+                    // Get a process using the process id.
+                    try
+                    {
+                        process = Process.GetProcessById(element.Current.ProcessId);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                    if (!appList.Contains(process.ProcessName))
+                        // If added from the existing window list
+                        // then ignore it
+                        appList.Add(process.ProcessName);
+                    element = w.walker.GetNextSibling(element);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+            }
+            finally
+            {
+                w = null;
+                element = null;
+            }
+            return appList.ToArray(typeof(string)) as string[];
+        }
+        [XmlRpcMethod("poll_events",
+            Description = "poll events internal only.")]
+        public string PollEvents()
+        {
+            if (windowList.windowCallbackEvent.Count > 0)
+            {
+                // Get first element
+                string s = (string)windowList.windowCallbackEvent[0];
+                // Remove first element, since the event is delivered
+                windowList.windowCallbackEvent.RemoveAt(0);
+                return s;
+            }
+            return "";
+        }
+        [XmlRpcMethod("onwindowcreate",
+            Description = "On window create callback.")]
+        public int OnWindowCreate(string windowName)
+        {
+            windowList.WatchWindow(windowName);
+            return 1;
+        }
+        [XmlRpcMethod("removecallback",
+            Description = "Remove callback.")]
+        public int RemoveCallback(string windowName)
+        {
+            windowList.UnwatchWindow(windowName);
+            return 1;
         }
     }
 }
