@@ -3,19 +3,28 @@ WinLDTP 1.0
 
 @author: Nagappan Alagappan <nalagappan@vmware.com>
 @copyright: Copyright (c) 2011-12 VMware Inc.,
-@license: LGPLv2
+@license: MIT license
 
 http://ldtp.freedesktop.org
 
-This file may be distributed and/or modified under the terms of the GNU General
-Public License version 2 as published by the Free Software Foundation. This file
-is distributed without any warranty; without even the implied warranty of
-merchantability or fitness for a particular purpose.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
 
-See 'README.txt' in the source distribution for more information.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-Headers in this file shall remain intact.
-*/
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ */
 using System;
 //using System.Runtime.Remoting;
 //using System.Runtime.Remoting.Channels;
@@ -38,6 +47,7 @@ namespace WinLdtpdService
             string listenAllInterface = Environment.GetEnvironmentVariable("LDTP_LISTEN_ALL_INTERFACE");
             if (ldtpDebugEnv != null && ldtpDebugEnv.Length > 0)
                 debug = true;
+            Common common = new Common(debug);
             /*
             // If planning to use Remoting instead of HTTP
             // use this commented portion of code
@@ -61,7 +71,7 @@ namespace WinLdtpdService
             Console.ReadLine();
             /**/
             ///*
-            WindowList windowList = new WindowList(debug);
+            WindowList windowList = new WindowList(common);
             HttpListener listener = new HttpListener();
             listener.Prefixes.Add("http://localhost:4118/");
             listener.Prefixes.Add("http://+:4118/");
@@ -80,7 +90,8 @@ namespace WinLdtpdService
                     Console.WriteLine("Listening only on local interface");
             }
             listener.Start();
-            XmlRpcListenerService svc = new Core(windowList, debug);
+            XmlRpcListenerService svc = new Core(windowList,
+                common, debug);
             try
             {
                 while (true)
