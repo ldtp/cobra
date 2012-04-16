@@ -401,6 +401,12 @@ if _ldtp_windows_env:
         return _remote_setvalue(window_name, object_name, float(data))
     def grabfocus(window_name, object_name = ''):
         return _remote_grabfocus(window_name, object_name)
+    def copytext(window_name, object_name, start, end = -1):
+        return _remote_copytext(window_name, object_name, start, end)
+    def cuttext(window_name, object_name, start, end = -1):
+        return _remote_cuttext(window_name, object_name, start, end)
+    def deletetext(window_name, object_name, start, end = -1):
+        return _remote_deletetext(window_name, object_name, start, end)
 ### WINDOWS
 
 def onwindowcreate(window_name, fn_name, *args):
