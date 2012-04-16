@@ -3,18 +3,27 @@ WinLDTP 1.0
 
 @author: Nagappan Alagappan <nalagappan@vmware.com>
 @copyright: Copyright (c) 2011-12 VMware Inc.,
-@license: LGPLv2
+@license: MIT license
 
 http://ldtp.freedesktop.org
 
-This file may be distributed and/or modified under the terms of the GNU General
-Public License version 2 as published by the Free Software Foundation. This file
-is distributed without any warranty; without even the implied warranty of
-merchantability or fitness for a particular purpose.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
 
-See 'README.txt' in the source distribution for more information.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-Headers in this file shall remain intact.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 */
 using System;
 using System.Threading;
@@ -28,13 +37,13 @@ namespace Ldtpd
 {
     public class WindowList : List<AutomationElement>
     {
-        bool debug;
+        Common common;
         Thread backgroundThread;
         ArrayList watchWindowList;
         internal ArrayList windowCallbackEvent;
-        public WindowList(bool debug)
+        public WindowList(Common common)
         {
-            this.debug = debug;
+            this.common = common;
             watchWindowList = new ArrayList();
             windowCallbackEvent = new ArrayList();
             /*
@@ -54,17 +63,6 @@ namespace Ldtpd
             backgroundThread = new Thread(new ThreadStart(BackgroundThread));
             // Clean up window handles in different thread
             backgroundThread.Start();
-        }
-        internal void InternalWait(int waitTime)
-        {
-            Thread.Sleep(waitTime * 1000);
-            // Collect all generations of memory.
-            GC.Collect();
-        }
-        public void LogMessage(Object o)
-        {
-            if (debug)
-                Console.WriteLine(o);
         }
         public void WatchWindow(string windowName)
         {
@@ -87,19 +85,19 @@ namespace Ldtpd
                 {
                     try
                     {
-                        LogMessage(el.Current.Name);
+                        common.LogMessage(el.Current.Name);
                     }
                     catch (ElementNotAvailableException ex)
                     {
                         // Don't alter the current list, remove it later
                         windowTmpList.Add(el);
-                        LogMessage(ex);
+                        common.LogMessage(ex);
                     }
                     catch (Exception ex)
                     {
                         // Don't alter the current list, remove it later
                         windowTmpList.Add(el);
-                        LogMessage(ex);
+                        common.LogMessage(ex);
                     }
                 }
             }
@@ -108,7 +106,7 @@ namespace Ldtpd
                 // Since window list is added / removed in different thread
                 // values of windowList might be altered and an exception is thrown
                 // Just handle the global exception
-                LogMessage(ex);
+                common.LogMessage(ex);
             }
             try
             {
@@ -121,13 +119,13 @@ namespace Ldtpd
                     }
                     catch (Exception ex)
                     {
-                        LogMessage(ex);
+                        common.LogMessage(ex);
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogMessage(ex);
+                common.LogMessage(ex);
             }
             windowTmpList = null;
             // With GC collect, noticed very less memory being used all the time
@@ -144,7 +142,7 @@ namespace Ldtpd
                 {
                     // Wait 10 second before starting the next
                     // cleanup cycle
-                    InternalWait(10);
+                    common.InternalWait(10);
                     CleanUpWindowElements();
                     // With GC collect,
                     // noticed very less memory being used all the time
@@ -152,7 +150,7 @@ namespace Ldtpd
                 }
                 catch (Exception ex)
                 {
-                    LogMessage(ex);
+                    common.LogMessage(ex);
                 }
             }
         }
@@ -201,12 +199,12 @@ namespace Ldtpd
                     {
                         // Add window handle that have name !
                         int[] rid = element.GetRuntimeId();
-                        LogMessage("Added: " +
+                        common.LogMessage("Added: " +
                             element.Current.ControlType.ProgrammaticName +
                             " : " + element.Current.Name + " : " + rid);
                         if (this.IndexOf(element) == -1)
                             this.Add(element);
-                        LogMessage("Window list count: " +
+                        common.LogMessage("Window list count: " +
                             this.Count);
                         foreach (string windowName in watchWindowList)
                         {
@@ -237,12 +235,12 @@ namespace Ldtpd
                     {
                         string windowName = element.Current.Name;
                         int[] rid = element.GetRuntimeId();
-                        LogMessage("Removed: " +
+                        common.LogMessage("Removed: " +
                             element.Current.ControlType.ProgrammaticName +
                             " : " + windowName + " : " + rid);
                         if (this.IndexOf(element) != -1)
                             this.Remove(element);
-                        LogMessage("Removed - Window list count: " +
+                        common.LogMessage("Removed - Window list count: " +
                             this.Count);
                     }
                 }
