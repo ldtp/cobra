@@ -3,18 +3,27 @@ WinLDTP 1.0
 
 @author: Nagappan Alagappan <nalagappan@vmware.com>
 @copyright: Copyright (c) 2011-12 VMware Inc.,
-@license: LGPLv2
+@license: MIT license
 
 http://ldtp.freedesktop.org
 
-This file may be distributed and/or modified under the terms of the GNU General
-Public License version 2 as published by the Free Software Foundation. This file
-is distributed without any warranty; without even the implied warranty of
-merchantability or fitness for a particular purpose.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
 
-See 'README.txt' in the source distribution for more information.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-Headers in this file shall remain intact.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 */
 using System;
 using ATGTestInput;
@@ -36,14 +45,15 @@ namespace Ldtpd
     {
         Thread backgroundThread;
         public bool debug = false;
-        protected WindowList windowList;
+        internal Common common;
+        internal WindowList windowList;
         protected int objectTimeOut = 5;
-        protected bool shiftKeyPressed = false;
-        protected Stack logStack = new Stack(100);
-        public Utils(WindowList windowList, bool debug)
+        internal bool shiftKeyPressed = false;
+        public Utils(WindowList windowList, Common common, bool debug)
         {
             this.debug = debug;
             this.windowList = windowList;
+            this.common = common;
             backgroundThread = new Thread(new ThreadStart(BackgroundThread));
             // Clean up window handles in different thread
             backgroundThread.Start();
@@ -219,23 +229,7 @@ namespace Ldtpd
         }
         public void LogMessage(Object o)
         {
-            if (debug)
-                Console.WriteLine(o);
-            try
-            {
-                if (logStack.Count == 100)
-                {
-                    // Removes 1 log, if it has 100 instances
-                    logStack.Pop();
-                }
-                // Add new log to the stack
-                logStack.Push("INFO-" + o);
-            }
-            catch (Exception ex)
-            {
-                if (debug)
-                    Console.WriteLine(ex);
-            }
+            common.LogMessage(o);
         }
         /*
          * InternalLaunchApp: Waits for the process to complete
@@ -917,210 +911,14 @@ namespace Ldtpd
             }
             return false;
         }
-        internal bool SelectListItem(AutomationElement element, String itemText,
-            bool verify = false)
-        {
-            if (element == null || itemText == null || itemText.Length == 0)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be null or empty.");
-            }
-            LogMessage("SelectListItem Element: " + element.Current.Name +
-                " - Type: " + element.Current.ControlType.ProgrammaticName);
-            Object pattern = null;
-            AutomationElement elementItem;
-            try
-            {
-                elementItem = GetObjectHandle(element, itemText);
-                if (elementItem != null)
-                {
-                    LogMessage(elementItem.Current.Name + " : " +
-                        elementItem.Current.ControlType.ProgrammaticName);
-                    if (verify)
-                    {
-                        bool status = false;
-                        if (elementItem.TryGetCurrentPattern(SelectionItemPattern.Pattern,
-                            out pattern))
-                        {
-                            status = ((SelectionItemPattern)pattern).Current.IsSelected;
-                        }
-                        if (element.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                            out pattern))
-                        {
-                            LogMessage("ExpandCollapsePattern");
-                            element.SetFocus();
-                            ((ExpandCollapsePattern)pattern).Collapse();
-                        }
-                        return status;
-                    }
-                    if (elementItem.TryGetCurrentPattern(SelectionItemPattern.Pattern,
-                        out pattern))
-                    {
-                        LogMessage("SelectionItemPattern");
-                        //((SelectionItemPattern)pattern).Select();
-                        // NOTE: Work around, as the above doesn't seem to work
-                        // with UIAComWrapper and UIAComWrapper is required
-                        // to Edit value in Spin control
-                        return InternalClick(elementItem);
-                    }
-                    else if (elementItem.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                        out pattern))
-                    {
-                        LogMessage("ExpandCollapsePattern");
-                        ((ExpandCollapsePattern)pattern).Expand();
-                        element.SetFocus();
-                        return true;
-                    }
-                    else
-                    {
-                        throw new XmlRpcFaultException(123,
-                            "Unsupported pattern.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
-            }
-            finally
-            {
-                pattern = null;
-                elementItem = null;
-            }
-            throw new XmlRpcFaultException(123,
-                "Unable to find item in the list: " + itemText);
-        }
-        internal int InternalComboHandler(String windowName, String objName,
-            String item, String actionType = "Select",
-            ArrayList childList = null)
-        {
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
-            }
-            windowHandle.SetFocus();
-            ControlType[] type = new ControlType[3] { ControlType.ComboBox,
-                ControlType.ListItem, ControlType.List/*, ControlType.Text */ };
-            AutomationElement childHandle = GetObjectHandle(windowHandle, objName,
-                type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
-            }
-            Object pattern = null;
-            try
-            {
-                LogMessage("Handle name: " + childHandle.Current.Name +
-                    " - " + childHandle.Current.ControlType.ProgrammaticName);
-                if (!IsEnabled(childHandle))
-                {
-                    throw new XmlRpcFaultException(123, "Object state is disabled");
-                }
-                if (childHandle.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                    out pattern))
-                {
-                    LogMessage("ExpandCollapsePattern");
-                    // Retry max 5 times
-                    for (int i = 0; i < 5; i++)
-                    {
-                        switch (actionType)
-                        {
-                            case "Hide":
-                                ((ExpandCollapsePattern)pattern).Collapse();
-                                // Required to wait 1 second, before checking the state and retry collapsing
-                                InternalWait(1);
-                                if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
-                                    ExpandCollapseState.Collapsed)
-                                {
-                                    // Hiding same combobox multiple time consecutively
-                                    // fails. Check for the state and retry to collapse
-                                    LogMessage("Collapsed");
-                                    return 1;
-                                }
-                                break;
-                            case "Show":
-                            case "Select":
-                            case "Verify":
-                                ((ExpandCollapsePattern)pattern).Expand();
-                                // Required to wait 1 second, before checking the state and retry expanding
-                                InternalWait(1);
-                                if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
-                                    ExpandCollapseState.Expanded)
-                                {
-                                    // Selecting same combobox multiple time consecutively
-                                    // fails. Check for the state and retry to expand
-                                    LogMessage("Expaneded");
-                                    if (actionType == "Show")
-                                        return 1;
-                                    else
-                                    {
-                                        childHandle.SetFocus();
-                                        bool verify = actionType == "Verify" ? true : false;
-                                        return SelectListItem(childHandle, item, verify) ? 1 : 0;
-                                    }
-                                }
-                                break;
-                            case "GetAllItem":
-                                string matchedKey = null;
-                                Hashtable objectHT = new Hashtable();
-                                InternalTreeWalker w = new InternalTreeWalker();
-                                InternalGetObjectList(w.walker.GetFirstChild(childHandle),
-                                    ref childList, ref objectHT, ref matchedKey,
-                                    false, null, null, ControlType.ListItem);
-                                w = null;
-                                objectHT = null;
-                                if (childList.Count > 0)
-                                {
-                                    // Don't process the last item
-                                    return 1;
-                                }
-                                else
-                                {
-                                    LogMessage("childList.Count <= 0: " + childList.Count);
-                                }
-                                return 0;
-                        }
-                    }
-                }
-                // Handle selectitem and verifyselect on list. Get ExpandCollapsePattern fails on list,
-                // VM Library items are selected and verified correctly on Player with this fix
-                else
-                {
-                    childHandle.SetFocus();
-                    bool verify = actionType == "Verify" ? true : false;
-                    return SelectListItem(childHandle, item, verify) ? 1 : 0;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
-            }
-            finally
-            {
-                pattern = null;
-                childHandle = null;
-            }
-            return 0;
-        }
-        internal bool IsEnabled(AutomationElement e)
+        internal bool IsEnabled(AutomationElement e, bool wait = true)
         {
             if (e == null)
                 return false;
             if (objectTimeOut <= 0)
                 return e.Current.IsEnabled;
-            for (int i = 0; i < objectTimeOut; i++)
+            int waitTimeOut = wait ? objectTimeOut : 1;
+            for (int i = 0; i < waitTimeOut; i++)
             {
                 if (e.Current.IsEnabled)
                     return true;
@@ -1130,24 +928,9 @@ namespace Ldtpd
             LogMessage("e.Current.IsEnabled: " + e.Current.IsEnabled);
             return false;
         }
-        internal int InternalWait(object waitTime)
+        internal void InternalWait(int time)
         {
-            int time;
-            try
-            {
-                time = Convert.ToInt32(waitTime, CultureInfo.CurrentCulture);
-            }
-            catch (Exception ex)
-            {
-                time = 5;
-                LogMessage(ex);
-            }
-            if (time < 1)
-                time = 1;
-            Thread.Sleep(time * 1000);
-            // Collect all generations of memory.
-            GC.Collect();
-            return 1;
+            common.InternalWait(time);
         }
         internal int InternalWaitTillGuiExist(String windowName,
             String objName = null, int guiTimeOut = 30)
@@ -1301,380 +1084,6 @@ namespace Ldtpd
                 rect.Y + rect.Height / 2);
             Input.MoveToAndClick(pt);
             return true;
-        }
-        internal int IsMenuChecked(AutomationElement menuHandle)
-        {
-            if (menuHandle == null)
-            {
-                LogMessage("Invalid menu handle");
-                return 0;
-            }
-            Object pattern = null;
-            if (menuHandle.TryGetCurrentPattern(LegacyIAccessiblePattern.Pattern,
-                                        out pattern))
-            {
-                int ischecked;
-                uint currentstate = ((LegacyIAccessiblePattern)pattern).Current.State;
-                // Use fifth bit of current state to determine menu item is checked or not checked
-                ischecked = (currentstate & 16) == 16 ? 1 : 0;
-                LogMessage("IsMenuChecked: " + menuHandle.Current.Name + " : " + "Checked: " +
-                    ischecked + " : " + "Current State: " + currentstate);
-                pattern = null;
-                return ischecked;
-            }
-            else
-                LogMessage("Unable to get LegacyIAccessiblePattern");
-                return 0;
-        }
-        internal int InternalMenuHandler(String windowName, String objName,
-            ref ArrayList menuList, String actionType = "Select")
-        {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            String mainMenu = objName;
-            String currObjName = null;
-            Object invokePattern = null;
-            AutomationElementCollection c = null;
-            ControlType[] type = new ControlType[3] { ControlType.Menu,
-                ControlType.MenuBar, ControlType.MenuItem };
-            ControlType[] controlType = new ControlType[1] { ControlType.Menu };
-            bool bContextNavigated = false;
-            AutomationElement windowHandle, childHandle;
-            AutomationElement prevObjHandle = null, firstObjHandle = null;
-
-            InternalTreeWalker w = new InternalTreeWalker();
-            try
-            {
-                windowHandle = GetWindowHandle(windowName);
-                if (windowHandle == null)
-                {
-                    throw new XmlRpcFaultException(123,
-                        "Unable to find window: " + windowName);
-                }
-                windowHandle.SetFocus();
-                LogMessage("Window name: " + windowHandle + " : " +
-                    windowHandle.Current.Name +
-                    " : " + windowHandle.Current.ControlType.ProgrammaticName);
-                childHandle = windowHandle;
-                /*
-                // element is an AutomationElement.
-                AutomationPattern[] patterns = childHandle.GetSupportedPatterns();
-                foreach (AutomationPattern pattern1 in patterns)
-                {
-                    Console.WriteLine("ProgrammaticName: " + pattern1.ProgrammaticName);
-                    Console.WriteLine("PatternName: " + Automation.PatternName(pattern1));
-                }
-                /**/
-                while (true)
-                {
-                    if (objName.Contains(";"))
-                    {
-                        int index = objName.IndexOf(";",
-                            StringComparison.CurrentCulture);
-                        currObjName = objName.Substring(0, index);
-                        objName = objName.Substring(index + 1);
-                    }
-                    else
-                    {
-                        currObjName = objName;
-                    }
-                    LogMessage("childHandle: " + childHandle.Current.Name + " : " + currObjName + " : " +
-                            childHandle.Current.ControlType.ProgrammaticName);
-                    childHandle = GetObjectHandle(childHandle,
-                        currObjName, type, false);
-                    if (childHandle == null)
-                    {
-                        if (currObjName == objName)
-                        {
-                            throw new XmlRpcFaultException(123,
-                                "Unable to find Object: " + objName);
-                        }
-                        else
-                        {
-                            throw new XmlRpcFaultException(123,
-                                "Unable to find Object: " + currObjName);
-                        }
-                    }
-                    // Store previous handle for later use
-                    prevObjHandle = childHandle;
-                    if (firstObjHandle == null)
-                    {
-                        // Save it for later use
-                        firstObjHandle = childHandle;
-                    }
-                    if ((actionType == "Select" || actionType == "SubMenu" ||
-                        actionType == "Check" || actionType == "UnCheck" ||
-                        actionType == "VerifyCheck") && !IsEnabled(childHandle))
-                    {
-                        throw new XmlRpcFaultException(123,
-                            "Object state is disabled");
-                    }
-                    childHandle.SetFocus();
-                    if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern,
-                        out invokePattern))
-                    {
-                        if (actionType == "Select" || currObjName != objName ||
-                             actionType == "SubMenu" || actionType == "VerifyCheck")
-                        {
-                            LogMessage("Invoking menu item: " + currObjName + " : " + objName +
-                                " : " + childHandle.Current.ControlType.ProgrammaticName + " : "
-                                + childHandle.Current.Name);
-                            childHandle.SetFocus();
-                            if (!(actionType == "VerifyCheck" && currObjName == objName))
-                            {
-                                InternalClick(childHandle);
-                            }
-                            try
-                            {
-                                // Invoke doesn't work for VMware Workstation
-                                // But they work for Notepad
-                                // MoveToAndClick works for VMware Workstation
-                                // But not for Notepad (on first time)
-                                // Requires 2 clicks !
-                                //((InvokePattern)invokePattern).Invoke();
-                                InternalWait(1);
-                                c = childHandle.FindAll(TreeScope.Children,
-                                    Condition.TrueCondition);
-                            }
-                            catch (System.NotImplementedException ex)
-                            {
-                                // Noticed with VMware Workstation
-                                //    System.Runtime.InteropServices.COMException (0x80040200):
-                                //       Exception from HRESULT: 0x80040200
-                                LogMessage("NotImplementedException");
-                                LogMessage(ex);
-                            }
-                            catch (System.Windows.Automation.ElementNotEnabledException ex)
-                            {
-                                // Noticed with VMware Workstation
-                                //    System.Runtime.InteropServices.COMException (0x80040200):
-                                //       Exception from HRESULT: 0x80040200
-                                LogMessage("Element not enabled");
-                                LogMessage(ex);
-                            }
-                            catch (Exception ex)
-                            {
-                                LogMessage(ex);
-                            }
-                        }
-                    }
-                    if (currObjName == objName && actionType != "SubMenu")
-                    {
-                        int state;
-                        switch (actionType)
-                        {
-                            case "Select":
-                                // No child menu item to be processed
-                                return 1;
-                            case "Check":
-                            case "UnCheck":
-                                state = IsMenuChecked(childHandle);
-                                LogMessage("IsMenuChecked(childHandle): " +
-                                    childHandle.Current.ControlType.ProgrammaticName);
-                                LogMessage("actionType: " + actionType);
-                                // Don't process the last item
-                                if (actionType == "Check")
-                                {
-                                    if (state == 1)
-                                        // Already checked, just click back the main menu
-                                        InternalClick(firstObjHandle);
-                                    else
-                                        // Check menu
-                                        InternalClick(childHandle);
-                                    return 1;
-                                }
-                                else if (actionType == "UnCheck")
-                                {
-                                    if (state == 0)
-                                        // Already unchecked, just click back the main menu
-                                        InternalClick(firstObjHandle);
-                                    else
-                                        // Uncheck menu
-                                        InternalClick(childHandle);
-                                    return 1;
-                                }
-                                break;
-                            case "Exist":
-                            case "Enabled":
-                                state = IsEnabled(childHandle) == true ? 1 : 0;
-                                LogMessage("IsEnabled(childHandle): " +
-                                    childHandle.Current.Name + " : " + state);
-                                LogMessage("IsEnabled(childHandle): " +
-                                    childHandle.Current.ControlType.ProgrammaticName);
-                                // Set it back to old state, else the menu selection left there
-                                InternalClick(firstObjHandle);
-                                // Don't process the last item
-                                if (actionType == "Enabled")
-                                    return state;
-                                else if (actionType == "Exist")
-                                    return 1;
-                                break;
-                            case "SubMenu":
-                                string matchedKey = null;
-                                Hashtable objectHT = new Hashtable();
-                                menuList.Clear();
-                                InternalGetObjectList(
-                                    w.walker.GetFirstChild(childHandle),
-                                    ref menuList, ref objectHT, ref matchedKey);
-                                objectHT = null;
-                                if (menuList.Count > 0)
-                                {
-                                    // Set it back to old state,
-                                    // else the menu selection left there
-                                    InternalClick(firstObjHandle);
-                                    // Don't process the last item
-                                    return 1;
-                                }
-                                else
-                                    LogMessage("menuList.Count <= 0: " + menuList.Count);
-                                break;
-                            case "VerifyCheck":
-                                state = IsMenuChecked(childHandle);
-                                InternalClick(firstObjHandle);
-                                return state;
-                            default:
-                                break;
-                        }
-                    }
-                    else if (!bContextNavigated && InternalWaitTillGuiExist("Context",
-                        null, 3) == 1)
-                    {
-                        LogMessage("Context");
-                        AutomationElement tmpWindowHandle;
-                        // Menu item under Menu are listed under Menu Window
-                        if (actionType == "VerifyCheck")
-                            tmpWindowHandle = GetWindowHandle("Context", true, controlType);
-                        else
-                            tmpWindowHandle = GetWindowHandle("Context");
-                        if (tmpWindowHandle == null)
-                        {
-                            throw new XmlRpcFaultException(123,
-                                "Unable to find window: Context");
-                        }
-                        // Find object from current handle, rather than navigating
-                        // the complete window
-                        childHandle = tmpWindowHandle;
-                        bContextNavigated = true;
-                        LogMessage("bContextNavigated: " + bContextNavigated);
-                        if (actionType != "SubMenu")
-                            continue;
-                        else if (currObjName == objName)
-                        {
-                            switch (actionType)
-                            {
-                                case "SubMenu":
-                                    string matchedKey = null;
-                                    Hashtable objectHT = new Hashtable();
-                                    menuList.Clear();
-                                    InternalGetObjectList(
-                                        w.walker.GetFirstChild(childHandle),
-                                        ref menuList, ref objectHT, ref matchedKey);
-                                    if (menuList.Count > 0)
-                                    {
-                                        // Set it back to old state,
-                                        // else the menu selection left there
-                                        InternalClick(firstObjHandle);
-                                        // Don't process the last item
-                                        return 1;
-                                    }
-                                    else
-                                        LogMessage("menuList.Count <= 0: " + menuList.Count);
-                                    break;
-                            }
-                        }
-                    }
-                    else if (c != null && c.Count > 0)
-                    {
-                        LogMessage("c != null && c.Count > 0");
-                        childHandle = windowHandle;
-                        continue;
-                    }
-                    else if (InternalWaitTillGuiExist(prevObjHandle.Current.Name, null, 3) == 1)
-                    {
-                        LogMessage("prevObjHandle: " + prevObjHandle.Current.Name);
-                        // Menu item under Menu are listed under Menu Window
-                        LogMessage("Menu item under Menu are listed under Menu Window: " +
-                            prevObjHandle.Current.Name);
-                        AutomationElement tmpWindowHandle;
-                        if (actionType == "VerifyCheck")
-                            tmpWindowHandle = GetWindowHandle(prevObjHandle.Current.Name, true, controlType);
-                        else
-                            tmpWindowHandle = GetWindowHandle(prevObjHandle.Current.Name);
-                        if (tmpWindowHandle != null)
-                        {
-                            // Find object from current handle, rather than navigating
-                            // the complete window
-                            LogMessage("Assigning tmpWindowHandle as childHandle");
-                            childHandle = tmpWindowHandle;
-                            LogMessage("childHandle: " + childHandle.Current.Name + " : " +
-                                childHandle.Current.ControlType.ProgrammaticName);
-                        }
-                    }
-                    // Required for Notepad like app
-                    if ((c == null || c.Count == 0))
-                    {
-                        LogMessage("Work around for Windows application");
-                        LogMessage(windowHandle.Current.Name + " : " + objName);
-                        AutomationElement tmpChildHandle = GetObjectHandle(windowHandle, objName,
-                            type, false);
-                        // Work around for Notepad, as it doesn't find the menuitem
-                        // on clicking any menu
-                        if (tmpChildHandle != null)
-                        {
-                            LogMessage("Work around: tmpChildHandle != null");
-                            if (actionType == "SubMenu" && currObjName == objName)
-                                // Work around for Notepad like app
-                                childHandle = tmpChildHandle;
-                            else
-                                // Work around for Notepad like app,
-                                // but for actionType other than SubMenu
-                                childHandle = windowHandle;
-                        }
-                    }
-                    if (currObjName == objName)
-                    {
-                        switch (actionType)
-                        {
-                            case "SubMenu":
-                                string matchedKey = null;
-                                Hashtable objectHT = new Hashtable();
-                                menuList.Clear();
-                                InternalGetObjectList(w.walker.GetFirstChild(childHandle),
-                                    ref menuList, ref objectHT, ref matchedKey);
-                                // Set it back to old state,
-                                // else the menu selection left there
-                                InternalClick(firstObjHandle);
-                                objectHT = null;
-                                // Don't process the last item
-                                return 1;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (firstObjHandle != null)
-                {
-                    // Set it back to old state, else the menu selection left there
-                    InternalClick(firstObjHandle);
-                }
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                                    "Unhandled exception: " + ex.Message);
-            }
-            finally
-            {
-                c = null;
-                w = null;
-                windowHandle = childHandle = null;
-                prevObjHandle = firstObjHandle = null;
-            }
         }
         internal int InternalCheckObject(string windowName, string objName,
 					 string actionType)
