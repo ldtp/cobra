@@ -142,8 +142,8 @@
                   Source='WUIATestLibrary.dll'
                   KeyPath='yes' />
          </Component>
-	 <Component Id="lgpl" Guid="43AFE145-9F81-4EC2-B57B-89F3DCC8685B">
-                <File Id="lgplrtf" KeyPath="yes" Source="lgpl.rtf" />
+	 <Component Id="mit" Guid="43AFE145-9F81-4EC2-B57B-89F3DCC8685B">
+                <File Id="mittxt" KeyPath="yes" Source="mit-license.txt" />
          </Component>
 	 <Component Id="README" Guid="99C85611-B9B0-4D1D-A8B4-06B0EBC30B16">
                 <File Id="READMEtxt" KeyPath="yes" Source="README.txt" />
@@ -212,7 +212,7 @@
          <ComponentRef Id='Ldtpd' />
          <ComponentRef Id='UIAComWrapper' />
          <ComponentRef Id='WUIATestLibrary' />
-         <ComponentRef Id='lgpl' />
+         <ComponentRef Id='mit' />
          <ComponentRef Id='README' />
          <ComponentRef Id='FAQ' />
          <ComponentRef Id='AUTHORS' />
