@@ -3,28 +3,35 @@ WinLDTP 1.0
 
 @author: Nagappan Alagappan <nalagappan@vmware.com>
 @copyright: Copyright (c) 2011-12 VMware Inc.,
-@license: LGPLv2
+@license: MIT license
 
 http://ldtp.freedesktop.org
 
-This file may be distributed and/or modified under the terms of the GNU General
-Public License version 2 as published by the Free Software Foundation. This file
-is distributed without any warranty; without even the implied warranty of
-merchantability or fitness for a particular purpose.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
 
-See 'README.txt' in the source distribution for more information.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-Headers in this file shall remain intact.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 */
 using System;
-using System.Collections;
-
-// Additional namespace
 using System.IO;
 using System.Text;
 using ATGTestInput;
 using System.Windows;
 using System.Threading;
+using System.Collections;
 using System.Diagnostics;
 using CookComputing.XmlRpc;
 using System.Globalization;
@@ -40,206 +47,60 @@ namespace Ldtpd
 {
     public class Core : Utils
     {
-        public Core(WindowList windowList, bool debug = false)
-            : base(windowList, debug)
+        public Core(WindowList windowList, Common common, bool debug = false)
+            : base(windowList, common, debug)
         {
         }
         [XmlRpcMethod("getlastlog", Description = "Get last log from the stack.")]
         public string GetLastLog()
         {
-            if (logStack.Count > 0)
-                return (string)logStack.Pop();
+            if (common.logStack.Count > 0)
+                return (string)common.logStack.Pop();
             return "";
         }
         [XmlRpcMethod("wait", Description = "Wait a given amount of seconds")]
         public int Wait(object waitTime)
         {
-            return InternalWait(waitTime);
+            int time;
+            try
+            {
+                time = Convert.ToInt32(waitTime, CultureInfo.CurrentCulture);
+            }
+            catch (Exception ex)
+            {
+                time = 5;
+                LogMessage(ex);
+            }
+            if (time < 1)
+                time = 1;
+            InternalWait(time);
+            return 1;
         }
         [XmlRpcMethod("getobjectlist", Description = "Get object list")]
         public String[] GetObjectList(String windowName)
         {
-            if (windowName == null || windowName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            string matchedKey = null;
-            ObjInfo objInfo = new ObjInfo(false);
-            Hashtable objectHT = new Hashtable();
-            ArrayList objectList = new ArrayList();
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
-            }
-
-            InternalTreeWalker walker = new InternalTreeWalker();
-            InternalGetObjectList(walker.walker.GetFirstChild(windowHandle),
-                ref objectList, ref objectHT, ref matchedKey,
-                true, null, windowHandle.Current.Name);
-            if (debug)
-            {
-                LogMessage(objectList.Count);
-                foreach (string key in objectHT.Keys)
-                {
-                    LogMessage("Key: " + ((Hashtable)objectHT[key])["key"]);
-                    LogMessage("Parent: " + ((Hashtable)objectHT[key])["parent"]);
-                    LogMessage("Obj index: " + ((Hashtable)objectHT[key])["obj_index"]);
-                    LogMessage("Class: " + ((Hashtable)objectHT[key])["class"]);
-                    foreach (string child in (ArrayList)((Hashtable)objectHT[key])["children"])
-                        LogMessage("Children: " + child);
-                }
-            }
-            walker = null;
-            objectHT = null;
-            windowHandle = null;
+            Generic generic = new Generic(this);
             try
             {
-                return objectList.ToArray(typeof(string)) as string[];
+                return generic.GetObjectList(windowName);
             }
             finally
             {
-                objectList = null;
+                generic = null;
             }
         }
         [XmlRpcMethod("getwindowlist", Description = "Get window list")]
         public String[] GetWindowList()
         {
-            int index;
-            String s, actualString;
-            ArrayList windowArrayList = new ArrayList();
-            CurrentObjInfo currObjInfo;
-            ObjInfo objInfo = new ObjInfo(false);
-            AutomationElement element;
-            InternalTreeWalker w = new InternalTreeWalker();
-            element = w.walker.GetFirstChild(AutomationElement.RootElement);
-            Condition condition = new PropertyCondition(
-                AutomationElement.ControlTypeProperty,
-                ControlType.Window);
+            Generic generic = new Generic(this);
             try
             {
-                AutomationElementCollection c;
-                List<AutomationElement> windowTmpList = new List<AutomationElement>();
-                LogMessage("GetWindowList - Window list count: " + windowList.Count);
-                try
-                {
-                    foreach (AutomationElement e in windowList)
-                    {
-                        try
-                        {
-                            s = e.Current.Name;
-                            LogMessage("Cached window name: " + s);
-                            currObjInfo = objInfo.GetObjectType(e);
-                            actualString = currObjInfo.objType + s;
-                            index = 1;
-                            while (true)
-                            {
-                                if (windowArrayList.IndexOf(actualString) < 0)
-                                    break;
-                                actualString = currObjInfo.objType + s + index;
-                                index++;
-                            }
-                            windowArrayList.Add(actualString);
-                        }
-                        catch (ElementNotAvailableException ex)
-                        {
-                            // If window doesn't exist, remove it from list
-                            windowTmpList.Add(e);
-                            LogMessage(ex);
-                        }
-                        catch (Exception ex)
-                        {
-                            // Capture any unhandled exception,
-                            // so that the framework won't crash
-                            windowTmpList.Add(e);
-                            LogMessage(ex);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Since window list is added / removed in different thread
-                    // values of windowList might be altered and an exception is thrown
-                    // Just handle the global exception
-                    LogMessage(ex);
-                }
-                try
-                {
-                    foreach (AutomationElement e in windowTmpList)
-                        windowList.Remove(e);
-                }
-                catch (Exception ex)
-                {
-                    LogMessage(ex);
-                }
-                // FIXME: Check whether resetting the ObjInfo is appropriate here
-                objInfo = new ObjInfo(false);
-                while (null != element)
-                {
-                    if (windowList.IndexOf(element) != -1)
-                    {
-                        // As the window info already added to the windowArrayList
-                        // let us not re-add it
-                        LogMessage(element.Current.Name + " already in windowList");
-                        element = w.walker.GetNextSibling(element);
-                        continue;
-                    }
-                    s = element.Current.Name;
-                    LogMessage("Window name: " + s);
-                    currObjInfo = objInfo.GetObjectType(element);
-                    actualString = currObjInfo.objType + s;
-                    index = 1;
-                    while (true)
-                    {
-                        if (windowArrayList.IndexOf(actualString) < 0)
-                            break;
-                        actualString = currObjInfo.objType + s + index;
-                        index++;
-                    }
-                    windowArrayList.Add(actualString);
-                    try
-                    {
-                        c = element.FindAll(TreeScope.Children, condition);
-                        foreach (AutomationElement e in c)
-                        {
-                            s = e.Current.Name;
-                            currObjInfo = objInfo.GetObjectType(e);
-                            if (s == null || s == "")
-                                actualString = currObjInfo.objType + currObjInfo.objCount;
-                            else
-                            {
-                                actualString = currObjInfo.objType + s;
-                                index = 1;
-                                while (true)
-                                {
-                                    if (windowArrayList.IndexOf(actualString) < 0)
-                                        break;
-                                    actualString = currObjInfo.objType + s + index;
-                                    index++;
-                                }
-                            }
-                            windowArrayList.Add(actualString);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogMessage(ex);
-                    }
-                    element = w.walker.GetNextSibling(element);
-                }
-                return windowArrayList.ToArray(typeof(string)) as string[];
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
+                return generic.GetWindowList();
             }
             finally
             {
-                w = null;
-                windowArrayList = null;
+                generic = null;
             }
-            // Unable to find window
-            return null;
         }
         [XmlRpcMethod("waittillguiexist",
             Description = "Wait till a window or component exists.")]
@@ -263,38 +124,15 @@ namespace Ldtpd
         [XmlRpcMethod("objectexist", Description = "Checks whether a component exists.")]
         public int ObjectExist(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                LogMessage("Argument cannot be empty.");
-                return 0;
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
-            AutomationElement childHandle;
+            Generic generic = new Generic(this);
             try
             {
-                windowHandle.SetFocus();
-                childHandle = GetObjectHandle(windowHandle,
-                    objName, null, false);
-                if (childHandle != null)
-                    return 1;
-                LogMessage("Unable to find Object: " + objName);
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
+                return generic.ObjectExist(windowName, objName);
             }
             finally
             {
-                childHandle = windowHandle = null;
+                generic = null;
             }
-            return 0;
         }
         [XmlRpcMethod("objtimeout ",
             Description = "Object timeout period, default 5 seconds.")]
@@ -310,669 +148,498 @@ namespace Ldtpd
             Description = "Select (click) a menuitem.")]
         public int SelectMenuItem(String windowName, String objName)
         {
-            ArrayList menuList = new ArrayList();
-            return InternalMenuHandler(windowName, objName, ref menuList, "Select");
+            Menu menu = new Menu(this);
+            try
+            {
+                return menu.SelectMenuItem(windowName, objName);
+            }
+            finally
+            {
+                menu = null;
+            }
         }
         [XmlRpcMethod("maximizewindow",
             Description = "Maximize window.")]
         public int MaximizeWindow(String windowName)
         {
-            ArrayList menuList = new ArrayList();
-            // Need to see how this is going to be for i18n / l10n
-            return InternalMenuHandler(windowName, "mnuSystem;mnuMaximize",
-                ref menuList, "Select");
+            Menu menu = new Menu(this);
+            try
+            {
+                return menu.MaximizeWindow(windowName);
+            }
+            finally
+            {
+                menu = null;
+            }
         }
         [XmlRpcMethod("minimizewindow",
             Description = "Minimize window.")]
         public int MinimizeWindow(String windowName)
         {
-            ArrayList menuList = new ArrayList();
-            // Need to see how this is going to be for i18n / l10n
-            return InternalMenuHandler(windowName, "mnuSystem;mnuMinimize",
-                ref menuList, "Select");
+            Menu menu = new Menu(this);
+            try
+            {
+                return menu.MinimizeWindow(windowName);
+            }
+            finally
+            {
+                menu = null;
+            }
         }
         [XmlRpcMethod("closewindow",
             Description = "Close window.")]
         public int CloseWindow(String windowName)
         {
-            ArrayList menuList = new ArrayList();
-            // Need to see how this is going to be for i18n / l10n
-            return InternalMenuHandler(windowName, "mnuSystem;mnuClose",
-                ref menuList, "Select");
+            Menu menu = new Menu(this);
+            try
+            {
+                return menu.CloseWindow(windowName);
+            }
+            finally
+            {
+                menu = null;
+            }
         }
         [XmlRpcMethod("menucheck",
             Description = "Check (click) a menuitem.")]
         public int MenuCheck(String windowName, String objName)
         {
-            ArrayList menuList = new ArrayList();
-            // Works for "Notepad" like app,
-            //  but fails for "VMware Workstation" like app
-            return InternalMenuHandler(windowName, objName, ref menuList, "Check");
+            Menu menu = new Menu(this);
+            try
+            {
+                return menu.MenuCheck(windowName, objName);
+            }
+            finally
+            {
+                menu = null;
+            }
         }
         [XmlRpcMethod("menuuncheck",
             Description = "Uncheck (click) a menuitem.")]
         public int MenuUnCheck(String windowName, String objName)
         {
-            ArrayList menuList = new ArrayList();
-            // Works for "Notepad" like app,
-            //  but fails for "VMware Workstation" like app
-            return InternalMenuHandler(windowName, objName, ref menuList, "UnCheck");
+            Menu menu = new Menu(this);
+            try
+            {
+                return menu.MenuUnCheck(windowName, objName);
+            }
+            finally
+            {
+                menu = null;
+            }
         }
         [XmlRpcMethod("verifymenucheck",
             Description = "Verify a menuitem is unchecked.")]
         public int VerifyMenuCheck(String windowName, String objName)
         {
-            ArrayList menuList = new ArrayList();
+            Menu menu = new Menu(this);
             try
             {
-                return InternalMenuHandler(windowName, objName, ref menuList, "VerifyCheck");
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                return 0;
+                return menu.VerifyMenuCheck(windowName, objName);
             }
             finally
             {
-                menuList = null;
+                menu = null;
             }
         }
         [XmlRpcMethod("verifymenuuncheck",
             Description = "Verify a menuitem is unchecked.")]
         public int VerifyMenuUnCheck(String windowName, String objName)
         {
-            ArrayList menuList = new ArrayList();
+            Menu menu = new Menu(this);
             try
             {
-                return InternalMenuHandler(windowName, objName, ref menuList, "VerifyCheck") == 1 ? 0 : 1;
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                return 0;
+                return menu.VerifyMenuUnCheck(windowName, objName);
             }
             finally
             {
-                menuList = null;
+                menu = null;
             }
         }
         [XmlRpcMethod("menuitemenabled",
             Description = "Verify a menuitem is enabled.")]
         public int MenuItemEnabled(String windowName, String objName)
         {
-            ArrayList menuList = new ArrayList();
+            Menu menu = new Menu(this);
             try
             {
-                return InternalMenuHandler(windowName, objName, ref menuList, "Enabled");
-            }
-            catch (XmlRpcFaultException ex)
-            {
-                LogMessage(ex);
-                return 0;
+                return menu.MenuItemEnabled(windowName, objName);
             }
             finally
             {
-                menuList = null;
+                menu = null;
             }
         }
         [XmlRpcMethod("doesmenuitemexist",
             Description = "Does a menu item exist.")]
         public int DoesSelectMenuItemExist(String windowName, String objName)
         {
-            ArrayList menuList = new ArrayList();
+            Menu menu = new Menu(this);
             try
             {
-                return InternalMenuHandler(windowName, objName, ref menuList, "Exist");
-            }
-            catch (XmlRpcFaultException ex)
-            {
-                LogMessage(ex);
-                return 0;
+                return menu.DoesSelectMenuItemExist(windowName, objName);
             }
             finally
             {
-                menuList = null;
+                menu = null;
             }
         }
         [XmlRpcMethod("listsubmenus",
             Description = "List sub menu item.")]
         public String[] ListSubMenus(String windowName, String objName)
         {
-            ArrayList menuList = new ArrayList();
-            if (InternalMenuHandler(windowName, objName, ref menuList, "SubMenu") == 1)
+            Menu menu = new Menu(this);
+            try
             {
-                menuList = null;
-                return menuList.ToArray(typeof(string)) as string[];
+                return menu.ListSubMenus(windowName, objName);
             }
-            else
+            finally
             {
-                menuList = null;
-                throw new XmlRpcFaultException(123, "Unable to get sub menuitem.");
+                menu = null;
             }
         }
         [XmlRpcMethod("stateenabled",
             Description = "Checks whether an object state enabled.")]
         public int StateEnabled(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                LogMessage("Argument cannot be empty.");
-                return 0;
-            }
-            AutomationElement childHandle;
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
+            Generic generic = new Generic(this);
             try
             {
-                windowHandle.SetFocus();
-                childHandle = GetObjectHandle(windowHandle,
-                    objName, null, false);
-                if (childHandle == null)
-                {
-                    LogMessage("Unable to find Object: " + objName);
-                    return 0;
-                }
-                if (IsEnabled(childHandle))
-                    return 1;
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
+                return generic.StateEnabled(windowName, objName);
             }
             finally
             {
-                childHandle = windowHandle = null;
+                generic = null;
             }
-            return 0;
         }
         [XmlRpcMethod("click", Description = "Click item.")]
         public int Click(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            windowHandle.SetFocus();
-            ControlType[] type = new ControlType[9] { ControlType.Button,
-                ControlType.CheckBox, ControlType.RadioButton,
-                ControlType.SplitButton, ControlType.Menu, ControlType.ListItem,
-                ControlType.MenuItem, ControlType.MenuBar, ControlType.Pane };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            if (!IsEnabled(childHandle))
-            {
-                windowHandle = null;
-                throw new XmlRpcFaultException(123,
-                    "Object state is disabled");
-            }
-            Object pattern = null;
+            Generic generic = new Generic(this);
             try
             {
-                childHandle.SetFocus();
-                if (childHandle.Current.ControlType == ControlType.Pane)
-                {
-                    // NOTE: Work around, as the pane doesn't seem to work
-                    // with any actions. Noticed this window, when Windows
-                    // Security Warning dialog pop's up
-                    InternalClick(childHandle);
-                    return 1;
-                }
-                else if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern,
-                    out pattern))
-                {
-                    if (childHandle.Current.ControlType == ControlType.Menu ||
-                        childHandle.Current.ControlType == ControlType.MenuBar ||
-                        childHandle.Current.ControlType == ControlType.MenuItem ||
-                        childHandle.Current.ControlType == ControlType.ListItem)
-                    {
-                        //((InvokePattern)invokePattern).Invoke();
-                        // NOTE: Work around, as the above doesn't seem to work
-                        // with UIAComWrapper and UIAComWrapper is required
-                        // to Edit value in Spin control
-                        InternalClick(childHandle);
-                    }
-                    else
-                    {
-                        ((InvokePattern)pattern).Invoke();
-                    }
-                    return 1;
-                }
-                else if (childHandle.TryGetCurrentPattern(SelectionItemPattern.Pattern,
-                    out pattern))
-                {
-                    ((SelectionItemPattern)pattern).Select();
-                    return 1;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return generic.Click(windowName, objName);
             }
             finally
             {
-                pattern = null;
-                childHandle = null;
+                generic = null;
             }
-            throw new XmlRpcFaultException(123, "Unable to perform action");
         }
         [XmlRpcMethod("selectindex",
             Description = "Select combo box / layered pane item based on index.")]
         public int SelectIndex(String windowName, String objName, int index)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            if (index == 0)
-                throw new XmlRpcFaultException(123,
-                    "Index out of range: " + index);
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            windowHandle.SetFocus();
-            ControlType[] type = new ControlType[3] { ControlType.ComboBox,
-                ControlType.ListItem, ControlType.List };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            LogMessage("Handle name: " + childHandle.Current.Name +
-                " - " + childHandle.Current.ControlType.ProgrammaticName);
-            if (!IsEnabled(childHandle))
-            {
-                childHandle = null;
-                throw new XmlRpcFaultException(123,
-                    "Object state is disabled");
-            }
-            Object pattern;
-            if (childHandle.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                    out pattern))
-            {
-                ((ExpandCollapsePattern)pattern).Expand();
-            }
-            childHandle.SetFocus();
-            AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
-                Condition.TrueCondition);
-            childHandle = null;
-            AutomationElement element = null;
+            Combobox comboBox = new Combobox(this);
             try
             {
-                element = c[index];
-            }
-            catch (IndexOutOfRangeException)
-            {
-                throw new XmlRpcFaultException(123, "Index out of range: " + index);
-            }
-            catch (ArgumentException)
-            {
-                throw new XmlRpcFaultException(123, "Index out of range: " + index);
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                throw new XmlRpcFaultException(123, "Index out of range: " + index);
+                return comboBox.SelectIndex(windowName, objName, index);
             }
             finally
             {
-                c = null;
+                comboBox = null;
             }
-            if (element != null)
-            {
-                try
-                {
-                    LogMessage(element.Current.Name + " : " +
-                        element.Current.ControlType.ProgrammaticName);
-                    if (element.TryGetCurrentPattern(SelectionItemPattern.Pattern,
-                        out pattern))
-                    {
-                        LogMessage("SelectionItemPattern");
-                        element.SetFocus();
-                        //((SelectionItemPattern)pattern).Select();
-                        // NOTE: Work around, as the above doesn't seem to work
-                        // with UIAComWrapper and UIAComWrapper is required
-                        // to Edit value in Spin control
-                        InternalClick(element);
-                        return 1;
-                    }
-                    else if (element.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                        out pattern))
-                    {
-                        LogMessage("ExpandCollapsePattern");
-                        ((ExpandCollapsePattern)pattern).Expand();
-                        element.SetFocus();
-                        return 1;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogMessage(ex);
-                    if (ex is XmlRpcFaultException)
-                        throw;
-                    else
-                        throw new XmlRpcFaultException(123,
-                            "Unhandled exception: " + ex.Message);
-                }
-                finally
-                {
-                    element = null;
-                }
-            }
-            throw new XmlRpcFaultException(123,
-                "Unable to select item.");
         }
         [XmlRpcMethod("getallitem",
             Description = "Get all combo box item based on name.")]
         public string[] GetAllItem(String windowName, String objName)
         {
-            ArrayList childList = new ArrayList();
-            InternalComboHandler(windowName, objName, null, "Show");
-            InternalComboHandler(windowName, objName, null,
-                "GetAllItem", childList);
-            InternalComboHandler(windowName, objName, null, "Hide");
-            return childList.ToArray(typeof(string)) as string[];
+            Combobox comboBox = new Combobox(this);
+            try
+            {
+                return comboBox.GetAllItem(windowName, objName);
+            }
+            finally
+            {
+                comboBox = null;
+            }
         }
         [XmlRpcMethod("selectitem",
             Description = "Select combo box item based on name.")]
         public int SelectItem(String windowName, String objName, String item)
         {
-            return ComboSelect(windowName, objName, item);
+            Combobox comboBox = new Combobox(this);
+            try
+            {
+                return comboBox.SelectItem(windowName, objName, item);
+            }
+            finally
+            {
+                comboBox = null;
+            }
         }
         [XmlRpcMethod("showlist",
             Description = "Show combo box item based on name.")]
         public int ShowList(String windowName, String objName)
         {
-            return InternalComboHandler(windowName, objName, null, "Show");
+            Combobox comboBox = new Combobox(this);
+            try
+            {
+                return comboBox.ShowList(windowName, objName);
+            }
+            finally
+            {
+                comboBox = null;
+            }
         }
         [XmlRpcMethod("hidelist",
             Description = "Hide combo box item based on name.")]
         public int HideList(String windowName, String objName)
         {
-            return InternalComboHandler(windowName, objName, null, "Hide");
+            Combobox comboBox = new Combobox(this);
+            try
+            {
+                return comboBox.HideList(windowName, objName);
+            }
+            finally
+            {
+                comboBox = null;
+            }
         }
         [XmlRpcMethod("comboselect",
             Description = "Select combo box / layered pane item based on name.")]
         public int ComboSelect(String windowName, String objName, String item)
         {
-            return InternalComboHandler(windowName, objName, item, "Select");
+            Combobox comboBox = new Combobox(this);
+            try
+            {
+                return comboBox.ComboSelect(windowName, objName, item);
+            }
+            finally
+            {
+                comboBox = null;
+            }
         }
         [XmlRpcMethod("verifydropdown",
             Description = "Verify if combo box drop down list in the current dialog is visible.")]
         public int VerifyDropDown(String windowName, String objName)
         {
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
-            windowHandle.SetFocus();
-            ControlType[] type = new ControlType[3] { ControlType.ComboBox,
-                ControlType.ListItem, ControlType.List };
-            AutomationElement childHandle = GetObjectHandle(windowHandle, objName,
-                type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                LogMessage("Unable to find Object: " + objName);
-                return 0;
-            }
-            Object pattern = null;
+            Combobox comboBox = new Combobox(this);
             try
             {
-                LogMessage("Handle name: " + childHandle.Current.Name +
-                    " - " + childHandle.Current.ControlType.ProgrammaticName);
-                if (!IsEnabled(childHandle))
-                {
-                    LogMessage("Object state is disabled");
-                    return 0;
-                }
-                if (childHandle.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                    out pattern))
-                {
-                    LogMessage("ExpandCollapsePattern");
-                    if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
-                        ExpandCollapseState.Expanded)
-                    {
-                        LogMessage("Expaneded");
-                        return 1;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
+                return comboBox.VerifyDropDown(windowName, objName);
             }
             finally
             {
-                pattern = null;
-                childHandle = null;
+                comboBox = null;
             }
-            return 0;
         }
         [XmlRpcMethod("verifyshowlist",
             Description = "Verify if combo box drop down list in the current dialog is visible.")]
         public int VerifyShowList(String windowName, String objName)
         {
-            return VerifyDropDown(windowName, objName);
+            Combobox comboBox = new Combobox(this);
+            try
+            {
+                return comboBox.VerifyDropDown(windowName, objName);
+            }
+            finally
+            {
+                comboBox = null;
+            }
         }
         [XmlRpcMethod("verifyhidelist",
             Description = "Verify if combo box drop down list in the current dialog is not visible.")]
         public int VerifyHideList(String windowName, String objName)
         {
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
-            windowHandle.SetFocus();
-            ControlType[] type = new ControlType[3] { ControlType.ComboBox,
-                ControlType.ListItem, ControlType.List };
-            AutomationElement childHandle = GetObjectHandle(windowHandle, objName,
-                type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                LogMessage("Unable to find Object: " + objName);
-                return 0;
-            }
-            Object pattern = null;
+            Combobox comboBox = new Combobox(this);
             try
             {
-                LogMessage("Handle name: " + childHandle.Current.Name +
-                    " - " + childHandle.Current.ControlType.ProgrammaticName);
-                if (!IsEnabled(childHandle))
-                {
-                    LogMessage("Object state is disabled");
-                    return 0;
-                }
-                if (childHandle.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                    out pattern))
-                {
-                    LogMessage("ExpandCollapsePattern");
-                    if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
-                        ExpandCollapseState.Collapsed)
-                    {
-                        LogMessage("Collapsed");
-                        return 1;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
+                return comboBox.VerifyHideList(windowName, objName);
             }
             finally
             {
-                pattern = null;
-                childHandle = null;
+                comboBox = null;
             }
-            return 0;
         }
         [XmlRpcMethod("verifyselect",
             Description = "Select combo box / layered pane item based on name.")]
         public int VerifyComboSelect(String windowName, String objName, String item)
         {
+            Combobox comboBox = new Combobox(this);
             try
             {
-                return InternalComboHandler(windowName, objName, item, "Verify");
+                return comboBox.VerifyComboSelect(windowName, objName, item);
             }
-            catch (Exception ex)
+            finally
             {
-                LogMessage(ex);
-                return 0;
+                comboBox = null;
             }
         }
         [XmlRpcMethod("settextvalue",
             Description = "Type string sequence.")]
         public int SetTextValue(String windowName, String objName, String value)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[1] { ControlType.Edit };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            if (!IsEnabled(childHandle))
-            {
-                childHandle = null;
-                throw new XmlRpcFaultException(123,
-                    "Object state is disabled");
-            }
-            object valuePattern = null;
+            Text text = new Text(this);
             try
             {
-                // Reference: http://msdn.microsoft.com/en-us/library/ms750582.aspx
-                if (!childHandle.TryGetCurrentPattern(ValuePattern.Pattern,
-                    out valuePattern))
-                {
-                    childHandle.SetFocus();
-                    SendKeys.SendWait(value);
-                }
-                else
-                    ((ValuePattern)valuePattern).SetValue(value);
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return text.SetTextValue(windowName, objName, value);
             }
             finally
             {
-                childHandle = null;
-                valuePattern = null;
+                text = null;
             }
-            return 1;
         }
         [XmlRpcMethod("gettextvalue",
             Description = "Get text value")]
         public String GetTextValue(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[1] { ControlType.Edit };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, false);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
-            }
-            Object pattern = null;
+            Text text = new Text(this);
             try
             {
-                if (childHandle.TryGetCurrentPattern(ValuePattern.Pattern,
-                    out pattern))
-                {
-                    return ((ValuePattern)pattern).Current.Value;
-                }
-                else if (childHandle.TryGetCurrentPattern(TextPattern.Pattern,
-                    out pattern))
-                {
-                    return ((TextPattern)pattern).DocumentRange.GetText(-1);
-                }
-                else if (childHandle.TryGetCurrentPattern(RangeValuePattern.Pattern,
-                    out pattern))
-                {
-                    return ((RangeValuePattern)pattern).Current.Value.ToString(CultureInfo.CurrentCulture);
-                }
-                else
-                {
-                    throw new XmlRpcFaultException(123, "Unable to get text");
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return text.GetTextValue(windowName, objName);
             }
             finally
             {
-                pattern = null;
-                childHandle = null;
+                text = null;
+            }
+        }
+        [XmlRpcMethod("appendtext",
+            Description = "Append string with existing conent.")]
+        public int AppendText(String windowName,
+            String objName, string value)
+        {
+            Text text = new Text(this);
+            try
+            {
+                return text.AppendText(windowName, objName, value);
+            }
+            finally
+            {
+                text = null;
+            }
+        }
+        [XmlRpcMethod("copytext",
+            Description = "Copy text to clipboard.")]
+        public int CopyText(String windowName,
+            String objName, int start, int end = -1)
+        {
+            Text text = new Text(this);
+            try
+            {
+                return text.CopyText(windowName, objName, start, end);
+            }
+            finally
+            {
+                text = null;
+            }
+        }
+        [XmlRpcMethod("cuttext",
+            Description = "Cut text from existing text.")]
+        public int CutText(String windowName,
+            String objName, int start, int end = -1)
+        {
+            Text text = new Text(this);
+            try
+            {
+                return text.CutText(windowName, objName, start, end);
+            }
+            finally
+            {
+                text = null;
+            }
+        }
+        [XmlRpcMethod("deletetext",
+            Description = "Delete text from existing text.")]
+        public int DeleteText(String windowName,
+            String objName, int start, int end = -1)
+        {
+            Text text = new Text(this);
+            try
+            {
+                return text.DeleteText(windowName, objName, start, end);
+            }
+            finally
+            {
+                text = null;
+            }
+        }
+        [XmlRpcMethod("getcharcount",
+            Description = "Get character count.")]
+        public int GetCharCount(String windowName,
+            String objName)
+        {
+            Text text = new Text(this);
+            try
+            {
+                return text.GetCharCount(windowName, objName);
+            }
+            finally
+            {
+                text = null;
+            }
+        }
+        [XmlRpcMethod("inserttext",
+            Description = "Insert text in between existing text.")]
+        public int InsertText(String windowName,
+            String objName, int postion, string value)
+        {
+            Text text = new Text(this);
+            try
+            {
+                return text.InsertText(windowName, objName, postion, value);
+            }
+            finally
+            {
+                text = null;
+            }
+        }
+        [XmlRpcMethod("istextstateenabled",
+            Description = "Is text state enabled.")]
+        public int IsTextStateEnabled(String windowName, String objName)
+        {
+            Text text = new Text(this);
+            try
+            {
+                return text.IsTextStateEnabled(windowName, objName);
+            }
+            finally
+            {
+                text = null;
+            }
+        }
+        [XmlRpcMethod("pastetext",
+            Description = "Paste text from clipboard.")]
+        public int PasteText(String windowName,
+            String objName, int postion)
+        {
+            Text text = new Text(this);
+            try
+            {
+                return text.PasteText(windowName, objName, postion);
+            }
+            finally
+            {
+                text = null;
+            }
+        }
+        [XmlRpcMethod("verifysettext",
+            Description = "Verify the text set is correct.")]
+        public int VerifySetText(String windowName,
+            String objName, string value)
+        {
+            Text text = new Text(this);
+            try
+            {
+                return text.VerifySetText(windowName, objName, value);
+            }
+            finally
+            {
+                text = null;
+            }
+        }
+        [XmlRpcMethod("verifypartialmatch",
+            Description = "Verify partial text set is correct.")]
+        public int VerifyPartialText(String windowName,
+            String objName, string value)
+        {
+            Text text = new Text(this);
+            try
+            {
+                return text.VerifyPartialText(windowName, objName, value);
+            }
+            finally
+            {
+                text = null;
             }
         }
         [XmlRpcMethod("setvalue",
@@ -1125,309 +792,56 @@ namespace Ldtpd
         public int SelectTab(String windowName,
             String objName, String tabName)
         {
-            if (windowName == null || objName == null || windowName.Length == 0 ||
-                objName.Length == 0 || tabName == null || tabName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[1] { ControlType.Tab };
-            AutomationElement elementItem;
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            if (!IsEnabled(childHandle))
-            {
-                childHandle = null;
-                throw new XmlRpcFaultException(123,
-                    "Object state is disabled");
-            }
-            Object pattern;
+            Tab tab = new Tab(this);
             try
             {
-                childHandle.SetFocus();
-                elementItem = GetObjectHandle(childHandle,
-                    tabName);
-                if (elementItem != null)
-                {
-                    LogMessage(elementItem.Current.Name + " : " +
-                        elementItem.Current.ControlType.ProgrammaticName);
-                    if (elementItem.TryGetCurrentPattern(SelectionItemPattern.Pattern,
-                        out pattern))
-                    {
-                        LogMessage("SelectionItemPattern");
-                        //((SelectionItemPattern)pattern).Select();
-                        // NOTE: Work around, as the above doesn't seem to work
-                        // with UIAComWrapper and UIAComWrapper is required
-                        // to Edit value in Spin control
-                        InternalClick(elementItem);
-                        return 1;
-                    }
-                    else if (elementItem.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                        out pattern))
-                    {
-                        LogMessage("ExpandCollapsePattern");
-                        ((ExpandCollapsePattern)pattern).Expand();
-                        return 1;
-                    }
-                    else
-                    {
-                        throw new XmlRpcFaultException(123,
-                            "Unsupported pattern.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return tab.SelectTab(windowName, objName, tabName);
             }
             finally
             {
-                pattern = null;
-                childHandle = null;
+                tab = null;
             }
-            throw new XmlRpcFaultException(123,
-                "Unable to find the item in tab list: " + tabName);
         }
         [XmlRpcMethod("selecttabindex",
             Description = "Select tab based on index.")]
         public int SelectTabIndex(String windowName,
             String objName, int index)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[1] { ControlType.Tab };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            if (!IsEnabled(childHandle))
-            {
-                childHandle = null;
-                throw new XmlRpcFaultException(123,
-                    "Object state is disabled");
-            }
-            childHandle.SetFocus();
-            AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
-                Condition.TrueCondition);
-            childHandle = null;
-            AutomationElement element = null;
+            Tab tab = new Tab(this);
             try
             {
-                element = c[index];
-            }
-            catch (IndexOutOfRangeException)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Index out of range: " + index);
-            }
-            catch (ArgumentException)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Index out of range: " + index);
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                throw new XmlRpcFaultException(123, "Index out of range: " + index);
+                return tab.SelectTabIndex(windowName, objName, index);
             }
             finally
             {
-                c = null;
+                tab = null;
             }
-            Object pattern;
-            try
-            {
-                if (element != null)
-                {
-                    LogMessage(element.Current.Name + " : " +
-                        element.Current.ControlType.ProgrammaticName);
-                    if (element.TryGetCurrentPattern(SelectionItemPattern.Pattern,
-                        out pattern))
-                    {
-                        LogMessage("SelectionItemPattern");
-                        element.SetFocus();
-                        //((SelectionItemPattern)pattern).Select();
-                        // NOTE: Work around, as the above doesn't seem to work
-                        // with UIAComWrapper and UIAComWrapper is required
-                        // to Edit value in Spin control
-                        InternalClick(element);
-                        return 1;
-                    }
-                    else if (element.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                        out pattern))
-                    {
-                        LogMessage("ExpandCollapsePattern");
-                        ((ExpandCollapsePattern)pattern).Expand();
-                        element.SetFocus();
-                        return 1;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
-            }
-            finally
-            {
-                element = null;
-                pattern = null;
-            }
-            throw new XmlRpcFaultException(123, "Unable to select item.");
         }
         [XmlRpcMethod("gettabname", Description = "Get tab based on index.")]
         public String GetTabName(String windowName,
             String objName, int index)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[1] { ControlType.Tab };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            if (!IsEnabled(childHandle))
-            {
-                childHandle = null;
-                throw new XmlRpcFaultException(123,
-                    "Object state is disabled");
-            }
-            childHandle.SetFocus();
-            AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
-                Condition.TrueCondition);
-            childHandle = null;
-            AutomationElement element = null;
+            Tab tab = new Tab(this);
             try
             {
-                element = c[index];
-            }
-            catch (IndexOutOfRangeException)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Index out of range: " + index);
-            }
-            catch (ArgumentException)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Index out of range: " + index);
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                throw new XmlRpcFaultException(123,
-                    "Index out of range: " + index);
+                return tab.GetTabName(windowName, objName, index);
             }
             finally
             {
-                c = null;
+                tab = null;
             }
-            if (element != null)
-            {
-                string s = element.Current.Name;
-                element = null;
-                return s;
-            }
-            throw new XmlRpcFaultException(123,
-                "Unable to find item.");
         }
         [XmlRpcMethod("gettabcount", Description = "Get tab count.")]
         public int GetTabCount(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[1] { ControlType.Tab };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            if (!IsEnabled(childHandle))
-            {
-                childHandle = null;
-                throw new XmlRpcFaultException(123,
-                    "Object state is disabled");
-            }
+            Tab tab = new Tab(this);
             try
             {
-                childHandle.SetFocus();
-                AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
-                    Condition.TrueCondition);
-                return c.Count;
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return tab.GetTabCount(windowName, objName);
             }
             finally
             {
-                childHandle = null;
+                tab = null;
             }
         }
         [XmlRpcMethod("verifytabname",
@@ -1435,569 +849,133 @@ namespace Ldtpd
         public int VerifyTabName(String windowName,
             String objName, String tabName)
         {
-            if (windowName == null || objName == null || windowName.Length == 0 ||
-                objName.Length == 0 || tabName == null || tabName.Length == 0)
-            {
-                LogMessage("Argument cannot be empty.");
-                return 0;
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
-            ControlType[] type = new ControlType[1] { ControlType.Tab };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                LogMessage("Unable to find Object: " + objName);
-                return 0;
-            }
-            if (!IsEnabled(childHandle))
-            {
-                childHandle = null;
-                LogMessage("Object state is disabled");
-                return 0;
-            }
-            Object pattern;
-            AutomationElement elementItem;
+            Tab tab = new Tab(this);
             try
             {
-                childHandle.SetFocus();
-                elementItem = GetObjectHandle(childHandle, tabName);
-                if (elementItem != null)
-                {
-                    LogMessage(elementItem.Current.Name + " : " +
-                        elementItem.Current.ControlType.ProgrammaticName);
-                    if (elementItem.TryGetCurrentPattern(SelectionItemPattern.Pattern,
-                        out pattern))
-                    {
-                        LogMessage("SelectionItemPattern");
-                        return ((SelectionItemPattern)pattern).Current.IsSelected ? 1 : 0;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
+                return tab.VerifyTabName(windowName, objName, tabName);
             }
             finally
             {
-                pattern = null;
-                childHandle = elementItem = null;
+                tab = null;
             }
-            LogMessage("Unable to find the item in tab list: " + tabName);
-            return 0;
         }
         [XmlRpcMethod("doesrowexist",
             Description = "Does the given row text exist in tree item or list item.")]
         public int DoesRowExist(String windowName, String objName,
             String text, bool partialMatch = false)
         {
-            if (windowName == null || objName == null || windowName.Length == 0 ||
-                objName.Length == 0 || text == null || text.Length == 0)
-            {
-                LogMessage("Argument cannot be empty.");
-                return 0;
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
-            ControlType[] type = new ControlType[2] { ControlType.Tree,
-                ControlType.List };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                LogMessage("Unable to find Object: " + objName);
-                return 0;
-            }
-            if (!IsEnabled(childHandle))
-            {
-                childHandle = null;
-                LogMessage("Object state is disabled");
-                return 0;
-            }
-            AutomationElement elementItem;
+            Tree tree = new Tree(this);
             try
             {
-                childHandle.SetFocus();
-                type = new ControlType[2] { ControlType.TreeItem,
-                ControlType.ListItem };
-                if (partialMatch)
-                    text += "*";
-                elementItem = GetObjectHandle(childHandle,
-                    text, type, false);
-                if (elementItem != null)
-                {
-                    return 1;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
+                return tree.DoesRowExist(windowName, objName, text,
+                    partialMatch);
             }
             finally
             {
-                childHandle = elementItem = null;
+                tree = null;
             }
-            return 0;
         }
         [XmlRpcMethod("selectrow",
             Description = "Select the given row in tree or list item.")]
         public int SelectRow(String windowName, String objName,
             String text, bool partialMatch = false)
         {
-            if (windowName == null || objName == null || windowName.Length == 0
-                || objName.Length == 0 || text == null || text.Length == 0)
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[2] { ControlType.Tree,
-                ControlType.List };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            Object pattern;
-            AutomationElement elementItem;
+            Tree tree = new Tree(this);
             try
             {
-                childHandle.SetFocus();
-                if (partialMatch)
-                    text += "*";
-                elementItem = GetObjectHandle(childHandle,
-                    text);
-                if (elementItem != null)
-                {
-                    elementItem.SetFocus();
-                    LogMessage(elementItem.Current.Name + " : " +
-                        elementItem.Current.ControlType.ProgrammaticName);
-                    if (elementItem.TryGetCurrentPattern(SelectionItemPattern.Pattern,
-                        out pattern))
-                    {
-                        LogMessage("SelectionItemPattern");
-                        //((SelectionItemPattern)pattern).Select();
-                        // NOTE: Work around, as the above doesn't seem to work
-                        // with UIAComWrapper and UIAComWrapper is required
-                        // to Edit value in Spin control
-                        InternalClick(elementItem);
-                        return 1;
-                    }
-                    else if (elementItem.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                        out pattern))
-                    {
-                        LogMessage("ExpandCollapsePattern");
-                        ((ExpandCollapsePattern)pattern).Expand();
-                        return 1;
-                    }
-                    else
-                    {
-                        throw new XmlRpcFaultException(123,
-                            "Unsupported pattern.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return tree.SelectRow(windowName, objName, text, partialMatch);
             }
             finally
             {
-                pattern = null;
-                elementItem = childHandle = null;
+                tree = null;
             }
-            throw new XmlRpcFaultException(123, "Unable to find the item in list: " + text);
         }
         [XmlRpcMethod("selectrowpartialmatch",
             Description = "Select the given row partial match in tree or list item.")]
         public int SelectRowPartialMatch(String windowName, String objName,
             String text)
         {
-            return SelectRow(windowName, objName, text, true);
+            Tree tree = new Tree(this);
+            try
+            {
+                return tree.SelectRowPartialMatch(windowName, objName, text);
+            }
+            finally
+            {
+                tree = null;
+            }
         }
         [XmlRpcMethod("selectrowindex",
             Description = "Select tab based on index.")]
         public int SelectRowIndex(String windowName,
             String objName, int index)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[2] { ControlType.Tree,
-                ControlType.List };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            if (!IsEnabled(childHandle))
-            {
-                childHandle = null;
-                throw new XmlRpcFaultException(123,
-                    "Object state is disabled");
-            }
-            Object pattern;
-            AutomationElement element = null;
+            Tree tree = new Tree(this);
             try
             {
-                childHandle.SetFocus();
-                AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
-                    Condition.TrueCondition);
-                try
-                {
-                    element = c[index];
-                    element.SetFocus();
-                }
-                catch (IndexOutOfRangeException)
-                {
-                    throw new XmlRpcFaultException(123,
-                        "Index out of range: " + index);
-                }
-                catch (ArgumentException)
-                {
-                    throw new XmlRpcFaultException(123,
-                        "Index out of range: " + index);
-                }
-                catch (Exception ex)
-                {
-                    LogMessage(ex);
-                    throw new XmlRpcFaultException(123,
-                        "Index out of range: " + index);
-                }
-                if (element != null)
-                {
-                    LogMessage(element.Current.Name + " : " +
-                        element.Current.ControlType.ProgrammaticName);
-                    if (element.TryGetCurrentPattern(SelectionItemPattern.Pattern,
-                        out pattern))
-                    {
-                        LogMessage("SelectionItemPattern");
-                        element.SetFocus();
-                        //((SelectionItemPattern)pattern).Select();
-                        // NOTE: Work around, as the above doesn't seem to work
-                        // with UIAComWrapper and UIAComWrapper is required
-                        // to Edit value in Spin control
-                        InternalClick(element);
-                        return 1;
-                    }
-                    else if (element.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                        out pattern))
-                    {
-                        LogMessage("ExpandCollapsePattern");
-                        ((ExpandCollapsePattern)pattern).Expand();
-                        element.SetFocus();
-                        return 1;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return tree.SelectRowIndex(windowName, objName, index);
             }
             finally
             {
-                pattern = null;
-                element = childHandle = null;
+                tree = null;
             }
-            throw new XmlRpcFaultException(123, "Unable to select item.");
         }
         [XmlRpcMethod("expandtablecell",
             Description = "Expand or contract the tree table cell on the row index.")]
         public int ExpandTableCell(String windowName,
             String objName, int index)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[2] { ControlType.Tree,
-                ControlType.TreeItem };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            if (!IsEnabled(childHandle))
-            {
-                childHandle = null;
-                throw new XmlRpcFaultException(123,
-                    "Object state is disabled");
-            }
-            Object pattern;
-            AutomationElement element = null;
+            Tree tree = new Tree(this);
             try
             {
-                childHandle.SetFocus();
-                AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
-                    Condition.TrueCondition);
-                try
-                {
-                    element = c[index];
-                }
-                catch (IndexOutOfRangeException)
-                {
-                    throw new XmlRpcFaultException(123, "Index out of range: " + index);
-                }
-                catch (ArgumentException)
-                {
-                    throw new XmlRpcFaultException(123, "Index out of range: " + index);
-                }
-                catch (Exception ex)
-                {
-                    LogMessage(ex);
-                    throw new XmlRpcFaultException(123, "Index out of range: " + index);
-                }
-                finally
-                {
-                    c = null;
-                    childHandle = null;
-                }
-                if (element != null)
-                {
-                    LogMessage(element.Current.Name + " : " +
-                        element.Current.ControlType.ProgrammaticName);
-                    if (element.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                        out pattern))
-                    {
-                        LogMessage("ExpandCollapsePattern");
-                        if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
-                            ExpandCollapseState.Expanded)
-                            ((ExpandCollapsePattern)pattern).Collapse();
-                        else if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
-                            ExpandCollapseState.Collapsed)
-                            ((ExpandCollapsePattern)pattern).Expand();
-                        return 1;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return tree.ExpandTableCell(windowName, objName, index);
             }
             finally
             {
-                element = null;
-                pattern = null;
+                tree = null;
             }
-            throw new XmlRpcFaultException(123, "Unable to expand item.");
         }
         [XmlRpcMethod("getcellvalue",
             Description = "Get tree table cell value on the row index.")]
         public String GetCellValue(String windowName,
             String objName, int index)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[2] { ControlType.Tree, 
-                ControlType.TreeItem };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            if (!IsEnabled(childHandle))
-            {
-                childHandle = null;
-                throw new XmlRpcFaultException(123,
-                    "Object state is disabled");
-            }
-            AutomationElement element = null;
+            Tree tree = new Tree(this);
             try
             {
-                childHandle.SetFocus();
-                AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
-                    Condition.TrueCondition);
-                element = c[index];
-                c = null;
-                if (element != null)
-                    return element.Current.Name;
-            }
-            catch (IndexOutOfRangeException)
-            {
-                throw new XmlRpcFaultException(123, "Index out of range: " + index);
-            }
-            catch (ArgumentException)
-            {
-                throw new XmlRpcFaultException(123, "Index out of range: " + index);
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                throw new XmlRpcFaultException(123, "Index out of range: " + index);
+                return tree.GetCellValue(windowName, objName, index);
             }
             finally
             {
-                element = childHandle = null;
+                tree = null;
             }
-            throw new XmlRpcFaultException(123, "Unable to get item value.");
         }
         [XmlRpcMethod("getrowcount",
             Description = "Get tree table cell row count.")]
         public int GetRowCount(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[2] { ControlType.Tree,
-                ControlType.TreeItem };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            AutomationElementCollection c;
+            Tree tree = new Tree(this);
             try
             {
-                if (!IsEnabled(childHandle))
-                {
-                    throw new XmlRpcFaultException(123,
-                        "Object state is disabled");
-                }
-                childHandle.SetFocus();
-                c = childHandle.FindAll(TreeScope.Children,
-                    Condition.TrueCondition);
-                if (c == null)
-                    throw new XmlRpcFaultException(123,
-                        "Unable to get row count.");
-                return c.Count;
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return tree.GetRowCount(windowName, objName);
             }
             finally
             {
-                c = null;
-                childHandle = null;
+                tree = null;
             }
         }
         [XmlRpcMethod("grabfocus",
             Description = "Grab focus of given element.")]
         public int GrabFocus(String windowName, String objName = null)
         {
-            if (windowName == null || windowName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
-            }
-            if (objName == null || objName.Length == 0)
-            {
-                // If objName is not provided, just grab window focus
-                windowHandle.SetFocus();
-                return 1;
-            }
-            AutomationElement childHandle = GetObjectHandle(windowHandle, objName);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
-            }
+            Generic generic = new Generic(this);
             try
             {
-                childHandle.SetFocus();
-                return 1;
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return generic.GrabFocus(windowName, objName);
             }
             finally
             {
-                childHandle = null;
+                generic = null;
             }
         }
         [XmlRpcMethod("handletablecell", Description = "Handle table cell.")]
@@ -2037,52 +1015,15 @@ namespace Ldtpd
             Description = "Generate mouse event.")]
         public int GenerateMouseEvent(int x, int y, String type = "b1p")
         {
-            Point pt = new Point(x, y);
-            switch (type)
+            Mouse mouse = new Mouse(this);
+            try
             {
-                case "b1p":
-                    ATGTestInput.Input.SendMouseInput(x, y, 0, ATGTestInput.SendMouseInputFlags.LeftDown);
-                    break;
-                case "b1r":
-                    ATGTestInput.Input.SendMouseInput(x, y, 0, ATGTestInput.SendMouseInputFlags.LeftUp);
-                    break;
-                case "b1c":
-                    ATGTestInput.Input.MoveTo(pt);
-                    ATGTestInput.Input.SendMouseInput(0, 0, 0, ATGTestInput.SendMouseInputFlags.LeftDown);
-                    ATGTestInput.Input.SendMouseInput(0, 0, 0, ATGTestInput.SendMouseInputFlags.LeftUp);
-                    break;
-                case "b2p":
-                    ATGTestInput.Input.SendMouseInput(x, y, 0, ATGTestInput.SendMouseInputFlags.MiddleDown);
-                    break;
-                case "b2r":
-                    ATGTestInput.Input.SendMouseInput(x, y, 0, ATGTestInput.SendMouseInputFlags.MiddleUp);
-                    break;
-                case "b2c":
-                    ATGTestInput.Input.MoveTo(pt);
-                    ATGTestInput.Input.SendMouseInput(0, 0, 0, ATGTestInput.SendMouseInputFlags.MiddleDown);
-                    ATGTestInput.Input.SendMouseInput(0, 0, 0, ATGTestInput.SendMouseInputFlags.MiddleUp);
-                    break;
-                case "b3p":
-                    ATGTestInput.Input.SendMouseInput(x, y, 0, ATGTestInput.SendMouseInputFlags.RightDown);
-                    break;
-                case "b3r":
-                    ATGTestInput.Input.SendMouseInput(x, y, 0, ATGTestInput.SendMouseInputFlags.RightUp);
-                    break;
-                case "b3c":
-                    ATGTestInput.Input.MoveTo(pt);
-                    ATGTestInput.Input.SendMouseInput(0, 0, 0, ATGTestInput.SendMouseInputFlags.RightDown);
-                    ATGTestInput.Input.SendMouseInput(0, 0, 0, ATGTestInput.SendMouseInputFlags.RightUp);
-                    break;
-                case "abs":
-                    ATGTestInput.Input.SendMouseInput(pt.X, pt.Y, 0, SendMouseInputFlags.Move | SendMouseInputFlags.Absolute);
-                    break;
-                case "rel":
-                    ATGTestInput.Input.SendMouseInput(pt.X, pt.Y, 0, SendMouseInputFlags.Move);
-                    break;
-                default:
-                    throw new XmlRpcFaultException(123, "Unsupported mouse type: " + type);
+                return mouse.GenerateMouseEvent(x, y, type);
             }
-            return 1;
+            finally
+            {
+                mouse = null;
+            }
         }
         [XmlRpcMethod("launchapp", Description = "Launch application.")]
         public int LaunchApp(string cmd, string[] args, int delay = 5,
@@ -2128,64 +1069,14 @@ namespace Ldtpd
         public string ImageCapture(string windowName = null,
             int x = 0, int y = 0, int width = -1, int height = -1)
         {
-            System.Drawing.Bitmap b = null;
-            ScreenShot ss = null;
-            AutomationElement windowHandle;
+            Image image = new Image(this);
             try
             {
-                ss = new ScreenShot();
-                // capture entire screen, and save it to a file
-                string path = Path.GetTempPath() + Path.GetRandomFileName() + ".png";
-                if (windowName.Length > 0)
-                {
-                    windowHandle = GetWindowHandle(windowName);
-                    if (windowHandle == null)
-                    {
-                        throw new XmlRpcFaultException(123,
-                            "Unable to find window: " + windowName);
-                    }
-                    windowHandle.SetFocus();
-                    Rect rect = windowHandle.Current.BoundingRectangle;
-                    System.Drawing.Rectangle rectangle = new System.Drawing.Rectangle(
-                        (int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
-                    b = ss.CaptureSize(path, rectangle);
-                }
-                else if (width != -1 && height != -1)
-                {
-                    System.Drawing.Rectangle rectangle = new System.Drawing.Rectangle(
-                        x, y, width, height);
-                    b = ss.CaptureSize(path, rectangle);
-                }
-                else
-                {
-                    b = ss.Capture(path);
-                }
-                string encodedText = "";
-                using (FileStream fs = File.Open(path, FileMode.Open,
-                    FileAccess.Read))
-                {
-                    Byte[] bytesToEncode = new byte[fs.Length];
-                    fs.Read(bytesToEncode, 0, (int)fs.Length);
-                    encodedText = Convert.ToBase64String(bytesToEncode);
-                    fs.Close();
-                }
-                LogMessage(path);
-                File.Delete(path);
-                return encodedText;
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                throw new XmlRpcFaultException(123,
-                    "Unhandled exception: " + ex.Message);
+                return image.ImageCapture(windowName, x, y, width, height);
             }
             finally
             {
-                b = null;
-                ss = null;
-                windowHandle = null;
+                image = null;
             }
         }
         [XmlRpcMethod("hasstate",
@@ -2193,789 +1084,139 @@ namespace Ldtpd
         public int HasState(String windowName, String objName,
             String state, int guiTimeOut = 0)
         {
-            if (windowName == null || objName == null || windowName.Length == 0
-                || objName.Length == 0 || state == null || state.Length == 0)
-            {
-                LogMessage("Argument cannot be empty.");
-                return 0;
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
-            windowHandle.SetFocus();
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, null, false);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                LogMessage("Unable to find Object: " + objName);
-                return 0;
-            }
-            Object pattern;
-            AutomationElementCollection c;
+            Generic generic = new Generic(this);
             try
             {
-                if (!IsEnabled(childHandle))
-                {
-                    // Let us not grab the focus which is enabled
-                    // will be helpful during verification
-                    LogMessage("childHandle.SetFocus");
-                    childHandle.SetFocus();
-                }
-                c = childHandle.FindAll(TreeScope.Children,
-                    Condition.TrueCondition);
-                if (c == null)
-                {
-                    LogMessage("Unable to get row count.");
-                    return 0;
-                }
-                do
-                {
-                    LogMessage("State: " + state);
-                    switch (state.ToLower(CultureInfo.CurrentCulture))
-                    {
-                        case "visible":
-                        case "showing":
-                            if (childHandle.Current.IsOffscreen == false)
-                                return 1;
-                            break;
-                        case "enabled":
-                            if (IsEnabled(childHandle))
-                                return 1;
-                            break;
-                        case "focused":
-                            LogMessage("childHandle.Current.HasKeyboardFocus: " +
-                                childHandle.Current.HasKeyboardFocus);
-                            if (childHandle.Current.HasKeyboardFocus)
-                                return 1;
-                            break;
-                        case "checked":
-                            if (childHandle.TryGetCurrentPattern(TogglePattern.Pattern,
-                                out pattern))
-                            {
-                                if (((TogglePattern)pattern).Current.ToggleState ==
-                                    ToggleState.On)
-                                {
-                                    return 1;
-                                }
-                            }
-                            break;
-                        case "selected":
-                            if (childHandle.TryGetCurrentPattern(SelectionItemPattern.Pattern,
-                                out pattern))
-                            {
-                                if (((SelectionItemPattern)pattern).Current.IsSelected)
-                                    return 1;
-                            }
-                            break;
-                        case "selectable":
-                            if (IsEnabled(childHandle) &&
-                                childHandle.TryGetCurrentPattern(SelectionItemPattern.Pattern,
-                                out pattern))
-                            {
-                                // Assuming, if its enabled and has selection item pattern
-                                // then its selectable
-                                return 1;
-                            }
-                            break;
-                    }
-                    if (guiTimeOut > 0)
-                    {
-                        // Wait a second and retry checking the state
-                        Wait(1);
-                        guiTimeOut--;
-                    }
-                } while (guiTimeOut > 0);
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
+                return generic.HasState(windowName, objName, state, guiTimeOut);
             }
             finally
             {
-                c = null;
-                pattern = null;
-                childHandle = null;
+                generic = null;
             }
-            return 0;
         }
         [XmlRpcMethod("getallstates",
             Description = "Get all the object states.")]
         public string[] GetAllStates(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, null, false);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            Object pattern;
-            AutomationElementCollection c;
-            ArrayList stateList = new ArrayList();
+            Generic generic = new Generic(this);
             try
             {
-                if (IsEnabled(childHandle))
-                {
-                    childHandle.SetFocus();
-                }
-                c = childHandle.FindAll(TreeScope.Children,
-                    Condition.TrueCondition);
-                if (c == null)
-                    throw new XmlRpcFaultException(123,
-                        "Unable to get row count.");
-                if (childHandle.Current.IsOffscreen == false)
-                {
-                    stateList.Add("visible");
-                    stateList.Add("showing");
-                }
-                if (IsEnabled(childHandle))
-                    stateList.Add("enabled");
-                if (childHandle.Current.HasKeyboardFocus)
-                    stateList.Add("focused");
-                if (childHandle.TryGetCurrentPattern(TogglePattern.Pattern,
-                    out pattern))
-                {
-                    if (((TogglePattern)pattern).Current.ToggleState == ToggleState.On)
-                    {
-                        stateList.Add("checked");
-                    }
-                }
-                if (childHandle.TryGetCurrentPattern(SelectionItemPattern.Pattern,
-                            out pattern))
-                {
-                    if (((SelectionItemPattern)pattern).Current.IsSelected)
-                    {
-                        stateList.Add("selected");
-                        //stateList.Add("checked");
-                    }
-                }
-                if (IsEnabled(childHandle) &&
-                    childHandle.TryGetCurrentPattern(SelectionItemPattern.Pattern,
-                            out pattern))
-                {
-                    stateList.Add("selectable");
-                }
-                return stateList.ToArray(typeof(string)) as string[];
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return generic.GetAllStates(windowName, objName);
             }
             finally
             {
-                c = null;
-                pattern = null;
-                childHandle = null;
+                generic = null;
             }
         }
         [XmlRpcMethod("getobjectsize", Description = "Get object size.")]
         public int[] GetObjectSize(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
-            }
-            AutomationElement childHandle = GetObjectHandle(windowHandle, objName);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
-            }
+            Generic generic = new Generic(this);
             try
             {
-                childHandle.SetFocus();
-                Rect rect = childHandle.Current.BoundingRectangle;
-                return new int[] { (int)rect.X, (int)rect.Y,
-                (int)rect.Width, (int)rect.Height };
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return generic.GetObjectSize(windowName, objName);
             }
             finally
             {
-                childHandle = null;
+                generic = null;
             }
         }
         [XmlRpcMethod("getobjectinfo", Description = "Get object info.")]
         public string[] GetObjectInfo(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            string matchedKey = "";
-            ArrayList objectList = new ArrayList();
-            Hashtable objectHT = new Hashtable();
-            ObjInfo objInfo = new ObjInfo(false);
-            InternalTreeWalker w;
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            w = new InternalTreeWalker();
-            Hashtable ht;
-            ArrayList keyList = new ArrayList();
+            Generic generic = new Generic(this);
             try
             {
-                if (InternalGetObjectList(w.walker.GetFirstChild(windowHandle),
-                    ref objectList, ref objectHT, ref matchedKey,
-                    false, objName, windowHandle.Current.Name))
-                {
-                    LogMessage(objectHT.Count + " : " + objectList.Count);
-                    LogMessage(objectList[objectList.Count - 1]);
-                    ht = (Hashtable)objectHT[matchedKey];
-                    if (ht != null)
-                    {
-                        foreach (string key in ht.Keys)
-                        {
-                            LogMessage(key);
-                            keyList.Add(key);
-                        }
-                        return keyList.ToArray(typeof(string)) as string[];
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return generic.GetObjectInfo(windowName, objName);
             }
             finally
             {
-                w = null;
-                ht = null;
-                keyList = null;
-                windowHandle = null;
+                generic = null;
             }
-            throw new XmlRpcFaultException(123, "Unable to find Object info: " + objName);
         }
         [XmlRpcMethod("getobjectproperty", Description = "Get object property.")]
         public string GetObjectProperty(String windowName, String objName,
             string property)
         {
-            if (windowName == null || objName == null || property == null ||
-                windowName.Length == 0 || objName.Length == 0 || property.Length == 0)
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            bool flag;
-            string matchedKey = "";
-            ArrayList objectList = new ArrayList();
-            Hashtable objectHT = new Hashtable();
-            ObjInfo objInfo = new ObjInfo(false);
-            InternalTreeWalker w;
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            w = new InternalTreeWalker();
-            Hashtable ht;
-            ArrayList childrenList;
+            Generic generic = new Generic(this);
             try
             {
-                if (property == "children")
-                    flag = true;
-                else
-                    flag = false;
-                if (InternalGetObjectList(w.walker.GetFirstChild(windowHandle),
-                    ref objectList, ref objectHT, ref matchedKey,
-                    flag, objName, windowHandle.Current.Name) || flag)
-                {
-                    if (debug)
-                    {
-                        LogMessage(objectList.Count);
-                        foreach (string key in objectHT.Keys)
-                        {
-                            LogMessage("Key: " +
-                                ((Hashtable)objectHT[key])["key"]);
-                            LogMessage("Parent: " +
-                                ((Hashtable)objectHT[key])["parent"]);
-                            LogMessage("Obj index: " +
-                                ((Hashtable)objectHT[key])["obj_index"]);
-                            LogMessage("Class: " +
-                                ((Hashtable)objectHT[key])["class"]);
-                            foreach (string child in
-                                (ArrayList)((Hashtable)objectHT[key])["children"])
-                                LogMessage("Children: " + child);
-                        }
-                    }
-                    LogMessage(objectHT.Count + " : " + objectList.Count);
-                    LogMessage(objectList[objectList.Count - 1]);
-                    LogMessage("matchedKey: " + matchedKey + " : " + flag);
-                    ht = (Hashtable)objectHT[matchedKey];
-                    if (ht != null)
-                    {
-                        foreach (string key in ht.Keys)
-                        {
-                            LogMessage(key);
-                            if (key == property)
-                            {
-                                if (property == "children")
-                                {
-                                    childrenList = (ArrayList)ht[key];
-                                    LogMessage("Count: " + childrenList.Count);
-                                    string value = "";
-                                    foreach (string child in childrenList)
-                                    {
-                                        if (value == "")
-                                            value = child;
-                                        else
-                                            value += ", " + child;
-                                    }
-                                    return value;
-                                }
-                                else
-                                    return (string)ht[key];
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return generic.GetObjectProperty(windowName, objName, property);
             }
             finally
             {
-                w = null;
-                ht = null;
-                windowHandle = null;
+                generic = null;
             }
-            throw new XmlRpcFaultException(123, "Unable to find Object property: " +
-                property + " of object: " + objName);
         }
         [XmlRpcMethod("getchild", Description = "Get child.")]
         public string[] GetChild(String windowName, String childName = null,
             string role = null, string parentName = null)
         {
-            if (windowName == null || windowName.Length == 0 ||
-                (parentName == null && childName == null && role == null &&
-                childName.Length == 0 && role.Length == 0 && parentName.Length == 0))
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            Hashtable ht;
-            string matchedKey = "";
-            Hashtable objectHT = new Hashtable();
-            ObjInfo objInfo = new ObjInfo(false);
-            ArrayList childList = new ArrayList();
-            ArrayList objectList = new ArrayList();
-            InternalTreeWalker w;
-            AutomationElement childHandle;
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            w = new InternalTreeWalker();
+            Generic generic = new Generic(this);
             try
             {
-                if (childName != null && childName.Length > 0 &&
-                    role != null && role.Length > 0)
-                {
-                    InternalGetObjectList(w.walker.GetFirstChild(windowHandle),
-                        ref objectList, ref objectHT, ref matchedKey,
-                        true, childName, windowHandle.Current.Name);
-                    Regex rx;
-                    foreach (string key in objectHT.Keys)
-                    {
-                        try
-                        {
-                            if (debug)
-                                LogMessage("Key: " + key);
-                            ht = (Hashtable)objectHT[key];
-                            String tmp = Regex.Replace(childName, @"\*", @".*");
-                            tmp = Regex.Replace(tmp, " ", "");
-                            tmp = Regex.Replace(tmp, @"\(", @"\(");
-                            tmp = Regex.Replace(tmp, @"\)", @"\)");
-                            rx = new Regex(tmp, RegexOptions.Compiled |
-                                RegexOptions.IgnorePatternWhitespace |
-                                RegexOptions.Multiline |
-                                RegexOptions.CultureInvariant);
-                            if (debug)
-                            {
-                                LogMessage("Role matched: " +
-                                    (string)ht["class"] == role);
-                                if (ht.ContainsKey("label") &&
-                                    (string)ht["label"] != null)
-                                    LogMessage("Label matched: " +
-                                        rx.Match((string)ht["label"]).Success);
-                            }
-                            if ((string)ht["class"] == role &&
-                                ((ht.ContainsKey("label") &&
-                                (string)ht["label"] != null &&
-                                rx.Match((string)ht["label"]).Success) ||
-                                ((ht.ContainsKey("key") &&
-                                (string)ht["key"] != null &&
-                                rx.Match((string)ht["key"]).Success))))
-                            {
-                                childList.Add(ht["key"]);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            LogMessage(ex);
-                        }
-                        finally
-                        {
-                            rx = null;
-                        }
-                    }
-                    return childList.ToArray(typeof(string)) as string[];
-                }
-                if (role != null && role.Length > 0)
-                {
-                    childHandle = GetObjectHandle(windowHandle,
-                        childName);
-                    if (childHandle == null)
-                    {
-                        throw new XmlRpcFaultException(123,
-                            "Unable to find child object: " + childName);
-                    }
-                    role = Regex.Replace(role, @" ", @"_");
-                    InternalGetObjectList(w.walker.GetFirstChild(windowHandle),
-                        ref objectList, ref objectHT, ref matchedKey,
-                        true, null, windowHandle.Current.Name);
-                    foreach (string key in objectHT.Keys)
-                    {
-                        try
-                        {
-                            if (debug)
-                                LogMessage("Key: " + key);
-                            ht = (Hashtable)objectHT[key];
-                            if ((string)ht["class"] == role)
-                                childList.Add(ht["key"]);
-                        }
-                        catch (Exception ex)
-                        {
-                            LogMessage(ex);
-                        }
-                    }
-                    return childList.ToArray(typeof(string)) as string[];
-                }
-                if (childName != null && childName.Length > 0)
-                {
-                    childHandle = GetObjectHandle(windowHandle,
-                        childName);
-                    if (childHandle == null)
-                    {
-                        throw new XmlRpcFaultException(123,
-                            "Unable to find child object: " + childName);
-                    }
-                    InternalGetObjectList(w.walker.GetFirstChild(childHandle),
-                        ref objectList, ref objectHT, ref matchedKey,
-                        true, null, windowHandle.Current.Name);
-                    foreach (string key in objectHT.Keys)
-                    {
-                        try
-                        {
-                            if (debug)
-                                LogMessage("Key: " + key);
-                            ht = (Hashtable)objectHT[key];
-                            childList.Add(ht["key"]);
-                        }
-                        catch (Exception ex)
-                        {
-                            LogMessage(ex);
-                        }
-                    }
-                    return childList.ToArray(typeof(string)) as string[];
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return generic.GetChild(windowName, childName, role, parentName);
             }
             finally
             {
-                w = null;
-                ht = objectHT = null;
-                childHandle = windowHandle = null;
-                childList = objectList = null;
+                generic = null;
             }
-            throw new XmlRpcFaultException(123, "Unsupported parameter type passed");
         }
         [XmlRpcMethod("enterstring", Description = "Generate key event.")]
         public int EnterString(string windowName, string objName = null,
             string data = null)
         {
-            if (objName != null && objName.Length > 0)
+            Keyboard keyboard = new Keyboard(this);
+            try
             {
-                AutomationElement windowHandle = GetWindowHandle(windowName);
-                if (windowHandle != null)
-                {
-                    AutomationElement childHandle = GetObjectHandle(windowHandle, objName);
-                    windowHandle = null;
-                    try
-                    {
-                        if (childHandle != null)
-                        {
-                            childHandle.SetFocus();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogMessage(ex);
-                        if (ex is XmlRpcFaultException)
-                            throw;
-                        else
-                            throw new XmlRpcFaultException(123,
-                                "Unhandled exception: " + ex.Message);
-                    }
-                    finally
-                    {
-                        childHandle = null;
-                    }
-                }
+                return keyboard.EnterString(windowName, objName, data);
             }
-            else
+            finally
             {
-                // Hack as Linux LDTPv1/v2
-                data = windowName;
+                keyboard = null;
             }
-            if (data == null || data.Length == 0)
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            return GenerateKeyEvent(data);
         }
         [XmlRpcMethod("generatekeyevent", Description = "Generate key event.")]
         public int GenerateKeyEvent(string data)
         {
-            if (data == null || data.Length == 0)
+            Keyboard keyboard = new Keyboard(this);
+            try
             {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+                return keyboard.GenerateKeyEvent(data);
             }
-            KeyInfo[] keys = GetKeyVal(data);
-            int index = 0;
-            int lastIndex = 0;
-            bool capsLock = false;
-            foreach (KeyInfo key in keys)
+            finally
             {
-                try
-                {
-                    if (!capsLock &&
-                        key.key == System.Windows.Input.Key.CapsLock)
-                    {
-                        // For the first time
-                        // Set Caps Lock ON
-                        ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.CapsLock,
-                            true);
-                        ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.CapsLock,
-                            false);
-                        capsLock = true;
-                        continue;
-                    }
-                    if (capsLock && key.shift)
-                    {
-                        ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.LeftShift,
-                            true);
-                    }
-                    else if (!capsLock && key.shift)
-                    {
-                        ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.LeftShift,
-                            !shiftKeyPressed);
-                    }
-                    else if (shiftKeyPressed)
-                    {
-                        // Workaround: Release existing shift key
-                        // As the default behavior fails when it finds capital letter
-                        ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.LeftShift,
-                            false);
-                        ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.LeftShift,
-                            true);
-                    }
-                    // Key press
-                    ATGTestInput.Input.SendKeyboardInput(key.key, true);
-                    if (!key.nonPrintKey)
-                    {
-                        // Key release
-                        // Don't release nonPrintKey, it will be released later
-                        ATGTestInput.Input.SendKeyboardInput(key.key, false);
-                        for (int i = lastIndex; i < index; i++)
-                        {
-                            KeyInfo tmpKey = keys[i];
-                            if (!tmpKey.nonPrintKey ||
-                                tmpKey.key == System.Windows.Input.Key.CapsLock)
-                                // Release only nonPrintKey
-                                // Caps lock will be released later
-                                break;
-                            if (tmpKey.key == System.Windows.Input.Key.LeftShift ||
-                                tmpKey.key == System.Windows.Input.Key.RightShift)
-                            {
-                                shiftKeyPressed = false;
-                            }
-                            // Key release
-                            ATGTestInput.Input.SendKeyboardInput(tmpKey.key, false);
-                        }
-                        // Update lastIndex with index
-                        // the non_print_key that has been processed
-                        lastIndex = index;
-                    }
-                    if (capsLock && key.shift)
-                    {
-                        ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.LeftShift,
-                            false);
-                    }
-                    else if (!capsLock && key.shift)
-                    {
-                        ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.LeftShift,
-                            !shiftKeyPressed);
-                    }
-                    else if (shiftKeyPressed)
-                    {
-                        ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.LeftShift,
-                            false);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogMessage(ex.StackTrace);
-                    throw new XmlRpcFaultException(123, ex.Message);
-                }
-                Thread.Sleep(200);
-                index++;
+                keyboard = null;
             }
-            for (int i = lastIndex; i < index; i++)
-            {
-                KeyInfo tmpKey = keys[i];
-                if (!tmpKey.nonPrintKey ||
-                    tmpKey.key == System.Windows.Input.Key.CapsLock)
-                    // Release only nonPrintKey
-                    // Caps lock will be released later
-                    break;
-                if (shiftKeyPressed)
-                {
-                    if (tmpKey.key == System.Windows.Input.Key.LeftShift ||
-                        tmpKey.key == System.Windows.Input.Key.RightShift)
-                    {
-                        shiftKeyPressed = false;
-                    }
-                }
-                // Key release
-                ATGTestInput.Input.SendKeyboardInput(tmpKey.key, false);
-            }
-            if (capsLock)
-            {
-                // Set Caps Lock OFF
-                ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.CapsLock,
-                    true);
-                ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.CapsLock,
-                    false);
-            }
-            return 1;
         }
         [XmlRpcMethod("keypress", Description = "Key press.")]
         public int KeyPress(string data)
         {
-            if (data == null || data.Length == 0)
+            Keyboard keyboard = new Keyboard(this);
+            try
             {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+                return keyboard.KeyPress(data);
             }
-            KeyInfo[] keys = GetKeyVal(data);
-            foreach (KeyInfo key in keys)
+            finally
             {
-                if (key.key == System.Windows.Input.Key.LeftShift ||
-                    key.key == System.Windows.Input.Key.RightShift)
-                {
-                    shiftKeyPressed = true;
-                }
-                try
-                {
-                    ATGTestInput.Input.SendKeyboardInput(key.key, true);
-                }
-                catch (Exception ex)
-                {
-                    LogMessage(ex.StackTrace);
-                    throw new XmlRpcFaultException(123, ex.Message);
-                }
-                Thread.Sleep(200);
+                keyboard = null;
             }
-            return 1;
         }
         [XmlRpcMethod("keyrelease", Description = "Key release.")]
         public int KeyRelease(string data)
         {
-            if (data == null || data.Length == 0)
+            Keyboard keyboard = new Keyboard(this);
+            try
             {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+                return keyboard.KeyRelease(data);
             }
-            KeyInfo[] keys = GetKeyVal(data);
-            foreach (KeyInfo key in keys)
+            finally
             {
-                if (key.key == System.Windows.Input.Key.LeftShift ||
-                    key.key == System.Windows.Input.Key.RightShift)
-                {
-                    shiftKeyPressed = false;
-                }
-                try
-                {
-                    ATGTestInput.Input.SendKeyboardInput(key.key, false);
-                }
-                catch (Exception ex)
-                {
-                    LogMessage(ex.StackTrace);
-                    throw new XmlRpcFaultException(123, ex.Message);
-                }
-                Thread.Sleep(200);
+                keyboard = null;
             }
-            return 1;
         }
-        [XmlRpcMethod("mouseleftclick", Description = "Mouse left click on an object.")]
+        [XmlRpcMethod("mouseleftclick",
+            Description = "Mouse left click on an object.")]
         public int MouseLeftClick(String windowName, String objName)
         {
             return Click(windowName, objName);
@@ -2984,54 +1225,15 @@ namespace Ldtpd
             Description = "Get the current running application list.")]
         public string[] GetAppList()
         {
-            Process process;
-            ArrayList appList = new ArrayList();
-            foreach (AutomationElement e in windowList)
-            {
-                // Get a process using the process id.
-                try
-                {
-                    process = Process.GetProcessById(e.Current.ProcessId);
-                }
-                catch
-                {
-                    continue;
-                }
-                appList.Add(process.ProcessName);
-            }
-            InternalTreeWalker w = new InternalTreeWalker();
-            AutomationElement element = w.walker.GetFirstChild(AutomationElement.RootElement);
+            Generic generic = new Generic(this);
             try
             {
-                while (null != element)
-                {
-
-                    // Get a process using the process id.
-                    try
-                    {
-                        process = Process.GetProcessById(element.Current.ProcessId);
-                    }
-                    catch
-                    {
-                        continue;
-                    }
-                    if (!appList.Contains(process.ProcessName))
-                        // If added from the existing window list
-                        // then ignore it
-                        appList.Add(process.ProcessName);
-                    element = w.walker.GetNextSibling(element);
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
+                return generic.GetAppList();
             }
             finally
             {
-                w = null;
-                element = null;
+                generic = null;
             }
-            return appList.ToArray(typeof(string)) as string[];
         }
         [XmlRpcMethod("poll_events",
             Description = "poll events internal only.")]
@@ -3059,6 +1261,33 @@ namespace Ldtpd
         public int RemoveCallback(string windowName)
         {
             windowList.UnwatchWindow(windowName);
+            return 1;
+        }
+        [XmlRpcMethod("getcpustat",
+            Description = "Get CPU stat for the give process name.")]
+        public double[] GetCpuStat(string processName)
+        {
+            ProcessStats ps = new ProcessStats(common);
+            return ps.GetCpuUsage(processName);
+        }
+        [XmlRpcMethod("getmemorystat",
+            Description = "Get memory stat.")]
+        public long[] GetMemoryStat(string processName)
+        {
+            ProcessStats ps = new ProcessStats(common);
+            return ps.GetPhysicalMemoryUsage(processName);
+        }
+        [XmlRpcMethod("startprocessmonitor",
+            Description = "Start memory and CPU monitoring," +
+            " with the time interval between each process scan.")]
+        public int StartProcessMonitor(string processName, int interval = 2)
+        {
+            return 1;
+        }
+        [XmlRpcMethod("stopprocessmonitor",
+            Description = "Stop memory and CPU monitoring.")]
+        public int StopProcessMonitor(string processName)
+        {
             return 1;
         }
     }
