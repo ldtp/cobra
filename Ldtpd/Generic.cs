@@ -241,7 +241,7 @@ namespace Ldtpd
         }
         public String[] GetObjectList(String windowName)
         {
-            if (windowName == null || windowName.Length == 0)
+            if (String.IsNullOrEmpty(windowName))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
@@ -287,8 +287,8 @@ namespace Ldtpd
         }
         public int ObjectExist(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 LogMessage("Argument cannot be empty.");
                 return 0;
@@ -322,8 +322,8 @@ namespace Ldtpd
         }
         public int StateEnabled(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 LogMessage("Argument cannot be empty.");
                 return 0;
@@ -361,8 +361,9 @@ namespace Ldtpd
         public int HasState(String windowName, String objName,
            String state, int guiTimeOut = 0)
         {
-            if (windowName == null || objName == null || windowName.Length == 0
-                || objName.Length == 0 || state == null || state.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName) ||
+                String.IsNullOrEmpty(state))
             {
                 LogMessage("Argument cannot be empty.");
                 return 0;
@@ -472,8 +473,8 @@ namespace Ldtpd
         }
         public string[] GetAllStates(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -558,8 +559,8 @@ namespace Ldtpd
         }
         public int Click(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
@@ -645,21 +646,24 @@ namespace Ldtpd
         }
         public int[] GetObjectSize(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
             AutomationElement windowHandle = utils.GetWindowHandle(windowName);
             if (windowHandle == null)
             {
-                throw new XmlRpcFaultException(123, "Unable to find window: " + windowName);
+                throw new XmlRpcFaultException(123,
+                    "Unable to find window: " + windowName);
             }
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle, objName);
+            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
+                objName);
             windowHandle = null;
             if (childHandle == null)
             {
-                throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
+                throw new XmlRpcFaultException(123,
+                    "Unable to find Object: " + objName);
             }
             try
             {
@@ -684,8 +688,8 @@ namespace Ldtpd
         }
         public string[] GetObjectInfo(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
@@ -739,13 +743,15 @@ namespace Ldtpd
                 keyList = null;
                 windowHandle = null;
             }
-            throw new XmlRpcFaultException(123, "Unable to find Object info: " + objName);
+            throw new XmlRpcFaultException(123,
+                "Unable to find Object info: " + objName);
         }
         public string GetObjectProperty(String windowName, String objName,
             string property)
         {
-            if (windowName == null || objName == null || property == null ||
-                windowName.Length == 0 || objName.Length == 0 || property.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName) ||
+                String.IsNullOrEmpty(property))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
@@ -845,9 +851,10 @@ namespace Ldtpd
         public string[] GetChild(String windowName, String childName = null,
             string role = null, string parentName = null)
         {
-            if (windowName == null || windowName.Length == 0 ||
-                (parentName == null && childName == null && role == null &&
-                childName.Length == 0 && role.Length == 0 && parentName.Length == 0))
+            if (String.IsNullOrEmpty(windowName) ||
+                (String.IsNullOrEmpty(parentName) &&
+                String.IsNullOrEmpty(childName) &&
+                String.IsNullOrEmpty(role)))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
@@ -1001,7 +1008,7 @@ namespace Ldtpd
         }
         public int GrabFocus(String windowName, String objName = null)
         {
-            if (windowName == null || windowName.Length == 0)
+            if (String.IsNullOrEmpty(windowName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");

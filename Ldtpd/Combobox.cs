@@ -48,7 +48,7 @@ namespace Ldtpd
         private bool SelectListItem(AutomationElement element, String itemText,
             bool verify = false)
         {
-            if (element == null || itemText == null || itemText.Length == 0)
+            if (element == null || String.IsNullOrEmpty(itemText))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be null or empty.");
@@ -127,6 +127,12 @@ namespace Ldtpd
             String item, String actionType = "Select",
             ArrayList childList = null)
         {
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
+            {
+                LogMessage("Invalid argument");
+                return 0;
+            }
             AutomationElement windowHandle = utils.GetWindowHandle(windowName);
             if (windowHandle == null)
             {
@@ -164,7 +170,8 @@ namespace Ldtpd
                         {
                             case "Hide":
                                 ((ExpandCollapsePattern)pattern).Collapse();
-                                // Required to wait 1 second, before checking the state and retry collapsing
+                                // Required to wait 1 second,
+                                // before checking the state and retry collapsing
                                 utils.InternalWait(1);
                                 if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
                                     ExpandCollapseState.Collapsed)
@@ -179,7 +186,8 @@ namespace Ldtpd
                             case "Select":
                             case "Verify":
                                 ((ExpandCollapsePattern)pattern).Expand();
-                                // Required to wait 1 second, before checking the state and retry expanding
+                                // Required to wait 1 second,
+                                // before checking the state and retry expanding
                                 utils.InternalWait(1);
                                 if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
                                     ExpandCollapseState.Expanded)
@@ -220,8 +228,10 @@ namespace Ldtpd
                         }
                     }
                 }
-                // Handle selectitem and verifyselect on list. Get ExpandCollapsePattern fails on list,
-                // VM Library items are selected and verified correctly on Player with this fix
+                // Handle selectitem and verifyselect on list.
+                // Get ExpandCollapsePattern fails on list,
+                // VM Library items are selected and
+                // verified correctly on Player with this fix
                 else
                 {
                     childHandle.SetFocus();
@@ -247,8 +257,8 @@ namespace Ldtpd
         }
         public int SelectIndex(String windowName, String objName, int index)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -384,6 +394,12 @@ namespace Ldtpd
         }
         public int VerifyDropDown(String windowName, String objName)
         {
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
+            {
+                LogMessage("Invalid argument");
+                return 0;
+            }
             AutomationElement windowHandle = utils.GetWindowHandle(windowName);
             if (windowHandle == null)
             {
@@ -440,6 +456,12 @@ namespace Ldtpd
         }
         public int VerifyHideList(String windowName, String objName)
         {
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
+            {
+                LogMessage("Invalid argument");
+                return 0;
+            }
             AutomationElement windowHandle = utils.GetWindowHandle(windowName);
             if (windowHandle == null)
             {

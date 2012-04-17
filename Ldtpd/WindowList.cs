@@ -142,7 +142,7 @@ namespace Ldtpd
                 {
                     // Wait 10 second before starting the next
                     // cleanup cycle
-                    common.InternalWait(10);
+                    common.Wait(10);
                     CleanUpWindowElements();
                     // With GC collect,
                     // noticed very less memory being used all the time
@@ -156,7 +156,7 @@ namespace Ldtpd
         }
         private bool DoesWindowNameMatched(AutomationElement e, string windowName)
         {
-            if (e == null || windowName == null || windowName.Length == 0)
+            if (e == null || String.IsNullOrEmpty(windowName))
                 return false;
             String s1, s2;
             CurrentObjInfo currObjInfo;
@@ -194,8 +194,7 @@ namespace Ldtpd
                 if (e.EventId == WindowPattern.WindowOpenedEvent)
                 {
                     if (element != null &&
-                        element.Current.Name != null &&
-                        element.Current.Name.Length > 0)
+                        String.IsNullOrEmpty(element.Current.Name))
                     {
                         // Add window handle that have name !
                         int[] rid = element.GetRuntimeId();

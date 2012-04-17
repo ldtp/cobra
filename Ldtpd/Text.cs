@@ -48,9 +48,9 @@ namespace Ldtpd
         }
         public int SetTextValue(String windowName, String objName, String value)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0 ||
-                value == null || value.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName) ||
+                String.IsNullOrEmpty(value))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
@@ -106,8 +106,8 @@ namespace Ldtpd
         }
         public String GetTextValue(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
@@ -167,9 +167,9 @@ namespace Ldtpd
         public int AppendText(String windowName,
             String objName, string value)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0 ||
-                value == null || value.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName) ||
+                String.IsNullOrEmpty(value))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -210,8 +210,8 @@ namespace Ldtpd
         public int CutText(String windowName,
             String objName, int start, int end = -1)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -253,8 +253,8 @@ namespace Ldtpd
         public int DeleteText(String windowName,
             String objName, int start, int end = -1)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -282,8 +282,8 @@ namespace Ldtpd
         public int GetCharCount(String windowName,
             String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -295,9 +295,9 @@ namespace Ldtpd
         public int InsertText(String windowName,
             String objName, int postion, string value)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0 ||
-                value == null || value.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName) ||
+                String.IsNullOrEmpty(value))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -320,8 +320,8 @@ namespace Ldtpd
         }
         public int IsTextStateEnabled(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 return 0;
             }
@@ -359,8 +359,8 @@ namespace Ldtpd
         public int PasteText(String windowName,
             String objName, int postion)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -386,7 +386,9 @@ namespace Ldtpd
         public int VerifySetText(String windowName,
             String objName, string value)
         {
-            if (value == null || value.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName) ||
+                String.IsNullOrEmpty(value))
                 return 0;
             try
             {
@@ -404,7 +406,9 @@ namespace Ldtpd
         public int VerifyPartialText(String windowName,
             String objName, string value)
         {
-            if (value == null || value.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName) ||
+                String.IsNullOrEmpty(value))
                 return 0;
             try
             {

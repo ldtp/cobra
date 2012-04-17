@@ -48,8 +48,9 @@ namespace Ldtpd
         public int DoesRowExist(String windowName, String objName,
             String text, bool partialMatch = false)
         {
-            if (windowName == null || objName == null || windowName.Length == 0 ||
-                objName.Length == 0 || text == null || text.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName) ||
+                String.IsNullOrEmpty(text))
             {
                 LogMessage("Argument cannot be empty.");
                 return 0;
@@ -104,8 +105,9 @@ namespace Ldtpd
         public int SelectRow(String windowName, String objName,
             String text, bool partialMatch = false)
         {
-            if (windowName == null || objName == null || windowName.Length == 0
-                || objName.Length == 0 || text == null || text.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName) ||
+                String.IsNullOrEmpty(text))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
@@ -188,8 +190,8 @@ namespace Ldtpd
         public int SelectRowIndex(String windowName,
             String objName, int index)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -289,8 +291,8 @@ namespace Ldtpd
         public int ExpandTableCell(String windowName,
             String objName, int index)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -383,8 +385,8 @@ namespace Ldtpd
         public String GetCellValue(String windowName,
             String objName, int index)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -443,8 +445,8 @@ namespace Ldtpd
         }
         public int GetRowCount(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }

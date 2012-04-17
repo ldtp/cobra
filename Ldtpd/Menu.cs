@@ -71,8 +71,8 @@ namespace Ldtpd
         private int InternalMenuHandler(String windowName, String objName,
             ref ArrayList menuList, String actionType = "Select")
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }

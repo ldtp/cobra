@@ -34,12 +34,20 @@ namespace Ldtpd
     public class Common
     {
         bool debug = false;
-        internal Stack logStack = new Stack(100);
+        public bool Debug
+        {
+            get { return debug; }
+        }
+        public Stack LogStack
+        {
+            get { return logStack; }
+        }
+        Stack logStack = new Stack(100);
         public Common(bool debug)
         {
             this.debug = debug;
         }
-        internal void InternalWait(int waitTime)
+        public void Wait(int waitTime)
         {
             Thread.Sleep(waitTime * 1000);
             // Collect all generations of memory.

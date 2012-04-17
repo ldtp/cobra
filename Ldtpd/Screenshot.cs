@@ -60,6 +60,8 @@ namespace Ldtpd
 
         private void saveImage2File(Bitmap screenshot, string fileName)
         {
+            if (String.IsNullOrEmpty(fileName))
+                return;
             string ext = Path.GetExtension(fileName);
             switch (ext.ToLower())
             {

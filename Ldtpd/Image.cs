@@ -27,6 +27,7 @@ SOFTWARE.
 */
 using System;
 using System.IO;
+using System.Drawing;
 using System.Windows;
 using System.Collections;
 using CookComputing.XmlRpc;
@@ -46,10 +47,10 @@ namespace Ldtpd
         {
             utils.LogMessage(o);
         }
-        public string ImageCapture(string windowName = null,
+        public string Capture(string windowName = null,
             int x = 0, int y = 0, int width = -1, int height = -1)
         {
-            System.Drawing.Bitmap b = null;
+            Bitmap b = null;
             ScreenShot ss = null;
             AutomationElement windowHandle;
             try

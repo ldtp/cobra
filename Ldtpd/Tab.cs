@@ -48,8 +48,9 @@ namespace Ldtpd
         public int SelectTab(String windowName,
             String objName, String tabName)
         {
-            if (windowName == null || objName == null || windowName.Length == 0 ||
-                objName.Length == 0 || tabName == null || tabName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName) ||
+                String.IsNullOrEmpty(tabName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -131,8 +132,8 @@ namespace Ldtpd
         public int SelectTabIndex(String windowName,
             String objName, int index)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -234,8 +235,8 @@ namespace Ldtpd
         public String GetTabName(String windowName,
             String objName, int index)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -301,8 +302,8 @@ namespace Ldtpd
         }
         public int GetTabCount(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -352,8 +353,9 @@ namespace Ldtpd
         public int VerifyTabName(String windowName,
             String objName, String tabName)
         {
-            if (windowName == null || objName == null || windowName.Length == 0 ||
-                objName.Length == 0 || tabName == null || tabName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName) ||
+                String.IsNullOrEmpty(tabName))
             {
                 LogMessage("Argument cannot be empty.");
                 return 0;
