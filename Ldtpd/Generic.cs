@@ -80,25 +80,29 @@ namespace Ldtpd
                     }
                     catch
                     {
+                        process = null;
                         continue;
                     }
                     if (!appList.Contains(process.ProcessName))
                         // If added from the existing window list
                         // then ignore it
                         appList.Add(process.ProcessName);
+                    process = null;
                     element = w.walker.GetNextSibling(element);
                 }
+                return appList.ToArray(typeof(string)) as string[];
             }
             catch (Exception ex)
             {
                 LogMessage(ex);
+                return appList.ToArray(typeof(string)) as string[];
             }
             finally
             {
                 w = null;
+                appList = null;
                 element = null;
             }
-            return appList.ToArray(typeof(string)) as string[];
         }
         public String[] GetWindowList()
         {
