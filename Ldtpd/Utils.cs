@@ -1,29 +1,29 @@
 ﻿/*
-WinLDTP 1.0
-
-@author: Nagappan Alagappan <nalagappan@vmware.com>
-@copyright: Copyright (c) 2011-12 VMware Inc.,
-@license: MIT license
-
-http://ldtp.freedesktop.org
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+ * WinLDTP 1.0
+ * 
+ * Author: Nagappan Alagappan <nalagappan@vmware.com>
+ * Copyright: Copyright (c) 2011-12 VMware, Inc. All Rights Reserved.
+ * License: MIT license
+ * 
+ * http://ldtp.freedesktop.org
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
 */
 using System;
 using ATGTestInput;
@@ -495,6 +495,31 @@ namespace Ldtpd
             w = null;
             objectList = null;
             return o;
+        }
+        internal AutomationElement GetObjectHandle(string windowName,
+            string objName, ControlType[] type = null, bool waitForObj = true)
+        {
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
+            {
+                throw new XmlRpcFaultException(123,
+                    "Argument cannot be empty.");
+            }
+            AutomationElement windowHandle = GetWindowHandle(windowName);
+            if (windowHandle == null)
+            {
+                throw new XmlRpcFaultException(123,
+                    "Unable to find window: " + windowName);
+            }
+            AutomationElement childHandle = GetObjectHandle(windowHandle,
+                objName, type, true);
+            windowHandle = null;
+            if (childHandle == null)
+            {
+                throw new XmlRpcFaultException(123,
+                    "Unable to find Object: " + objName);
+            }
+            return childHandle;
         }
         private AutomationElement InternalGetObjectHandle(AutomationElement childHandle,
             String objName, ControlType[] type, ref ArrayList objectList)
