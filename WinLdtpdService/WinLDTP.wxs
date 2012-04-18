@@ -170,7 +170,7 @@ SOFTWARE.
                   KeyPath='yes' />
          </Component>
 	 <Component Id="mit" Guid="D14AC46F-5C53-4BF6-8FC0-0B8A6E722284">
-                <File Id="mitrtf" KeyPath="yes" Source="MITLicense.rtf" />
+                <File Id="mitrtf" KeyPath="yes" Source="License.rtf" />
          </Component>
 	 <Component Id="README" Guid="99C85611-B9B0-4D1D-A8B4-06B0EBC30B16">
                 <File Id="READMEtxt" KeyPath="yes" Source="README.txt" />
