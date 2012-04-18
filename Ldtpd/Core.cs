@@ -47,15 +47,17 @@ namespace Ldtpd
 {
     public class Core : Utils
     {
+        ProcessStats ps;
         public Core(WindowList windowList, Common common, bool debug = false)
             : base(windowList, common, debug)
         {
+            ps = new ProcessStats(common);
         }
         [XmlRpcMethod("getlastlog", Description = "Get last log from the stack.")]
         public string GetLastLog()
         {
-            if (common.logStack.Count > 0)
-                return (string)common.logStack.Pop();
+            if (common.LogStack.Count > 0)
+                return (string)common.LogStack.Pop();
             return "";
         }
         [XmlRpcMethod("wait", Description = "Wait a given amount of seconds")]
@@ -647,8 +649,8 @@ namespace Ldtpd
         public int SetValue(String windowName,
             String objName, double value)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -703,8 +705,8 @@ namespace Ldtpd
         [XmlRpcMethod("getvalue", Description = "Get object value")]
         public double GetValue(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -993,7 +995,7 @@ namespace Ldtpd
         [XmlRpcMethod("remap", Description = "Remap window info.")]
         public int Remap(String windowName)
         {
-            if (windowName == null || windowName.Length == 0)
+            if (String.IsNullOrEmpty(windowName))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
@@ -1003,8 +1005,8 @@ namespace Ldtpd
         [XmlRpcMethod("activatetext", Description = "Activate text.")]
         public int ActivateText(String windowName, String objName)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
@@ -1045,7 +1047,8 @@ namespace Ldtpd
                 psi.UseShellExecute = true;
                 ps.StartInfo = psi;
                 ps.Start();
-                Thread thread = new Thread(new ParameterizedThreadStart(InternalLaunchApp));
+                Thread thread = new Thread(new ParameterizedThreadStart(
+                    InternalLaunchApp));
                 // Clean up in different thread
                 thread.Start(ps);
                 Wait(delay);
@@ -1072,7 +1075,7 @@ namespace Ldtpd
             Image image = new Image(this);
             try
             {
-                return image.ImageCapture(windowName, x, y, width, height);
+                return image.Capture(windowName, x, y, width, height);
             }
             finally
             {
@@ -1268,26 +1271,42 @@ namespace Ldtpd
         public double[] GetCpuStat(string processName)
         {
             ProcessStats ps = new ProcessStats(common);
-            return ps.GetCpuUsage(processName);
+            try
+            {
+                return ps.GetCpuUsage(processName);
+            }
+            finally
+            {
+                ps = null;
+            }
         }
         [XmlRpcMethod("getmemorystat",
             Description = "Get memory stat.")]
         public long[] GetMemoryStat(string processName)
         {
             ProcessStats ps = new ProcessStats(common);
-            return ps.GetPhysicalMemoryUsage(processName);
+            try
+            {
+                return ps.GetPhysicalMemoryUsage(processName);
+            }
+            finally
+            {
+                ps = null;
+            }
         }
         [XmlRpcMethod("startprocessmonitor",
             Description = "Start memory and CPU monitoring," +
             " with the time interval between each process scan.")]
         public int StartProcessMonitor(string processName, int interval = 2)
         {
+            ps.StartProcessMonitor(processName, interval);
             return 1;
         }
         [XmlRpcMethod("stopprocessmonitor",
             Description = "Stop memory and CPU monitoring.")]
         public int StopProcessMonitor(string processName)
         {
+            ps.StopProcessMonitor(processName);
             return 1;
         }
     }
