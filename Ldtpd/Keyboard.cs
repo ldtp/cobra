@@ -26,19 +26,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 using System;
-using System.IO;
 using System.Windows;
 using System.Threading;
 using System.Collections;
 using CookComputing.XmlRpc;
 using System.Windows.Forms;
 using System.Windows.Automation;
+using System.Text.RegularExpressions;
 
 namespace Ldtpd
 {
     class Keyboard
     {
         Utils utils;
+        bool shiftKeyPressed = false;
         public Keyboard(Utils utils)
         {
             this.utils = utils;
@@ -47,10 +48,141 @@ namespace Ldtpd
         {
             utils.LogMessage(o);
         }
+        internal KeyInfo GetKey(string key)
+        {
+            try
+            {
+                switch (key.ToLower())
+                {
+                    case "ctrl":
+                    case "ctrll":
+                        return new KeyInfo(System.Windows.Input.Key.LeftCtrl, false, true);
+                    case "ctrlr":
+                        return new KeyInfo(System.Windows.Input.Key.RightCtrl, false, true);
+                    case "caps":
+                    case "capslock":
+                        return new KeyInfo(System.Windows.Input.Key.CapsLock, false, true);
+                    case "pgdown":
+                        return new KeyInfo(System.Windows.Input.Key.PageDown, false);
+                    case "alt":
+                    case "altl":
+                        return new KeyInfo(System.Windows.Input.Key.LeftAlt, false, true);
+                    case "altr":
+                        return new KeyInfo(System.Windows.Input.Key.RightAlt, false, true);
+                    case "shift":
+                    case "shiftl":
+                        shiftKeyPressed = true;
+                        return new KeyInfo(System.Windows.Input.Key.LeftShift, true, true);
+                    case "shiftr":
+                        shiftKeyPressed = true;
+                        return new KeyInfo(System.Windows.Input.Key.RightShift, true, true);
+                    case "esc":
+                    case "escape":
+                        return new KeyInfo(System.Windows.Input.Key.Escape, false);
+                    case "bksp":
+                    case "backspace":
+                        return new KeyInfo(System.Windows.Input.Key.Back, false);
+                    case "tab":
+                        return new KeyInfo(System.Windows.Input.Key.Tab, false);
+                    case "windowskey":
+                    case "windowskeyl":
+                        return new KeyInfo(System.Windows.Input.Key.LWin, false);
+                    case "windowskeyr":
+                        return new KeyInfo(System.Windows.Input.Key.RWin, false);
+                    case " ":
+                        return new KeyInfo(System.Windows.Input.Key.Space, false);
+                    case "<":
+                        return new KeyInfo(System.Windows.Input.Key.OemComma, true);
+                    case ">":
+                        return new KeyInfo(System.Windows.Input.Key.OemPeriod, true);
+                    case "'":
+                        return new KeyInfo(System.Windows.Input.Key.OemQuotes, false);
+                    case "\"":
+                        return new KeyInfo(System.Windows.Input.Key.OemQuotes, true);
+                    case "!":
+                        return new KeyInfo(System.Windows.Input.Key.D1, true);
+                    case "@":
+                        return new KeyInfo(System.Windows.Input.Key.D2, true);
+                    case "#":
+                        return new KeyInfo(System.Windows.Input.Key.D3, true);
+                    case "$":
+                        return new KeyInfo(System.Windows.Input.Key.D4, true);
+                    case "%":
+                        return new KeyInfo(System.Windows.Input.Key.D5, true);
+                    case "^":
+                        return new KeyInfo(System.Windows.Input.Key.D6, true);
+                    case "&":
+                        return new KeyInfo(System.Windows.Input.Key.D7, true);
+                    case "*":
+                        return new KeyInfo(System.Windows.Input.Key.D8, true);
+                    case "(":
+                        return new KeyInfo(System.Windows.Input.Key.D9, true);
+                    case ")":
+                        return new KeyInfo(System.Windows.Input.Key.D0, true);
+                    case "_":
+                        return new KeyInfo(System.Windows.Input.Key.Subtract, true);
+                    case "+":
+                        return new KeyInfo(System.Windows.Input.Key.Add, true);
+                    default:
+                        bool shift = key.Length == 1 ?
+                            Regex.Match(key, @"[A-Z]", RegexOptions.None).Success : false;
+                        System.Windows.Input.KeyConverter k = new System.Windows.Input.KeyConverter();
+                        System.Windows.Input.Key mykey = (System.Windows.Input.Key)k.ConvertFromString(key);
+                        LogMessage(shift);
+                        return new KeyInfo(mykey, shift);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+            }
+            throw new XmlRpcFaultException(123, "Unsupported key type: " + key);
+        }
+        internal KeyInfo[] GetKeyVal(string data)
+        {
+            int index = 0;
+            string token;
+            int maxTokenSize = 15;
+            ArrayList keyList = new ArrayList();
+            while (index < data.Length)
+            {
+                token = "";
+                if (data[index].ToString().Equals("<"))
+                {
+                    index++;
+                    int i = 0;
+                    while (!data[index].ToString().Equals(">") && i < maxTokenSize)
+                    {
+                        token += data[index++];
+                        i++;
+                    }
+                    if (!data[index].ToString().Equals(">"))
+                        // Premature end of string without an opening '<'
+                        throw new XmlRpcFaultException(123,
+                            "Premature end of string without an opening '<'.");
+                    index++;
+                }
+                else
+                {
+                    token = data[index++].ToString();
+                }
+                LogMessage(token);
+                keyList.Add(GetKey(token));
+            }
+            try
+            {
+                return keyList.ToArray(typeof(KeyInfo))
+                    as KeyInfo[];
+            }
+            finally
+            {
+                keyList = null;
+            }
+        }
         public int EnterString(string windowName, string objName = null,
             string data = null)
         {
-            if (objName != null && objName.Length > 0)
+            if (String.IsNullOrEmpty(objName))
             {
                 AutomationElement windowHandle = utils.GetWindowHandle(windowName);
                 if (windowHandle != null)
@@ -93,11 +225,11 @@ namespace Ldtpd
         }
         public int GenerateKeyEvent(string data)
         {
-            if (data == null || data.Length == 0)
+            if (String.IsNullOrEmpty(data))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
-            KeyInfo[] keys = utils.GetKeyVal(data);
+            KeyInfo[] keys = GetKeyVal(data);
             int index = 0;
             int lastIndex = 0;
             bool capsLock = false;
@@ -125,9 +257,9 @@ namespace Ldtpd
                     else if (!capsLock && key.shift)
                     {
                         ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.LeftShift,
-                            !utils.shiftKeyPressed);
+                            !shiftKeyPressed);
                     }
-                    else if (utils.shiftKeyPressed)
+                    else if (shiftKeyPressed)
                     {
                         // Workaround: Release existing shift key
                         // As the default behavior fails when it finds capital letter
@@ -154,7 +286,7 @@ namespace Ldtpd
                             if (tmpKey.key == System.Windows.Input.Key.LeftShift ||
                                 tmpKey.key == System.Windows.Input.Key.RightShift)
                             {
-                                utils.shiftKeyPressed = false;
+                                shiftKeyPressed = false;
                             }
                             // Key release
                             ATGTestInput.Input.SendKeyboardInput(tmpKey.key, false);
@@ -171,9 +303,9 @@ namespace Ldtpd
                     else if (!capsLock && key.shift)
                     {
                         ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.LeftShift,
-                            !utils.shiftKeyPressed);
+                            !shiftKeyPressed);
                     }
-                    else if (utils.shiftKeyPressed)
+                    else if (shiftKeyPressed)
                     {
                         ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.LeftShift,
                             false);
@@ -195,12 +327,12 @@ namespace Ldtpd
                     // Release only nonPrintKey
                     // Caps lock will be released later
                     break;
-                if (utils.shiftKeyPressed)
+                if (shiftKeyPressed)
                 {
                     if (tmpKey.key == System.Windows.Input.Key.LeftShift ||
                         tmpKey.key == System.Windows.Input.Key.RightShift)
                     {
-                        utils.shiftKeyPressed = false;
+                        shiftKeyPressed = false;
                     }
                 }
                 // Key release
@@ -218,17 +350,17 @@ namespace Ldtpd
         }
         public int KeyPress(string data)
         {
-            if (data == null || data.Length == 0)
+            if (String.IsNullOrEmpty(data))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
-            KeyInfo[] keys = utils.GetKeyVal(data);
+            KeyInfo[] keys = GetKeyVal(data);
             foreach (KeyInfo key in keys)
             {
                 if (key.key == System.Windows.Input.Key.LeftShift ||
                     key.key == System.Windows.Input.Key.RightShift)
                 {
-                    utils.shiftKeyPressed = true;
+                    shiftKeyPressed = true;
                 }
                 try
                 {
@@ -245,17 +377,17 @@ namespace Ldtpd
         }
         public int KeyRelease(string data)
         {
-            if (data == null || data.Length == 0)
+            if (String.IsNullOrEmpty(data))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
-            KeyInfo[] keys = utils.GetKeyVal(data);
+            KeyInfo[] keys = GetKeyVal(data);
             foreach (KeyInfo key in keys)
             {
                 if (key.key == System.Windows.Input.Key.LeftShift ||
                     key.key == System.Windows.Input.Key.RightShift)
                 {
-                    utils.shiftKeyPressed = false;
+                    shiftKeyPressed = false;
                 }
                 try
                 {
