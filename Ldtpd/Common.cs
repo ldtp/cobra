@@ -53,24 +53,30 @@ namespace Ldtpd
             // Collect all generations of memory.
             GC.Collect();
         }
+        public void LogProcessStat(Object o)
+        {
+            logStack.Push(o);
+        }
         public void LogMessage(Object o)
         {
             if (debug)
+            {
                 Console.WriteLine(o);
-            try
-            {
-                if (logStack.Count == 100)
+                try
                 {
-                    // Removes 1 log, if it has 100 instances
-                    logStack.Pop();
+                    if (logStack.Count == 1000)
+                    {
+                        // Removes 1 log, if it has 1000 instances
+                        logStack.Pop();
+                    }
+                    // Add new log to the stack
+                    logStack.Push("INFO-" + o);
                 }
-                // Add new log to the stack
-                logStack.Push("INFO-" + o);
-            }
-            catch (Exception ex)
-            {
-                if (debug)
-                    Console.WriteLine(ex);
+                catch (Exception ex)
+                {
+                    if (debug)
+                        Console.WriteLine(ex);
+                }
             }
         }
     }
