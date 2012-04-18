@@ -48,7 +48,6 @@ namespace Ldtpd
         internal Common common;
         internal WindowList windowList;
         protected int objectTimeOut = 5;
-        internal bool shiftKeyPressed = false;
         public Utils(WindowList windowList, Common common, bool debug)
         {
             this.debug = debug;
@@ -94,137 +93,6 @@ namespace Ldtpd
                 {
                     LogMessage(ex);
                 }
-            }
-        }
-        internal KeyInfo GetKey(string key)
-        {
-            try
-            {
-                switch (key.ToLower())
-                {
-                    case "ctrl":
-                    case "ctrll":
-                        return new KeyInfo(System.Windows.Input.Key.LeftCtrl, false, true);
-                    case "ctrlr":
-                        return new KeyInfo(System.Windows.Input.Key.RightCtrl, false, true);
-                    case "caps":
-                    case "capslock":
-                        return new KeyInfo(System.Windows.Input.Key.CapsLock, false, true);
-                    case "pgdown":
-                        return new KeyInfo(System.Windows.Input.Key.PageDown, false);
-                    case "alt":
-                    case "altl":
-                        return new KeyInfo(System.Windows.Input.Key.LeftAlt, false, true);
-                    case "altr":
-                        return new KeyInfo(System.Windows.Input.Key.RightAlt, false, true);
-                    case "shift":
-                    case "shiftl":
-                        shiftKeyPressed = true;
-                        return new KeyInfo(System.Windows.Input.Key.LeftShift, true, true);
-                    case "shiftr":
-                        shiftKeyPressed = true;
-                        return new KeyInfo(System.Windows.Input.Key.RightShift, true, true);
-                    case "esc":
-                    case "escape":
-                        return new KeyInfo(System.Windows.Input.Key.Escape, false);
-                    case "bksp":
-                    case "backspace":
-                        return new KeyInfo(System.Windows.Input.Key.Back, false);
-                    case "tab":
-                        return new KeyInfo(System.Windows.Input.Key.Tab, false);
-                    case "windowskey":
-                    case "windowskeyl":
-                        return new KeyInfo(System.Windows.Input.Key.LWin, false);
-                    case "windowskeyr":
-                        return new KeyInfo(System.Windows.Input.Key.RWin, false);
-                    case " ":
-                        return new KeyInfo(System.Windows.Input.Key.Space, false);
-                    case "<":
-                        return new KeyInfo(System.Windows.Input.Key.OemComma, true);
-                    case ">":
-                        return new KeyInfo(System.Windows.Input.Key.OemPeriod, true);
-                    case "'":
-                        return new KeyInfo(System.Windows.Input.Key.OemQuotes, false);
-                    case "\"":
-                        return new KeyInfo(System.Windows.Input.Key.OemQuotes, true);
-                    case "!":
-                        return new KeyInfo(System.Windows.Input.Key.D1, true);
-                    case "@":
-                        return new KeyInfo(System.Windows.Input.Key.D2, true);
-                    case "#":
-                        return new KeyInfo(System.Windows.Input.Key.D3, true);
-                    case "$":
-                        return new KeyInfo(System.Windows.Input.Key.D4, true);
-                    case "%":
-                        return new KeyInfo(System.Windows.Input.Key.D5, true);
-                    case "^":
-                        return new KeyInfo(System.Windows.Input.Key.D6, true);
-                    case "&":
-                        return new KeyInfo(System.Windows.Input.Key.D7, true);
-                    case "*":
-                        return new KeyInfo(System.Windows.Input.Key.D8, true);
-                    case "(":
-                        return new KeyInfo(System.Windows.Input.Key.D9, true);
-                    case ")":
-                        return new KeyInfo(System.Windows.Input.Key.D0, true);
-                    case "_":
-                        return new KeyInfo(System.Windows.Input.Key.Subtract, true);
-                    case "+":
-                        return new KeyInfo(System.Windows.Input.Key.Add, true);
-                    default:
-                        bool shift = key.Length == 1 ?
-                            Regex.Match(key, @"[A-Z]", RegexOptions.None).Success : false;
-                        System.Windows.Input.KeyConverter k = new System.Windows.Input.KeyConverter();
-                        System.Windows.Input.Key mykey = (System.Windows.Input.Key)k.ConvertFromString(key);
-                        LogMessage(shift);
-                        return new KeyInfo(mykey, shift);
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-            }
-            throw new XmlRpcFaultException(123, "Unsupported key type: " + key);
-        }
-        internal KeyInfo[] GetKeyVal(string data)
-        {
-            int index = 0;
-            string token;
-            int maxTokenSize = 15;
-            ArrayList keyList = new ArrayList();
-            while (index < data.Length)
-            {
-                token = "";
-                if (data[index].ToString().Equals("<"))
-                {
-                    index++;
-                    int i = 0;
-                    while (!data[index].ToString().Equals(">") && i < maxTokenSize)
-                    {
-                        token += data[index++];
-                        i++;
-                    }
-                    if (!data[index].ToString().Equals(">"))
-                        // Premature end of string without an opening '<'
-                        throw new XmlRpcFaultException(123,
-                            "Premature end of string without an opening '<'.");
-                    index++;
-                }
-                else
-                {
-                    token = data[index++].ToString();
-                }
-                LogMessage(token);
-                keyList.Add(GetKey(token));
-            }
-            try
-            {
-                return keyList.ToArray(typeof(KeyInfo))
-                    as KeyInfo[];
-            }
-            finally
-            {
-                keyList = null;
             }
         }
         public void LogMessage(Object o)
@@ -529,6 +397,11 @@ namespace Ldtpd
             bool waitForObj = true, ControlType[] type = null)
         {
             AutomationElement o = null;
+            if (String.IsNullOrEmpty(windowName))
+            {
+                LogMessage("Invalid window name");
+                return o;
+            }
             int retry = waitForObj ? objectTimeOut : 1;
             // For debugging use the following value
             //int retry = waitForObj ? 1 : 1;
@@ -581,7 +454,7 @@ namespace Ldtpd
             String objName, ControlType[] type, bool waitForObj)
         {
             AutomationElement o = null;
-            if (e == null)
+            if (e == null || String.IsNullOrEmpty(objName))
             {
                 LogMessage("GetObjectHandle: Child handle NULL");
                 return null;
@@ -754,6 +627,11 @@ namespace Ldtpd
             string objName = null, string parentName = null,
             ControlType type = null)
         {
+            if (windowHandle == null)
+            {
+                LogMessage("Invalid window handle");
+                return false;
+            }
             int index;
             Regex rx = null;
             String s = null;
@@ -930,12 +808,12 @@ namespace Ldtpd
         }
         internal void InternalWait(int time)
         {
-            common.InternalWait(time);
+            common.Wait(time);
         }
         internal int InternalWaitTillGuiExist(String windowName,
             String objName = null, int guiTimeOut = 30)
         {
-            if (windowName == null || windowName.Length == 0)
+            if (String.IsNullOrEmpty(windowName))
             {
                 LogMessage("Argument cannot be empty.");
                 return 0;
@@ -988,7 +866,7 @@ namespace Ldtpd
         internal int InternalWaitTillGuiNotExist(String windowName,
             String objName = null, int guiTimeOut = 30)
         {
-            if (windowName == null || windowName.Length == 0)
+            if (String.IsNullOrEmpty(windowName))
             {
                 LogMessage("Argument cannot be empty.");
                 return 0;
@@ -997,7 +875,7 @@ namespace Ldtpd
             try
             {
                 int waitTime = 0;
-                if (objName == null || objName.Length == 0)
+                if (String.IsNullOrEmpty(objName))
                 {
                     while (waitTime < guiTimeOut)
                     {
@@ -1039,7 +917,7 @@ namespace Ldtpd
         }
         internal int InternalGuiExist(String windowName, String objName = null)
         {
-            if (windowName == null || windowName.Length == 0)
+            if (String.IsNullOrEmpty(windowName))
             {
                 LogMessage("Argument cannot be empty.");
                 return 0;
@@ -1053,7 +931,7 @@ namespace Ldtpd
                     return 0;
                 }
                 windowHandle.SetFocus();
-                if (objName != null && objName.Length > 0)
+                if (!String.IsNullOrEmpty(objName))
                 {
                     childHandle = GetObjectHandle(windowHandle,
                         objName, null, false);
@@ -1088,9 +966,9 @@ namespace Ldtpd
         internal int InternalCheckObject(string windowName, string objName,
 					 string actionType)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0 ||
-                actionType == null || actionType.Length == 0)
+            if (String.IsNullOrEmpty(windowName) ||
+                String.IsNullOrEmpty(objName) ||
+                String.IsNullOrEmpty(actionType))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
