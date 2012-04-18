@@ -26,6 +26,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 using System;
+//using System.Threading;
 //using System.Runtime.Remoting;
 //using System.Runtime.Remoting.Channels;
 //using System.Runtime.Remoting.Channels.Http;
@@ -44,7 +45,8 @@ namespace WinLdtpdService
         {
             bool debug = false;
             string ldtpDebugEnv = Environment.GetEnvironmentVariable("LDTP_DEBUG");
-            string listenAllInterface = Environment.GetEnvironmentVariable("LDTP_LISTEN_ALL_INTERFACE");
+            string listenAllInterface = Environment.GetEnvironmentVariable(
+                "LDTP_LISTEN_ALL_INTERFACE");
             if (ldtpDebugEnv != null && ldtpDebugEnv.Length > 0)
                 debug = true;
             Common common = new Common(debug);
@@ -70,7 +72,6 @@ namespace WinLdtpdService
             Console.WriteLine("Press <ENTER> to shutdown");
             Console.ReadLine();
             /**/
-            ///*
             WindowList windowList = new WindowList(common);
             HttpListener listener = new HttpListener();
             listener.Prefixes.Add("http://localhost:4118/");
@@ -90,8 +91,7 @@ namespace WinLdtpdService
                     Console.WriteLine("Listening only on local interface");
             }
             listener.Start();
-            XmlRpcListenerService svc = new Core(windowList,
-                common, debug);
+            XmlRpcListenerService svc = new Core(windowList, common, debug);
             try
             {
                 while (true)
@@ -104,24 +104,33 @@ namespace WinLdtpdService
                         HttpListenerContext context = listener.GetContext();
                         // Don't create LDTP instance here, this creates
                         // new object for every request !
-                        // Moved before creating HttpListener
+                        // Moved before creating HttpListenerContext
                         //XmlRpcListenerService svc = new LdtpdMain();
                         if (debug)
                             Console.WriteLine("Processing request");
                         svc.ProcessRequest(context);
                         context = null;
+                        /*
+                        // FIXME: If trying to do parallel process
+                        // memory usage goes high and never comes back
+                        // This is required for startprocessmonitor API
+                        Thread parallelProcess = new Thread(delegate()
+                        {
+                            svc.ProcessRequest(context);
+                            context = null;
+                        });
+                        parallelProcess.Start();
+                        /* */
                     }
                     catch (InvalidOperationException ex)
                     {
-                        if (debug)
-                            Console.WriteLine(ex);
+                        common.LogMessage(ex);
                     }
                 }
             }
             catch (Exception ex)
             {
-                if (debug)
-                    Console.WriteLine(ex);
+                common.LogMessage(ex);
             }
             finally
             {
@@ -129,7 +138,6 @@ namespace WinLdtpdService
                 windowList = null;
                 listener.Stop();
             }
-            /**/
         }
     }
 }
