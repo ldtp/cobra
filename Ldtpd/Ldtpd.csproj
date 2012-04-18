@@ -70,6 +70,7 @@
     <Compile Include="Tree.cs" />
     <Compile Include="Text.cs" />
     <Compile Include="Utils.cs" />
+    <Compile Include="Value.cs" />
     <Compile Include="WindowList.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
