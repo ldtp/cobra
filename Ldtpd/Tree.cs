@@ -1,29 +1,29 @@
 ﻿/*
-WinLDTP 1.0
-
-@author: Nagappan Alagappan <nalagappan@vmware.com>
-@copyright: Copyright (c) 2011-12 VMware Inc.,
-@license: MIT license
-
-http://ldtp.freedesktop.org
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+ * WinLDTP 1.0
+ * 
+ * Author: Nagappan Alagappan <nalagappan@vmware.com>
+ * Copyright: Copyright (c) 2011-12 VMware, Inc. All Rights Reserved.
+ * License: MIT license
+ * 
+ * http://ldtp.freedesktop.org
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
 */
 using System;
 using System.Windows;
@@ -45,44 +45,46 @@ namespace Ldtpd
         {
             utils.LogMessage(o);
         }
+        private AutomationElement GetObjectHandle(string windowName,
+            string objName, ControlType[] type = null, bool waitForObj = true)
+        {
+            if (type == null)
+                type = new ControlType[2] { ControlType.Tree,
+                    ControlType.List };
+            try
+            {
+                return utils.GetObjectHandle(windowName,
+                    objName, type, waitForObj);
+            }
+            finally
+            {
+                type = null;
+            }
+        }
         public int DoesRowExist(String windowName, String objName,
             String text, bool partialMatch = false)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName) ||
-                String.IsNullOrEmpty(text))
+            if (String.IsNullOrEmpty(text))
             {
                 LogMessage("Argument cannot be empty.");
                 return 0;
             }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
-            ControlType[] type = new ControlType[2] { ControlType.Tree,
-                ControlType.List };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                LogMessage("Unable to find Object: " + objName);
-                return 0;
-            }
-            if (!utils.IsEnabled(childHandle))
-            {
-                childHandle = null;
-                LogMessage("Object state is disabled");
-                return 0;
-            }
+            ControlType[] type;
+            AutomationElement childHandle;
             AutomationElement elementItem;
             try
             {
+                childHandle = GetObjectHandle(windowName,
+                    objName, null, false);
+                if (!utils.IsEnabled(childHandle))
+                {
+                    childHandle = null;
+                    LogMessage("Object state is disabled");
+                    return 0;
+                }
                 childHandle.SetFocus();
                 type = new ControlType[2] { ControlType.TreeItem,
-                ControlType.ListItem };
+                    ControlType.ListItem };
                 if (partialMatch)
                     text += "*";
                 elementItem = utils.GetObjectHandle(childHandle,
@@ -98,6 +100,7 @@ namespace Ldtpd
             }
             finally
             {
+                type = null;
                 childHandle = elementItem = null;
             }
             return 0;
@@ -105,30 +108,20 @@ namespace Ldtpd
         public int SelectRow(String windowName, String objName,
             String text, bool partialMatch = false)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName) ||
-                String.IsNullOrEmpty(text))
+            if (String.IsNullOrEmpty(text))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[2] { ControlType.Tree,
-                ControlType.List };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
             Object pattern;
             AutomationElement elementItem;
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
+            if (!utils.IsEnabled(childHandle))
+            {
+                childHandle = null;
+                throw new XmlRpcFaultException(123,
+                    "Object state is disabled");
+            }
             try
             {
                 childHandle.SetFocus();
@@ -141,8 +134,8 @@ namespace Ldtpd
                     elementItem.SetFocus();
                     LogMessage(elementItem.Current.Name + " : " +
                         elementItem.Current.ControlType.ProgrammaticName);
-                    if (elementItem.TryGetCurrentPattern(SelectionItemPattern.Pattern,
-                        out pattern))
+                    if (elementItem.TryGetCurrentPattern(
+                        SelectionItemPattern.Pattern, out pattern))
                     {
                         LogMessage("SelectionItemPattern");
                         //((SelectionItemPattern)pattern).Select();
@@ -152,8 +145,8 @@ namespace Ldtpd
                         utils.InternalClick(elementItem);
                         return 1;
                     }
-                    else if (elementItem.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                        out pattern))
+                    else if (elementItem.TryGetCurrentPattern(
+                        ExpandCollapsePattern.Pattern, out pattern))
                     {
                         LogMessage("ExpandCollapsePattern");
                         ((ExpandCollapsePattern)pattern).Expand();
@@ -180,7 +173,8 @@ namespace Ldtpd
                 pattern = null;
                 elementItem = childHandle = null;
             }
-            throw new XmlRpcFaultException(123, "Unable to find the item in list: " + text);
+            throw new XmlRpcFaultException(123,
+                "Unable to find the item in list: " + text);
         }
         public int SelectRowPartialMatch(String windowName, String objName,
             String text)
@@ -190,36 +184,16 @@ namespace Ldtpd
         public int SelectRowIndex(String windowName,
             String objName, int index)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[2] { ControlType.Tree,
-                ControlType.List };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
+            Object pattern;
+            AutomationElement element = null;
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
             if (!utils.IsEnabled(childHandle))
             {
                 childHandle = null;
                 throw new XmlRpcFaultException(123,
                     "Object state is disabled");
             }
-            Object pattern;
-            AutomationElement element = null;
             try
             {
                 childHandle.SetFocus();
@@ -291,36 +265,16 @@ namespace Ldtpd
         public int ExpandTableCell(String windowName,
             String objName, int index)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[2] { ControlType.Tree,
-                ControlType.TreeItem };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
+            Object pattern;
+            AutomationElement element = null;
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
             if (!utils.IsEnabled(childHandle))
             {
                 childHandle = null;
                 throw new XmlRpcFaultException(123,
                     "Object state is disabled");
             }
-            Object pattern;
-            AutomationElement element = null;
             try
             {
                 childHandle.SetFocus();
@@ -385,28 +339,8 @@ namespace Ldtpd
         public String GetCellValue(String windowName,
             String objName, int index)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[2] { ControlType.Tree, 
-                ControlType.TreeItem };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
             if (!utils.IsEnabled(childHandle))
             {
                 childHandle = null;
@@ -417,8 +351,8 @@ namespace Ldtpd
             try
             {
                 childHandle.SetFocus();
-                AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
-                    Condition.TrueCondition);
+                AutomationElementCollection c = childHandle.FindAll(
+                    TreeScope.Children, Condition.TrueCondition);
                 element = c[index];
                 c = null;
                 if (element != null)
@@ -426,57 +360,47 @@ namespace Ldtpd
             }
             catch (IndexOutOfRangeException)
             {
-                throw new XmlRpcFaultException(123, "Index out of range: " + index);
+                throw new XmlRpcFaultException(123,
+                    "Index out of range: " + index);
             }
             catch (ArgumentException)
             {
-                throw new XmlRpcFaultException(123, "Index out of range: " + index);
+                throw new XmlRpcFaultException(123,
+                    "Index out of range: " + index);
             }
             catch (Exception ex)
             {
                 LogMessage(ex);
-                throw new XmlRpcFaultException(123, "Index out of range: " + index);
+                throw new XmlRpcFaultException(123,
+                    "Index out of range: " + index);
             }
             finally
             {
                 element = childHandle = null;
             }
-            throw new XmlRpcFaultException(123, "Unable to get item value.");
+            throw new XmlRpcFaultException(123,
+                "Unable to get item value.");
         }
         public int GetRowCount(String windowName, String objName)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
+            if (!utils.IsEnabled(childHandle))
             {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
+                childHandle = null;
                 throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[2] { ControlType.Tree,
-                ControlType.TreeItem };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
+                    "Object state is disabled");
             }
             AutomationElementCollection c;
+            Condition prop1 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.ListItem);
+            Condition prop2 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.TreeItem);
+            Condition condition = new OrCondition(prop1, prop2);
             try
             {
-                if (!utils.IsEnabled(childHandle))
-                {
-                    throw new XmlRpcFaultException(123,
-                        "Object state is disabled");
-                }
                 childHandle.SetFocus();
-                c = childHandle.FindAll(TreeScope.Children,
-                    Condition.TrueCondition);
+                c = childHandle.FindAll(TreeScope.Children, condition);
                 if (c == null)
                     throw new XmlRpcFaultException(123,
                         "Unable to get row count.");
@@ -495,6 +419,7 @@ namespace Ldtpd
             {
                 c = null;
                 childHandle = null;
+                prop1 = prop2 = condition = null;
             }
         }
     }

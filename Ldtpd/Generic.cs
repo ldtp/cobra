@@ -1,29 +1,29 @@
 ﻿/*
-WinLDTP 1.0
-
-@author: Nagappan Alagappan <nalagappan@vmware.com>
-@copyright: Copyright (c) 2011-12 VMware Inc.,
-@license: MIT license
-
-http://ldtp.freedesktop.org
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+ * WinLDTP 1.0
+ * 
+ * Author: Nagappan Alagappan <nalagappan@vmware.com>
+ * Copyright: Copyright (c) 2011-12 VMware, Inc. All Rights Reserved.
+ * License: MIT license
+ * 
+ * http://ldtp.freedesktop.org
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
 */
 using System;
 using System.Windows;
@@ -48,6 +48,11 @@ namespace Ldtpd
         private void LogMessage(Object o)
         {
             utils.LogMessage(o);
+        }
+        private AutomationElement GetObjectHandle(string windowName,
+            string objName, ControlType[] type)
+        {
+            return utils.GetObjectHandle(windowName, objName, type);
         }
         public string[] GetAppList()
         {
@@ -259,7 +264,7 @@ namespace Ldtpd
                 throw new XmlRpcFaultException(123, "Unable to find window: " +
                     windowName);
             }
-
+            windowHandle.SetFocus();
             InternalTreeWalker walker = new InternalTreeWalker();
             utils.InternalGetObjectList(walker.walker.GetFirstChild(windowHandle),
                 ref objectList, ref objectHT, ref matchedKey,
@@ -291,28 +296,14 @@ namespace Ldtpd
         }
         public int ObjectExist(String windowName, String objName)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                LogMessage("Argument cannot be empty.");
-                return 0;
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
             AutomationElement childHandle;
             try
             {
-                windowHandle.SetFocus();
-                childHandle = utils.GetObjectHandle(windowHandle,
-                    objName, null, false);
+                childHandle = GetObjectHandle(windowName, objName, null);
+                childHandle.SetFocus();
                 if (childHandle != null)
                     return 1;
                 LogMessage("Unable to find Object: " + objName);
-                return 0;
             }
             catch (Exception ex)
             {
@@ -320,35 +311,17 @@ namespace Ldtpd
             }
             finally
             {
-                childHandle = windowHandle = null;
+                childHandle = null;
             }
             return 0;
         }
         public int StateEnabled(String windowName, String objName)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                LogMessage("Argument cannot be empty.");
-                return 0;
-            }
             AutomationElement childHandle;
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
             try
             {
-                windowHandle.SetFocus();
-                childHandle = utils.GetObjectHandle(windowHandle,
-                    objName, null, false);
-                if (childHandle == null)
-                {
-                    LogMessage("Unable to find Object: " + objName);
-                    return 0;
-                }
+                childHandle = GetObjectHandle(windowName, objName, null);
+                childHandle.SetFocus();
                 if (utils.IsEnabled(childHandle))
                     return 1;
             }
@@ -358,46 +331,19 @@ namespace Ldtpd
             }
             finally
             {
-                childHandle = windowHandle = null;
+                childHandle = null;
             }
             return 0;
         }
         public int HasState(String windowName, String objName,
            String state, int guiTimeOut = 0)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName) ||
-                String.IsNullOrEmpty(state))
-            {
-                LogMessage("Argument cannot be empty.");
-                return 0;
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
-            windowHandle.SetFocus();
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, null, false);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                LogMessage("Unable to find Object: " + objName);
-                return 0;
-            }
             Object pattern;
+            AutomationElement childHandle;
             AutomationElementCollection c;
             try
             {
-                if (!utils.IsEnabled(childHandle))
-                {
-                    // Let us not grab the focus which is enabled
-                    // will be helpful during verification
-                    LogMessage("childHandle.SetFocus");
-                    childHandle.SetFocus();
-                }
+                childHandle = GetObjectHandle(windowName, objName, null);
                 c = childHandle.FindAll(TreeScope.Children,
                     Condition.TrueCondition);
                 if (c == null)
@@ -477,35 +423,13 @@ namespace Ldtpd
         }
         public string[] GetAllStates(String windowName, String objName)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, null, false);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
             Object pattern;
+            AutomationElement childHandle;
             AutomationElementCollection c;
             ArrayList stateList = new ArrayList();
             try
             {
-                if (utils.IsEnabled(childHandle))
-                {
-                    childHandle.SetFocus();
-                }
+                childHandle = GetObjectHandle(windowName, objName, null);
                 c = childHandle.FindAll(TreeScope.Children,
                     Condition.TrueCondition);
                 if (c == null)
@@ -534,6 +458,7 @@ namespace Ldtpd
                     if (((SelectionItemPattern)pattern).Current.IsSelected)
                     {
                         stateList.Add("selected");
+                        // FIXME:
                         //stateList.Add("checked");
                     }
                 }
@@ -563,39 +488,20 @@ namespace Ldtpd
         }
         public int Click(String windowName, String objName)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            windowHandle.SetFocus();
             ControlType[] type = new ControlType[9] { ControlType.Button,
                 ControlType.CheckBox, ControlType.RadioButton,
                 ControlType.SplitButton, ControlType.Menu, ControlType.ListItem,
                 ControlType.MenuItem, ControlType.MenuBar, ControlType.Pane };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            if (!utils.IsEnabled(childHandle))
-            {
-                windowHandle = null;
-                throw new XmlRpcFaultException(123,
-                    "Object state is disabled");
-            }
             Object pattern = null;
+            AutomationElement childHandle;
             try
             {
+                childHandle = GetObjectHandle(windowName, objName, type);
+                if (!utils.IsEnabled(childHandle))
+                {
+                    throw new XmlRpcFaultException(123,
+                        "Object state is disabled");
+                }
                 childHandle.SetFocus();
                 if (childHandle.Current.ControlType == ControlType.Pane)
                 {
@@ -643,6 +549,7 @@ namespace Ldtpd
             }
             finally
             {
+                type = null;
                 pattern = null;
                 childHandle = null;
             }
@@ -650,25 +557,8 @@ namespace Ldtpd
         }
         public int[] GetObjectSize(String windowName, String objName)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName, null);
             try
             {
                 childHandle.SetFocus();

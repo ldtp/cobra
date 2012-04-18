@@ -1,29 +1,29 @@
 ﻿/*
-WinLDTP 1.0
-
-@author: Nagappan Alagappan <nalagappan@vmware.com>
-@copyright: Copyright (c) 2011-12 VMware Inc.,
-@license: MIT license
-
-http://ldtp.freedesktop.org
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+ * WinLDTP 1.0
+ * 
+ * Author: Nagappan Alagappan <nalagappan@vmware.com>
+ * Copyright: Copyright (c) 2011-12 VMware, Inc. All Rights Reserved.
+ * License: MIT license
+ * 
+ * http://ldtp.freedesktop.org
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
 */
 using System;
 using System.Windows;
@@ -44,6 +44,20 @@ namespace Ldtpd
         private void LogMessage(Object o)
         {
             utils.LogMessage(o);
+        }
+        private AutomationElement GetObjectHandle(string windowName,
+            string objName)
+        {
+            ControlType[] type = new ControlType[3] { ControlType.ComboBox,
+                ControlType.ListItem, ControlType.List/*, ControlType.Text */ };
+            try
+            {
+                return utils.GetObjectHandle(windowName, objName, type);
+            }
+            finally
+            {
+                type = null;
+            }
         }
         private bool SelectListItem(AutomationElement element, String itemText,
             bool verify = false)
@@ -127,29 +141,8 @@ namespace Ldtpd
             String item, String actionType = "Select",
             ArrayList childList = null)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                LogMessage("Invalid argument");
-                return 0;
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            windowHandle.SetFocus();
-            ControlType[] type = new ControlType[3] { ControlType.ComboBox,
-                ControlType.ListItem, ControlType.List/*, ControlType.Text */ };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
             Object pattern = null;
             try
             {
@@ -257,32 +250,11 @@ namespace Ldtpd
         }
         public int SelectIndex(String windowName, String objName, int index)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
             if (index == 0)
                 throw new XmlRpcFaultException(123,
                     "Index out of range: " + index);
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            windowHandle.SetFocus();
-            ControlType[] type = new ControlType[3] { ControlType.ComboBox,
-                ControlType.ListItem, ControlType.List };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
             LogMessage("Handle name: " + childHandle.Current.Name +
                 " - " + childHandle.Current.ControlType.ProgrammaticName);
             if (!utils.IsEnabled(childHandle))
@@ -394,32 +366,12 @@ namespace Ldtpd
         }
         public int VerifyDropDown(String windowName, String objName)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                LogMessage("Invalid argument");
-                return 0;
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
-            windowHandle.SetFocus();
-            ControlType[] type = new ControlType[3] { ControlType.ComboBox,
-                ControlType.ListItem, ControlType.List };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                LogMessage("Unable to find Object: " + objName);
-                return 0;
-            }
             Object pattern = null;
+            AutomationElement childHandle;
             try
             {
+                childHandle = GetObjectHandle(windowName,
+                    objName);
                 LogMessage("Handle name: " + childHandle.Current.Name +
                     " - " + childHandle.Current.ControlType.ProgrammaticName);
                 if (!utils.IsEnabled(childHandle))
@@ -456,32 +408,12 @@ namespace Ldtpd
         }
         public int VerifyHideList(String windowName, String objName)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                LogMessage("Invalid argument");
-                return 0;
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
-            windowHandle.SetFocus();
-            ControlType[] type = new ControlType[3] { ControlType.ComboBox,
-                ControlType.ListItem, ControlType.List };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                LogMessage("Unable to find Object: " + objName);
-                return 0;
-            }
             Object pattern = null;
+            AutomationElement childHandle;
             try
             {
+                childHandle = GetObjectHandle(windowName,
+                    objName);
                 LogMessage("Handle name: " + childHandle.Current.Name +
                     " - " + childHandle.Current.ControlType.ProgrammaticName);
                 if (!utils.IsEnabled(childHandle))

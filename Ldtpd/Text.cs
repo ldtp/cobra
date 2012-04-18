@@ -1,29 +1,29 @@
 ﻿/*
-WinLDTP 1.0
-
-@author: Nagappan Alagappan <nalagappan@vmware.com>
-@copyright: Copyright (c) 2011-12 VMware Inc.,
-@license: MIT license
-
-http://ldtp.freedesktop.org
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+ * WinLDTP 1.0
+ * 
+ * Author: Nagappan Alagappan <nalagappan@vmware.com>
+ * Copyright: Copyright (c) 2011-12 VMware, Inc. All Rights Reserved.
+ * License: MIT license
+ * 
+ * http://ldtp.freedesktop.org
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
 */
 using System;
 using System.Collections;
@@ -46,29 +46,27 @@ namespace Ldtpd
         {
             utils.LogMessage(o);
         }
+        private AutomationElement GetObjectHandle(string windowName,
+            string objName)
+        {
+            ControlType[] type = new ControlType[1] { ControlType.Edit };
+            try
+            {
+                return utils.GetObjectHandle(windowName, objName, type);
+            }
+            finally
+            {
+                type = null;
+            }
+        }
         public int SetTextValue(String windowName, String objName, String value)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName) ||
-                String.IsNullOrEmpty(value))
+            if (String.IsNullOrEmpty(value))
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[1] { ControlType.Edit };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
             if (!utils.IsEnabled(childHandle))
             {
                 childHandle = null;
@@ -106,25 +104,8 @@ namespace Ldtpd
         }
         public String GetTextValue(String windowName, String objName)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[1] { ControlType.Edit };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, false);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
-            }
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
             Object pattern = null;
             try
             {
@@ -167,9 +148,7 @@ namespace Ldtpd
         public int AppendText(String windowName,
             String objName, string value)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName) ||
-                String.IsNullOrEmpty(value))
+            if (String.IsNullOrEmpty(value))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -182,12 +161,6 @@ namespace Ldtpd
         public int CopyText(String windowName,
             String objName, int start, int end = -1)
         {
-            if (windowName == null || objName == null ||
-                windowName.Length == 0 || objName.Length == 0)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
             if (start < 0 || end != -1 && (start > end || end < start))
             {
                 throw new XmlRpcFaultException(123,
@@ -210,12 +183,6 @@ namespace Ldtpd
         public int CutText(String windowName,
             String objName, int start, int end = -1)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
             if (start < 0 || end != -1 && (start > end || end < start))
             {
                 throw new XmlRpcFaultException(123,
@@ -253,12 +220,6 @@ namespace Ldtpd
         public int DeleteText(String windowName,
             String objName, int start, int end = -1)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
             if (start < 0 || end != -1 && (start > end || end < start))
             {
                 throw new XmlRpcFaultException(123,
@@ -282,12 +243,6 @@ namespace Ldtpd
         public int GetCharCount(String windowName,
             String objName)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
             string existingText = GetTextValue(windowName,
                 objName);
             return existingText.Length;
@@ -295,9 +250,7 @@ namespace Ldtpd
         public int InsertText(String windowName,
             String objName, int postion, string value)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName) ||
-                String.IsNullOrEmpty(value))
+            if (String.IsNullOrEmpty(value))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
@@ -320,27 +273,11 @@ namespace Ldtpd
         }
         public int IsTextStateEnabled(String windowName, String objName)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                return 0;
-            }
-            AutomationElement windowHandle, childHandle;
+            AutomationElement childHandle;
             try
             {
-                windowHandle = utils.GetWindowHandle(windowName);
-                if (windowHandle == null)
-                {
-                    return 0;
-                }
-                ControlType[] type = new ControlType[1] { ControlType.Edit };
-                childHandle = utils.GetObjectHandle(windowHandle,
-                    objName, type, false);
-                windowHandle = null;
-                if (childHandle == null)
-                {
-                    return 0;
-                }
+                childHandle = GetObjectHandle(windowName,
+                    objName);
                 if (utils.IsEnabled(childHandle, false))
                 {
                     return 1;
@@ -352,19 +289,13 @@ namespace Ldtpd
             }
             finally
             {
-                childHandle = windowHandle = null;
+                childHandle = null;
             }
             return 0;
         }
         public int PasteText(String windowName,
             String objName, int postion)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
             string existingText = GetTextValue(windowName,
                 objName);
             if (postion < 0)
@@ -386,9 +317,7 @@ namespace Ldtpd
         public int VerifySetText(String windowName,
             String objName, string value)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName) ||
-                String.IsNullOrEmpty(value))
+            if (String.IsNullOrEmpty(value))
                 return 0;
             try
             {
@@ -406,9 +335,7 @@ namespace Ldtpd
         public int VerifyPartialText(String windowName,
             String objName, string value)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName) ||
-                String.IsNullOrEmpty(value))
+            if (String.IsNullOrEmpty(value))
                 return 0;
             try
             {

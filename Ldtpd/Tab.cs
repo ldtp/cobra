@@ -1,29 +1,29 @@
 ﻿/*
-WinLDTP 1.0
-
-@author: Nagappan Alagappan <nalagappan@vmware.com>
-@copyright: Copyright (c) 2011-12 VMware Inc.,
-@license: MIT license
-
-http://ldtp.freedesktop.org
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+ * WinLDTP 1.0
+ * 
+ * Author: Nagappan Alagappan <nalagappan@vmware.com>
+ * Copyright: Copyright (c) 2011-12 VMware, Inc. All Rights Reserved.
+ * License: MIT license
+ * 
+ * http://ldtp.freedesktop.org
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
 */
 using System;
 using System.Windows;
@@ -45,32 +45,30 @@ namespace Ldtpd
         {
             utils.LogMessage(o);
         }
+        private AutomationElement GetObjectHandle(string windowName,
+            string objName)
+        {
+            ControlType[] type = new ControlType[1] { ControlType.Tab };
+            try
+            {
+                return utils.GetObjectHandle(windowName, objName, type);
+            }
+            finally
+            {
+                type = null;
+            }
+        }
         public int SelectTab(String windowName,
             String objName, String tabName)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName) ||
-                String.IsNullOrEmpty(tabName))
+            if (String.IsNullOrEmpty(tabName))
             {
                 throw new XmlRpcFaultException(123,
                     "Argument cannot be empty.");
             }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[1] { ControlType.Tab };
             AutomationElement elementItem;
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
             if (!utils.IsEnabled(childHandle))
             {
                 childHandle = null;
@@ -132,27 +130,8 @@ namespace Ldtpd
         public int SelectTabIndex(String windowName,
             String objName, int index)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[1] { ControlType.Tab };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
             if (!utils.IsEnabled(childHandle))
             {
                 childHandle = null;
@@ -235,27 +214,8 @@ namespace Ldtpd
         public String GetTabName(String windowName,
             String objName, int index)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[1] { ControlType.Tab };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
             if (!utils.IsEnabled(childHandle))
             {
                 childHandle = null;
@@ -302,27 +262,8 @@ namespace Ldtpd
         }
         public int GetTabCount(String windowName, String objName)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[1] { ControlType.Tab };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
             if (!utils.IsEnabled(childHandle))
             {
                 childHandle = null;
@@ -353,38 +294,17 @@ namespace Ldtpd
         public int VerifyTabName(String windowName,
             String objName, String tabName)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName) ||
-                String.IsNullOrEmpty(tabName))
-            {
-                LogMessage("Argument cannot be empty.");
-                return 0;
-            }
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                LogMessage("Unable to find window: " + windowName);
-                return 0;
-            }
-            ControlType[] type = new ControlType[1] { ControlType.Tab };
-            AutomationElement childHandle = utils.GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                LogMessage("Unable to find Object: " + objName);
-                return 0;
-            }
-            if (!utils.IsEnabled(childHandle))
-            {
-                childHandle = null;
-                LogMessage("Object state is disabled");
-                return 0;
-            }
             Object pattern;
-            AutomationElement elementItem;
+            AutomationElement childHandle, elementItem;
             try
             {
+                childHandle = GetObjectHandle(windowName, objName);
+                if (!utils.IsEnabled(childHandle))
+                {
+                    childHandle = null;
+                    LogMessage("Object state is disabled");
+                    return 0;
+                }
                 childHandle.SetFocus();
                 elementItem = utils.GetObjectHandle(childHandle, tabName);
                 if (elementItem != null)
