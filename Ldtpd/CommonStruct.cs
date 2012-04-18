@@ -104,7 +104,8 @@ namespace Ldtpd
             else if (type == ControlType.ToolBar)
                 return new CurrentObjInfo("tbar", tbar++);
             else if (type == ControlType.Tree)
-                return new CurrentObjInfo("tree", tree++);
+                // For Linux compatibility
+                return new CurrentObjInfo("ttbl", tree++);
             else if (type == ControlType.TreeItem)
                 // For Linux compatibility
                 return new CurrentObjInfo("tblc", tblc++);
