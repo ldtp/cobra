@@ -645,111 +645,207 @@ namespace Ldtpd
             }
         }
         [XmlRpcMethod("setvalue",
-            Description = "Type string sequence.")]
+            Description = "Set value.")]
         public int SetValue(String windowName,
             String objName, double value)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[2] { ControlType.Slider,
-                ControlType.Spinner };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find Object: " + objName);
-            }
-            object valuePattern = null;
+            Value v = new Value(this);
             try
             {
-                if (!IsEnabled(childHandle))
-                {
-                    throw new XmlRpcFaultException(123,
-                        "Object state is disabled");
-                }
-                if (childHandle.TryGetCurrentPattern(RangeValuePattern.Pattern,
-                    out valuePattern))
-                {
-                    ((RangeValuePattern)valuePattern).SetValue(value);
-                    return 1;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return v.SetValue(windowName, objName, value);
             }
             finally
             {
-                childHandle = null;
-                valuePattern = null;
+                v = null;
             }
-            throw new XmlRpcFaultException(123, "Unable to set value");
         }
-        [XmlRpcMethod("getvalue", Description = "Get object value")]
+        [XmlRpcMethod("getvalue", Description = "Get value")]
         public double GetValue(String windowName, String objName)
         {
-            if (String.IsNullOrEmpty(windowName) ||
-                String.IsNullOrEmpty(objName))
-            {
-                throw new XmlRpcFaultException(123,
-                    "Argument cannot be empty.");
-            }
-            AutomationElement windowHandle = GetWindowHandle(windowName);
-            if (windowHandle == null)
-            {
-                throw new XmlRpcFaultException(123,
-                    "Unable to find window: " + windowName);
-            }
-            ControlType[] type = new ControlType[2] { ControlType.Slider,
-                ControlType.Spinner };
-            AutomationElement childHandle = GetObjectHandle(windowHandle,
-                objName, type, true);
-            windowHandle = null;
-            if (childHandle == null)
-            {
-                throw new XmlRpcFaultException(123, "Unable to find Object: " + objName);
-            }
-            Object pattern = null;
+            Value v = new Value(this);
             try
             {
-                if (childHandle.TryGetCurrentPattern(RangeValuePattern.Pattern,
-                    out pattern))
-                {
-                    return ((RangeValuePattern)pattern).Current.Value;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-                if (ex is XmlRpcFaultException)
-                    throw;
-                else
-                    throw new XmlRpcFaultException(123,
-                        "Unhandled exception: " + ex.Message);
+                return v.GetValue(windowName, objName);
             }
             finally
             {
-                pattern = null;
-                childHandle = null;
+                v = null;
             }
-            throw new XmlRpcFaultException(123, "Unable to get value");
+        }
+        [XmlRpcMethod("getslidervalue", Description = "Get value")]
+        public double GetSliderValue(String windowName, String objName)
+        {
+            Value v = new Value(this);
+            try
+            {
+                return v.GetValue(windowName, objName);
+            }
+            finally
+            {
+                v = null;
+            }
+        }
+        [XmlRpcMethod("getminvalue", Description = "Get min value")]
+        public double GetMinValue(String windowName, String objName)
+        {
+            Value v = new Value(this);
+            try
+            {
+                return v.GetMinValue(windowName, objName);
+            }
+            finally
+            {
+                v = null;
+            }
+        }
+        [XmlRpcMethod("getmaxvalue", Description = "Get max value")]
+        public double GetMaxValue(String windowName, String objName)
+        {
+            Value v = new Value(this);
+            try
+            {
+                return v.GetMaxValue(windowName, objName);
+            }
+            finally
+            {
+                v = null;
+            }
+        }
+        [XmlRpcMethod("getmin", Description = "Get min value")]
+        public double GetMin(String windowName, String objName)
+        {
+            Value v = new Value(this);
+            try
+            {
+                return v.GetMinValue(windowName, objName);
+            }
+            finally
+            {
+                v = null;
+            }
+        }
+        [XmlRpcMethod("getmax", Description = "Get max value")]
+        public double GetMax(String windowName, String objName)
+        {
+            Value v = new Value(this);
+            try
+            {
+                return v.GetMaxValue(windowName, objName);
+            }
+            finally
+            {
+                v = null;
+            }
+        }
+        [XmlRpcMethod("getminincrement", Description = "Get min increment value")]
+        public double GetMinIncrement(String windowName, String objName)
+        {
+            Value v = new Value(this);
+            try
+            {
+                return v.GetMinIncrement(windowName, objName);
+            }
+            finally
+            {
+                v = null;
+            }
+        }
+        [XmlRpcMethod("increase",
+            Description = "Increment value by number of iterations")]
+        public int Increase(String windowName, String objName, int iterations)
+        {
+            Value v = new Value(this);
+            try
+            {
+                return v.Increase(windowName, objName, iterations);
+            }
+            finally
+            {
+                v = null;
+            }
+        }
+        [XmlRpcMethod("decrease",
+            Description = "Decrement value by number of iterations")]
+        public int Decrease(String windowName, String objName, int iterations)
+        {
+            Value v = new Value(this);
+            try
+            {
+                return v.Decrease(windowName, objName, iterations);
+            }
+            finally
+            {
+                v = null;
+            }
+        }
+        [XmlRpcMethod("setmin", Description = "Set min value")]
+        public int SetMin(String windowName, String objName)
+        {
+            Value v = new Value(this);
+            try
+            {
+                return v.SetMin(windowName, objName);
+            }
+            finally
+            {
+                v = null;
+            }
+        }
+        [XmlRpcMethod("setmax", Description = "Set max value")]
+        public int SetMax(String windowName, String objName)
+        {
+            Value v = new Value(this);
+            try
+            {
+                return v.SetMax(windowName, objName);
+            }
+            finally
+            {
+                v = null;
+            }
+        }
+        [XmlRpcMethod("verifysetvalue",
+            Description = "Verify that the set value is correct.")]
+        public int VerifySetValue(String windowName,
+            String objName, double value)
+        {
+            Value v = new Value(this);
+            try
+            {
+                return v.VerifySetValue(windowName, objName, value);
+            }
+            finally
+            {
+                v = null;
+            }
+        }
+        [XmlRpcMethod("verifysliderhorizontal",
+            Description = "Verify slider is horizontal.")]
+        public int VerifySliderHorizontal(String windowName,String objName)
+        {
+            Value v = new Value(this);
+            try
+            {
+                return v.VerifySliderHorizontal(windowName, objName);
+            }
+            finally
+            {
+                v = null;
+            }
+        }
+        [XmlRpcMethod("verifyslidervertical",
+            Description = "Verify slider is vertical.")]
+        public int VerifySliderVertical(String windowName, String objName)
+        {
+            Value v = new Value(this);
+            try
+            {
+                return v.VerifySliderVertical(windowName, objName);
+            }
+            finally
+            {
+                v = null;
+            }
         }
         [XmlRpcMethod("check", Description = "Check radio button / checkbox")]
         public int Check(String windowName, String objName)
