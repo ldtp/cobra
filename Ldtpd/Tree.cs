@@ -113,6 +113,7 @@ namespace Ldtpd
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
             Object pattern;
+            ControlType[] type;
             AutomationElement elementItem;
             AutomationElement childHandle = GetObjectHandle(windowName,
                 objName);
@@ -127,8 +128,10 @@ namespace Ldtpd
                 childHandle.SetFocus();
                 if (partialMatch)
                     text += "*";
+                type = new ControlType[2] { ControlType.TreeItem,
+                    ControlType.ListItem };
                 elementItem = utils.GetObjectHandle(childHandle,
-                    text);
+                    text, type, true);
                 if (elementItem != null)
                 {
                     elementItem.SetFocus();
@@ -170,6 +173,7 @@ namespace Ldtpd
             }
             finally
             {
+                type = null;
                 pattern = null;
                 elementItem = childHandle = null;
             }
@@ -194,11 +198,16 @@ namespace Ldtpd
                 throw new XmlRpcFaultException(123,
                     "Object state is disabled");
             }
+            Condition prop1 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.ListItem);
+            Condition prop2 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.TreeItem);
+            Condition condition = new OrCondition(prop1, prop2);
             try
             {
                 childHandle.SetFocus();
                 AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
-                    Condition.TrueCondition);
+                    condition);
                 try
                 {
                     element = c[index];
@@ -259,6 +268,7 @@ namespace Ldtpd
             {
                 pattern = null;
                 element = childHandle = null;
+                prop1 = prop2 = condition = null;
             }
             throw new XmlRpcFaultException(123, "Unable to select item.");
         }
@@ -275,11 +285,16 @@ namespace Ldtpd
                 throw new XmlRpcFaultException(123,
                     "Object state is disabled");
             }
+            Condition prop1 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.ListItem);
+            Condition prop2 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.TreeItem);
+            Condition condition = new OrCondition(prop1, prop2);
             try
             {
                 childHandle.SetFocus();
                 AutomationElementCollection c = childHandle.FindAll(TreeScope.Children,
-                    Condition.TrueCondition);
+                    condition);
                 try
                 {
                     element = c[index];
@@ -301,6 +316,7 @@ namespace Ldtpd
                 {
                     c = null;
                     childHandle = null;
+                    prop1 = prop2 = condition = null;
                 }
                 if (element != null)
                 {
@@ -348,11 +364,16 @@ namespace Ldtpd
                     "Object state is disabled");
             }
             AutomationElement element = null;
+            Condition prop1 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.ListItem);
+            Condition prop2 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.TreeItem);
+            Condition condition = new OrCondition(prop1, prop2);
             try
             {
                 childHandle.SetFocus();
                 AutomationElementCollection c = childHandle.FindAll(
-                    TreeScope.Children, Condition.TrueCondition);
+                    TreeScope.Children, condition);
                 element = c[index];
                 c = null;
                 if (element != null)
@@ -377,6 +398,7 @@ namespace Ldtpd
             finally
             {
                 element = childHandle = null;
+                prop1 = prop2 = condition = null;
             }
             throw new XmlRpcFaultException(123,
                 "Unable to get item value.");
