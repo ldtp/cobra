@@ -1,4 +1,5 @@
 Windows version of Linux Desktop Testing Project (WinLDTP) - http://ldtp.freedesktop.org
+LDTP is a GUI test automation tool works on both Windows and Linux platform
 
 Verified with Windows XP SP3 / Windows 7 SP1
 
