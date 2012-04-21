@@ -55,12 +55,12 @@ namespace Ldtpd
     }
     public struct ObjInfo
     {
-        public int cbo, txt, btn, rbtn, chk, mnu;
+        public int cbo, txt, btn, rbtn, chk, mnu, pane;
         public int lbl, slider, ukn, lst, frm, header, headeritem, dlg;
         public int tab, tabitem, tbar, tree, tblc, tbl;
         public ObjInfo(bool dummyValue)
         {
-            cbo = txt = btn = rbtn = chk = mnu = 0;
+            cbo = txt = btn = rbtn = chk = mnu = pane = 0;
             lbl = slider = ukn = lst = frm = header = headeritem = 0;
             tab = tabitem = tbar = tree = tblc = tbl = dlg = 0;
         }
@@ -118,6 +118,8 @@ namespace Ldtpd
             else if (type == ControlType.Table)
                 // For Linux compatibility
                 return new CurrentObjInfo("tbl", tbl++);
+            else if (type == ControlType.Pane)
+                return new CurrentObjInfo("pane", pane++);
             return new CurrentObjInfo("ukn", ukn++);
         }
     }

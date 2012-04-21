@@ -194,7 +194,10 @@ namespace Ldtpd
                     s = element.Current.Name;
                     LogMessage("Window name: " + s);
                     currObjInfo = objInfo.GetObjectType(element);
-                    actualString = currObjInfo.objType + s;
+                    if (s == null || s == "")
+                        actualString = currObjInfo.objType + currObjInfo.objCount;
+                    else
+                        actualString = currObjInfo.objType + s;
                     index = 1;
                     while (true)
                     {
