@@ -410,7 +410,7 @@ if _ldtp_windows_env:
     def startprocessmonitor(process_name, interval = 2):
         return _remote_startprocessmonitor(process_name, interval)
     def generatemouseevent(x, y, eventType = 'b1p'):
-        return _remote_startprocessmonitor(x, y, eventType)
+        return _remote_generatemouseevent(x, y, eventType)
 ### WINDOWS
 
 def onwindowcreate(window_name, fn_name, *args):
