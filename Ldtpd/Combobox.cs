@@ -95,10 +95,17 @@ namespace Ldtpd
                         }
                         return status;
                     }
+                    if (elementItem.TryGetCurrentPattern(ScrollItemPattern.Pattern,
+                        out pattern))
+                    {
+                        LogMessage("ScrollItemPattern");
+                        ((ScrollItemPattern)pattern).ScrollIntoView();
+                    }
                     if (elementItem.TryGetCurrentPattern(SelectionItemPattern.Pattern,
                         out pattern))
                     {
                         LogMessage("SelectionItemPattern");
+                        elementItem.SetFocus();
                         //((SelectionItemPattern)pattern).Select();
                         // NOTE: Work around, as the above doesn't seem to work
                         // with UIAComWrapper and UIAComWrapper is required
