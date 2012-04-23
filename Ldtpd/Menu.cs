@@ -82,7 +82,8 @@ namespace Ldtpd
             AutomationElementCollection c = null;
             ControlType[] type = new ControlType[3] { ControlType.Menu,
                 ControlType.MenuBar, ControlType.MenuItem };
-            ControlType[] controlType = new ControlType[1] { ControlType.Menu };
+            ControlType[] controlType = new ControlType[3] { ControlType.Menu,
+                ControlType.MenuItem, ControlType.MenuBar };
             bool bContextNavigated = false;
             AutomationElement windowHandle, childHandle;
             AutomationElement prevObjHandle = null, firstObjHandle = null;
@@ -123,8 +124,9 @@ namespace Ldtpd
                     {
                         currObjName = objName;
                     }
-                    LogMessage("childHandle: " + childHandle.Current.Name + " : " + currObjName + " : " +
-                            childHandle.Current.ControlType.ProgrammaticName);
+                    LogMessage("childHandle: " + childHandle.Current.Name +
+                        " : " + currObjName + " : " +
+                        childHandle.Current.ControlType.ProgrammaticName);
                     childHandle = utils.GetObjectHandle(childHandle,
                         currObjName, type, false);
                     if (childHandle == null)
@@ -149,7 +151,8 @@ namespace Ldtpd
                     }
                     if ((actionType == "Select" || actionType == "SubMenu" ||
                         actionType == "Check" || actionType == "UnCheck" ||
-                        actionType == "VerifyCheck") && !utils.IsEnabled(childHandle))
+                        actionType == "VerifyCheck") &&
+                        !utils.IsEnabled(childHandle, false))
                     {
                         throw new XmlRpcFaultException(123,
                             "Object state is disabled");
@@ -161,9 +164,10 @@ namespace Ldtpd
                         if (actionType == "Select" || currObjName != objName ||
                              actionType == "SubMenu" || actionType == "VerifyCheck")
                         {
-                            LogMessage("Invoking menu item: " + currObjName + " : " + objName +
-                                " : " + childHandle.Current.ControlType.ProgrammaticName + " : "
-                                + childHandle.Current.Name);
+                            LogMessage("Invoking menu item: " + currObjName +
+                                " : " + objName + " : " +
+                                childHandle.Current.ControlType.ProgrammaticName +
+                                " : " + childHandle.Current.Name);
                             childHandle.SetFocus();
                             if (!(actionType == "VerifyCheck" && currObjName == objName))
                             {
