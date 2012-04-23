@@ -505,7 +505,16 @@ namespace Ldtpd
                     throw new XmlRpcFaultException(123,
                         "Object state is disabled");
                 }
-                childHandle.SetFocus();
+                try
+                {
+                    childHandle.SetFocus();
+                }
+                catch (Exception ex)
+                {
+                    // Have noticed exception with
+                    // maximize / minimize button
+                    LogMessage(ex);
+                }
                 if (childHandle.Current.ControlType == ControlType.Pane)
                 {
                     // NOTE: Work around, as the pane doesn't seem to work
@@ -530,7 +539,17 @@ namespace Ldtpd
                     }
                     else
                     {
-                        ((InvokePattern)pattern).Invoke();
+                        try
+                        {
+                            ((InvokePattern)pattern).Invoke();
+                        }
+                        catch (Exception ex)
+                        {
+                            LogMessage(ex);
+                            // Have noticed exception with
+                            // maximize / minimize button
+                            utils.InternalClick(childHandle);
+                        }
                     }
                     return 1;
                 }
