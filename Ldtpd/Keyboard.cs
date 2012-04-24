@@ -95,6 +95,10 @@ namespace Ldtpd
                         return new KeyInfo(System.Windows.Input.Key.OemComma, true);
                     case ">":
                         return new KeyInfo(System.Windows.Input.Key.OemPeriod, true);
+                    case ",":
+                        return new KeyInfo(System.Windows.Input.Key.OemComma, false);
+                    case ".":
+                        return new KeyInfo(System.Windows.Input.Key.OemPeriod, false);
                     case "'":
                         return new KeyInfo(System.Windows.Input.Key.OemQuotes, false);
                     case "\"":
@@ -121,8 +125,28 @@ namespace Ldtpd
                         return new KeyInfo(System.Windows.Input.Key.D0, true);
                     case "_":
                         return new KeyInfo(System.Windows.Input.Key.Subtract, true);
+                    case "-":
+                        return new KeyInfo(System.Windows.Input.Key.Subtract, false);
                     case "+":
                         return new KeyInfo(System.Windows.Input.Key.Add, true);
+                    case "=":
+                        return new KeyInfo(System.Windows.Input.Key.Add, false);
+                    case "?":
+                        return new KeyInfo(System.Windows.Input.Key.OemQuestion, true);
+                    case "/":
+                        return new KeyInfo(System.Windows.Input.Key.OemQuestion, false);
+                    case "|":
+                        return new KeyInfo(System.Windows.Input.Key.OemPipe, true);
+                    case "\\":
+                        return new KeyInfo(System.Windows.Input.Key.OemPipe, false);
+                    case "{":
+                        return new KeyInfo(System.Windows.Input.Key.OemOpenBrackets, true);
+                    case "[":
+                        return new KeyInfo(System.Windows.Input.Key.OemOpenBrackets, false);
+                    case "}":
+                        return new KeyInfo(System.Windows.Input.Key.OemCloseBrackets, true);
+                    case "]":
+                        return new KeyInfo(System.Windows.Input.Key.OemCloseBrackets, false);
                     default:
                         bool shift = key.Length == 1 ?
                             Regex.Match(key, @"[A-Z]", RegexOptions.None).Success : false;
