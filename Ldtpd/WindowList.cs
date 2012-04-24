@@ -154,7 +154,8 @@ namespace Ldtpd
                 }
             }
         }
-        private bool DoesWindowNameMatched(AutomationElement e, string windowName)
+        private bool DoesWindowNameMatched(AutomationElement e,
+            string windowName)
         {
             if (e == null || String.IsNullOrEmpty(windowName))
                 return false;
@@ -194,7 +195,7 @@ namespace Ldtpd
                 if (e.EventId == WindowPattern.WindowOpenedEvent)
                 {
                     if (element != null &&
-                        String.IsNullOrEmpty(element.Current.Name))
+                        !String.IsNullOrEmpty(element.Current.Name))
                     {
                         // Add window handle that have name !
                         int[] rid = element.GetRuntimeId();
