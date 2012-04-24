@@ -182,7 +182,7 @@ namespace Ldtpd
         public int EnterString(string windowName, string objName = null,
             string data = null)
         {
-            if (String.IsNullOrEmpty(objName))
+            if (!String.IsNullOrEmpty(objName))
             {
                 AutomationElement windowHandle = utils.GetWindowHandle(windowName);
                 if (windowHandle != null)
