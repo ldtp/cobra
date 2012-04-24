@@ -105,7 +105,6 @@ namespace Ldtpd
                         out pattern))
                     {
                         LogMessage("SelectionItemPattern");
-                        elementItem.SetFocus();
                         //((SelectionItemPattern)pattern).Select();
                         // NOTE: Work around, as the above doesn't seem to work
                         // with UIAComWrapper and UIAComWrapper is required
