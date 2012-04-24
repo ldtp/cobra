@@ -135,8 +135,8 @@ namespace Ldtpd
             ArrayList objectList = new ArrayList();
             // Trying to mimic python fnmatch.translate
             String tmp = Regex.Replace(windowName, @"\*", @".*");
-            tmp = Regex.Replace(tmp, " ", "");
             tmp = Regex.Replace(tmp, @"\\", @"\\");
+            tmp = Regex.Replace(tmp, " ", "");
             //tmp += @"\Z(?ms)";
             Regex rx = new Regex(tmp, RegexOptions.Compiled |
                 RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline |
@@ -541,9 +541,9 @@ namespace Ldtpd
             // Trying to mimic python fnmatch.translate
             String tmp = Regex.Replace(objName, @"\*", @".*");
             tmp = Regex.Replace(tmp, " ", "");
+            tmp = Regex.Replace(tmp, @"\\", @"\\");
             tmp = Regex.Replace(tmp, @"\(", @"\(");
             tmp = Regex.Replace(tmp, @"\)", @"\)");
-            tmp = Regex.Replace(tmp, @"\\", @"\\");
             // This fails for some reason, commenting out for now
             //tmp += @"\Z(?ms)";
             Regex rx = new Regex(tmp, RegexOptions.Compiled |
