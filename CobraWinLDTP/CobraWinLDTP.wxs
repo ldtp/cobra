@@ -46,15 +46,15 @@ SOFTWARE.
 
    <Product Id='*'
             UpgradeCode='$(var.UpgradeCode)'
-            Name='WinLDTP 1.0'
+            Name='CobraWinLDTP'
             Language='1033'
             Codepage='1252'
             Version='$(var.Version)'
-            Manufacturer='VMware, Inc.'>
+	    Manufacturer='VMware, Inc. (http://ldtp.freedesktop.org)'>
 
       <Package Id='*'
-               Description='Windows LDTP 1.0 Installer'
-               Comments='Windows LDTP is Free Software project.'
+               Description='Cobra Windows LDTP 1.0 Installer'
+               Comments='Cobra Windows LDTP is Free Software project.'
                Manufacturer='VMware, Inc.'
                InstallerVersion='200'
                Languages='1033'
@@ -66,13 +66,13 @@ SOFTWARE.
       <Directory Id='TARGETDIR' Name='SourceDir'>
          <Directory Id='$(var.ProgramFilesFolder)'>
             <Directory Id='CompanyFolder' Name='VMware'>
-               <Directory Id='INSTALLDIR' Name='WinLDTP 1.0'>
+               <Directory Id='INSTALLDIR' Name='CobraWinLDTP'>
                   <Directory Id='PYLDTPDIR' Name='ldtp' />
                </Directory>
             </Directory>
          </Directory>
          <Directory Id="ProgramMenuFolder">
-            <Directory Id="ProgramMenuDir" Name="WinLDTP 1.0" />
+            <Directory Id="ProgramMenuDir" Name="CobraWinLDTP" />
          </Directory>
          <Directory Id="DesktopFolder" />
       </Directory>
@@ -83,31 +83,26 @@ SOFTWARE.
                     Win64="$(var.Is64bit)">
             <Environment Id='UpdatePath' Name='PATH' Action='set' Permanent='no' System='yes' Part='last' Value='[INSTALLDIR]' />
             <Environment Id='UpdatePythonPath' Name='PYTHONPATH' Action='set' Permanent='no' System='yes' Part='last' Value='[INSTALLDIR]' />
-            <File Id='WinLDTPEXE'
-                  Name='WinLdtpdService.exe'
+            <File Id='CobraWinLDTPEXE'
+                  Name='CobraWinLDTP.exe'
                   DiskId='1'
-                  Source='WinLdtpdService.exe'
+                  Source='CobraWinLDTP.exe'
                   KeyPath='yes'>
+            <!--
             <Shortcut Id="startmenuWinLDTPService"
                       Directory="ProgramMenuDir"
-                      Name="WinLDTPService 1.0"
+                      Name="Cobra WinLDTP Service"
                       WorkingDirectory='INSTALLDIR'
-                      Icon="WinLdtpdService.exe"
+                      Icon="CobraWinLDTP.exe"
                       IconIndex="0"
-                      Advertise="yes" />
+		      Advertise="no" />
+            -->
             <!-- This is considered BAD practice - should be a user option, defaulting to no -->
             <!-- FYI, look into 
                <ShortcutProperty Key="System.AppUserModel.PreventPinning" Value="0" />
                <ShortcutProperty Key="System.AppUserModel.ID" Value="[AppUserModelId]" />
               These would be child elements of Shortcut.
             -->
-            <Shortcut Id="desktopWinLDTP10"
-                      Directory="DesktopFolder"
-                      Name="WinLDTP 1.0"
-                      WorkingDirectory='INSTALLDIR'
-                      Icon="WinLdtpdService.exe"
-                      IconIndex="0"
-                      Advertise="yes" />
             </File>
          </Component>
          <Component Id='SetEnvironmentVariable'
@@ -259,7 +254,9 @@ SOFTWARE.
          DowngradeErrorMessage='A newer version is installed' />
 
       <!-- You may want to point to a .ico file instead - this will copy the exe for icon caching -->
-      <Icon Id="WinLdtpdService.exe" SourceFile="WinLdtpdService.exe" />
+      <!--
+      <Icon Id="CobraWinLDTP.exe" SourceFile="CobraWinLDTP.exe" />
+      -->
       <CustomAction Id="LaunchSetEnvironmentVariable"
                       Directory="INSTALLDIR"
                       ExeCommand='"[INSTALLDIR]SetEnvironmentVariable.exe"'

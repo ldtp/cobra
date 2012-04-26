@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{B184E50F-FAAD-4D3E-BC12-BEE4C9D80492}</ProjectGuid>
+    <ProjectGuid>{4DAD9BF6-6DCF-4B9F-913A-0CC80925CD3C}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WinLdtpdService</RootNamespace>
-    <AssemblyName>WinLdtpdService</AssemblyName>
+    <RootNamespace>CobraWinLDTP</RootNamespace>
+    <AssemblyName>CobraWinLDTP</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>

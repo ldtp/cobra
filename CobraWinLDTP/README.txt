@@ -1,3 +1,5 @@
+Cobra WinLDTP is based on Linux Desktop Testing Project - http://ldtp.freedesktop.org
+
 Verified with Windows XP SP3 / Windows 7 SP1
 
 Minimum requirement .NET3.5
@@ -18,8 +20,8 @@ LDTP packages are created with WiX installer - http://wix.tramontana.co.hu
 
 To create WinLDTP package (Credit: David Connet <dconnet@vmware.com>):
 If planing to build package, copy WinLdtpdService.exe to the folder where rest of DLL's exist
-"c:\Program Files (x86)\Windows Installer XML v3.5\bin\candle.exe" -pedantic WinLDTP.wxs
-"c:\Program Files (x86)\Windows Installer XML v3.5\bin\light.exe" -pedantic -spdb -sadv -dcl:high -ext WixUIExtension -ext WixUtilExtension -dWixUILicenseRtf=License.rtf -out WinLDTP.msi WinLDTP.wixobj
+"c:\Program Files (x86)\Windows Installer XML v3.5\bin\candle.exe" -pedantic CobraWinLDTP.wxs
+"c:\Program Files (x86)\Windows Installer XML v3.5\bin\light.exe" -pedantic -spdb -sadv -dcl:high -ext WixUIExtension -ext WixUtilExtension -dWixUILicenseRtf=License.rtf -out CobraWinLDTP.msi CobraWinLDTP.wixobj
 
 By default LDTP listens in localhost, to listen in all ports, set environment variable
  LDTP_LISTEN_ALL_INTERFACE and then run WinLdtpdService.exe as an user with
