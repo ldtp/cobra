@@ -136,7 +136,7 @@ namespace Ldtpd
             // Trying to mimic python fnmatch.translate
             String tmp = Regex.Replace(windowName, @"\*", @".*");
             tmp = Regex.Replace(tmp, @"\\", @"\\");
-            tmp = Regex.Replace(tmp, " ", "");
+            tmp = Regex.Replace(tmp, "( |\r|\n)", "");
             //tmp += @"\Z(?ms)";
             Regex rx = new Regex(tmp, RegexOptions.Compiled |
                 RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline |
@@ -152,7 +152,7 @@ namespace Ldtpd
                         currObjInfo = objInfo.GetObjectType(e);
                         s = e.Current.Name;
                         if (s != null)
-                            s = (new Regex(" ")).Replace(s, "");
+                            s = Regex.Replace(s, "( |\r|\n)", "");
                         if (s == null || s.Length == 0)
                         {
                             // txt0, txt1
@@ -257,7 +257,7 @@ namespace Ldtpd
                     currObjInfo = objInfo.GetObjectType(element);
                     s = element.Current.Name;
                     if (s != null)
-                        s = (new Regex(" ")).Replace(s, "");
+                        s = Regex.Replace(s, "( |\r|\n)", "");
                     if (s == null || s == "")
                     {
                         // txt0, txt1
@@ -326,7 +326,7 @@ namespace Ldtpd
                             currObjInfo = objInfo.GetObjectType(subChild);
                             s = subChild.Current.Name;
                             if (s != null)
-                                s = (new Regex(" ")).Replace(s, "");
+                                s = Regex.Replace(s, "( |\r|\n)", "");
                             if (s == null || s == "")
                             {
                                 // txt0, txt1
@@ -539,8 +539,8 @@ namespace Ldtpd
 
             InternalTreeWalker w = new InternalTreeWalker();
             // Trying to mimic python fnmatch.translate
-            String tmp = Regex.Replace(objName, @"\*", @".*");
-            tmp = Regex.Replace(tmp, " ", "");
+            String tmp = Regex.Replace(objName, @"\*", @".*") + "$";
+            tmp = Regex.Replace(tmp, @"( |:|\.|_|\r|\n)", "");
             tmp = Regex.Replace(tmp, @"\\", @"\\");
             tmp = Regex.Replace(tmp, @"\(", @"\(");
             tmp = Regex.Replace(tmp, @"\)", @"\)");
@@ -566,11 +566,26 @@ namespace Ldtpd
                         if (debug)
                             LogMessage("Obj name: " + s + " : " +
                                 element.Current.ControlType.ProgrammaticName);
+                        if (element.Current.ControlType == ControlType.MenuItem)
+                        { // Do this only for menuitem type
+                            // Split keyboard shortcut, as that might not be
+                            // part of user provided object name
+                            // Pattern anything has Ctrl+ || Function key
+                            string[] tmpStrArray = Regex.Split(s,
+                                @"(Ctrl\+|F\d)");
+                            LogMessage("Menuitem shortcut length: " +
+                                tmpStrArray.Length);
+                            if (tmpStrArray.Length > 1)
+                                // Keyboard shortcut found,
+                                // just take first element from array
+                                s = tmpStrArray[0];
+                            tmpStrArray = null;
+                        }
                     }
                     if (currObjInfo.objType != null)
                     {
                         if (s != null)
-                            s = (new Regex(" ")).Replace(s, "");
+                            s = Regex.Replace(s, @"( |\t|:|\.|_|\r|\n)", "");
                         if (s == null || s.Length == 0)
                         {
                             // txt0, txt1
@@ -581,6 +596,7 @@ namespace Ldtpd
                         {
                             // txtName, txtPassword
                             actualString = currObjInfo.objType + s;
+                            LogMessage("###" + actualString + "###");
                             index = 1;
                             while (true)
                             {
@@ -701,7 +717,7 @@ namespace Ldtpd
                     }
                     actualString = null;
                     if (s != null)
-                        s = (new Regex(" ")).Replace(s, "");
+                        s = Regex.Replace(s, " ", "");
                     if (s == null || s.Length == 0)
                     {
                         // txt0, txt1
