@@ -1,4 +1,4 @@
-Cobra WinLDTP is based on Linux Desktop Testing Project - http://ldtp.freedesktop.org
+Cobra - Windows version of Linux Desktop Testing Project - http://ldtp.freedesktop.org
 
 Verified with Windows XP SP3 / Windows 7 SP1
 
