@@ -539,11 +539,12 @@ namespace Ldtpd
 
             InternalTreeWalker w = new InternalTreeWalker();
             // Trying to mimic python fnmatch.translate
-            String tmp = Regex.Replace(objName, @"\*", @".*") + "$";
-            tmp = Regex.Replace(tmp, @"( |:|\.|_|\r|\n)", "");
+            String tmp = Regex.Replace(objName, @"( |:|\.|_|\r|\n|<|>)", "");
+            tmp = Regex.Replace(tmp, @"\*", @".*");
             tmp = Regex.Replace(tmp, @"\\", @"\\");
             tmp = Regex.Replace(tmp, @"\(", @"\(");
             tmp = Regex.Replace(tmp, @"\)", @"\)");
+            tmp = @"\A(?ms)" + tmp + @"\Z(?ms)";
             // This fails for some reason, commenting out for now
             //tmp += @"\Z(?ms)";
             Regex rx = new Regex(tmp, RegexOptions.Compiled |
@@ -570,9 +571,7 @@ namespace Ldtpd
                         { // Do this only for menuitem type
                             // Split keyboard shortcut, as that might not be
                             // part of user provided object name
-                            // Pattern anything has Ctrl+ || Function key
-                            string[] tmpStrArray = Regex.Split(s,
-                                @"(Ctrl\+|F\d)");
+                            string[] tmpStrArray = Regex.Split(s, @"\t");
                             LogMessage("Menuitem shortcut length: " +
                                 tmpStrArray.Length);
                             if (tmpStrArray.Length > 1)
@@ -585,7 +584,7 @@ namespace Ldtpd
                     if (currObjInfo.objType != null)
                     {
                         if (s != null)
-                            s = Regex.Replace(s, @"( |\t|:|\.|_|\r|\n)", "");
+                            s = Regex.Replace(s, @"( |\t|:|\.|_|\r|\n|<|>)", "");
                         if (s == null || s.Length == 0)
                         {
                             // txt0, txt1
@@ -596,7 +595,7 @@ namespace Ldtpd
                         {
                             // txtName, txtPassword
                             actualString = currObjInfo.objType + s;
-                            LogMessage("###" + actualString + "###");
+							LogMessage("###" + actualString + "###");
                             index = 1;
                             while (true)
                             {
