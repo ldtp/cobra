@@ -137,6 +137,7 @@ namespace Ldtpd
             String tmp = Regex.Replace(windowName, @"\*", @".*");
             tmp = Regex.Replace(tmp, @"\\", @"\\");
             tmp = Regex.Replace(tmp, "( |\r|\n)", "");
+            tmp = @"\A(?ms)" + tmp + @"\Z(?ms)";
             //tmp += @"\Z(?ms)";
             Regex rx = new Regex(tmp, RegexOptions.Compiled |
                 RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline |
@@ -688,7 +689,7 @@ namespace Ldtpd
             if (objName != null)
             {
                 tmp = Regex.Replace(objName, @"\*", @".*");
-                tmp = Regex.Replace(tmp, " ", "");
+                tmp = Regex.Replace(tmp, @"( |:|\.|_|\r|\n|<|>)", "");
                 tmp = Regex.Replace(tmp, @"\(", @"\(");
                 tmp = Regex.Replace(tmp, @"\)", @"\)");
                 //tmp += @"\Z(?ms)";
@@ -716,7 +717,7 @@ namespace Ldtpd
                     }
                     actualString = null;
                     if (s != null)
-                        s = Regex.Replace(s, " ", "");
+                        s = Regex.Replace(s, @"( |\t|:|\.|_|\r|\n|<|>)", "");
                     if (s == null || s.Length == 0)
                     {
                         // txt0, txt1
