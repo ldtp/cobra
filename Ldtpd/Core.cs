@@ -1123,6 +1123,20 @@ namespace Ldtpd
                 mouse = null;
             }
         }
+        [XmlRpcMethod("simulatemousemove",
+            Description = "Simulate mouse move.")]
+        public int SimulateMouseMove(int source_x, int source_y, int dest_x, int dest_y, double delay = 0.0)
+        {
+            Mouse mouse = new Mouse(this);
+            try
+            {
+                return mouse.SimulateMouseMove(source_x, source_y, dest_x, dest_y, delay);
+            }
+            finally
+            {
+                mouse = null;
+            }
+        }
         [XmlRpcMethod("launchapp", Description = "Launch application.")]
         public int LaunchApp(string cmd, string[] args, int delay = 5,
             int env = 1, string lang = null)
@@ -1214,6 +1228,19 @@ namespace Ldtpd
             try
             {
                 return generic.GetObjectSize(windowName, objName);
+            }
+            finally
+            {
+                generic = null;
+            }
+        }
+        [XmlRpcMethod("getwindowsize", Description = "Get window size.")]
+        public int[] GetWindowSize(String windowName)
+        {
+            Generic generic = new Generic(this);
+            try
+            {
+                return generic.GetWindowSize(windowName);
             }
             finally
             {

@@ -602,6 +602,29 @@ namespace Ldtpd
                 childHandle = null;
             }
         }
+        public int[] GetWindowSize(String windowName)
+        {
+            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
+            try
+            {
+                Rect rect = windowHandle.Current.BoundingRectangle;
+                return new int[] { (int)rect.X, (int)rect.Y,
+                (int)rect.Width, (int)rect.Height };
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                if (ex is XmlRpcFaultException)
+                    throw;
+                else
+                    throw new XmlRpcFaultException(123,
+                        "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                windowHandle = null;
+            }
+        }
         public string[] GetObjectInfo(String windowName, String objName)
         {
             if (String.IsNullOrEmpty(windowName) ||
