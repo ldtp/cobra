@@ -579,11 +579,10 @@ namespace Ldtpd
         }
         public int[] GetObjectSize(String windowName, String objName)
         {
-            AutomationElement childHandle = GetObjectHandle(windowName,
-                objName, null);
+            AutomationElement childHandle;
             try
             {
-                childHandle.SetFocus();
+                childHandle = utils.GetObjectHandle(windowName, objName);
                 Rect rect = childHandle.Current.BoundingRectangle;
                 return new int[] { (int)rect.X, (int)rect.Y,
                 (int)rect.Width, (int)rect.Height };
@@ -604,9 +603,15 @@ namespace Ldtpd
         }
         public int[] GetWindowSize(String windowName)
         {
-            AutomationElement windowHandle = utils.GetWindowHandle(windowName);
+            AutomationElement windowHandle;
             try
             {
+                windowHandle = utils.GetWindowHandle(windowName);
+                if (windowHandle == null)
+                {
+                    throw new XmlRpcFaultException(123,
+                        "Unable to find window: " + windowName);
+                }
                 Rect rect = windowHandle.Current.BoundingRectangle;
                 return new int[] { (int)rect.X, (int)rect.Y,
                 (int)rect.Width, (int)rect.Height };
