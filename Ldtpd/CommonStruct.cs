@@ -53,7 +53,7 @@ namespace Ldtpd
             this.nonPrintKey = nonPrintKey;
         }
     }
-    public struct ObjInfo
+    public class ObjInfo
     {
         public int cbo, txt, btn, rbtn, chk, mnu, pane;
         public int lbl, slider, ukn, lst, frm, header, headeritem, dlg;
