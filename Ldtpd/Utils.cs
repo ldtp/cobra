@@ -523,8 +523,10 @@ namespace Ldtpd
             }
             return childHandle;
         }
-        private AutomationElement InternalGetObjectHandle(AutomationElement childHandle,
-            String objName, ControlType[] type, ref ArrayList objectList)
+        private AutomationElement InternalGetObjectHandle(
+            AutomationElement childHandle, String objName,
+            ControlType[] type, ref ArrayList objectList,
+            ObjInfo objInfo = null)
         {
             if (childHandle == null)
             {
@@ -536,7 +538,8 @@ namespace Ldtpd
             AutomationElement element;
             CurrentObjInfo currObjInfo;
             String actualString = null;
-            ObjInfo objInfo = new ObjInfo(false);
+            if (objInfo == null)
+                objInfo = new ObjInfo(false);
 
             InternalTreeWalker w = new InternalTreeWalker();
             // Trying to mimic python fnmatch.translate
@@ -640,7 +643,7 @@ namespace Ldtpd
                     // If any subchild exist for the current element navigate to it
                     AutomationElement subChild = InternalGetObjectHandle(
                         w.walker.GetFirstChild(element),
-                        objName, type, ref objectList);
+                        objName, type, ref objectList, objInfo);
                     if (subChild != null)
                     {
                         // Object found, don't loop further
@@ -668,7 +671,7 @@ namespace Ldtpd
             ref ArrayList objectList, ref Hashtable objectHT,
             ref string matchedKey, bool needAll = false,
             string objName = null, string parentName = null,
-            ControlType type = null)
+            ControlType type = null, ObjInfo objInfo = null)
         {
             if (windowHandle == null)
             {
@@ -678,7 +681,8 @@ namespace Ldtpd
             int index;
             Regex rx = null;
             String s = null;
-            ObjInfo objInfo = new ObjInfo(false);
+            if (objInfo == null)
+                objInfo = new ObjInfo(false);
             String actualString = null;
             CurrentObjInfo currObjInfo;
             Hashtable propertyHT;
@@ -811,7 +815,7 @@ namespace Ldtpd
                     // If any subchild exist for the current element navigate to it
                     if (InternalGetObjectList(w.walker.GetFirstChild(element),
                         ref objectList, ref objectHT, ref matchedKey,
-                        needAll, objName, actualString))
+                        needAll, objName, actualString, type, objInfo))
                         return true;
                     element = w.walker.GetNextSibling(element);
                 }
