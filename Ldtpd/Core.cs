@@ -483,12 +483,13 @@ namespace Ldtpd
         }
         [XmlRpcMethod("gettextvalue",
             Description = "Get text value")]
-        public String GetTextValue(String windowName, String objName)
+        public String GetTextValue(String windowName, String objName,
+            int startPos = 0, int endPos = 0)
         {
             Text text = new Text(this);
             try
             {
-                return text.GetTextValue(windowName, objName);
+                return text.GetTextValue(windowName, objName, startPos, endPos);
             }
             finally
             {
@@ -1036,12 +1037,12 @@ namespace Ldtpd
         [XmlRpcMethod("getcellvalue",
             Description = "Get tree table cell value on the row index.")]
         public String GetCellValue(String windowName,
-            String objName, int index)
+            String objName, int row, int column = 0)
         {
             Tree tree = new Tree(this);
             try
             {
-                return tree.GetCellValue(windowName, objName, index);
+                return tree.GetCellValue(windowName, objName, row, column);
             }
             finally
             {
