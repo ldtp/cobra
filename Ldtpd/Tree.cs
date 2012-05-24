@@ -353,7 +353,7 @@ namespace Ldtpd
             throw new XmlRpcFaultException(123, "Unable to expand item.");
         }
         public String GetCellValue(String windowName,
-            String objName, int index)
+            String objName, int row, int column = 0)
         {
             AutomationElement childHandle = GetObjectHandle(windowName,
                 objName);
@@ -368,13 +368,17 @@ namespace Ldtpd
                 AutomationElement.ControlTypeProperty, ControlType.ListItem);
             Condition prop2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.TreeItem);
-            Condition condition = new OrCondition(prop1, prop2);
+            Condition condition1 = new OrCondition(prop1, prop2);
+            Condition condition2 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.Text);
             try
             {
                 childHandle.SetFocus();
                 AutomationElementCollection c = childHandle.FindAll(
-                    TreeScope.Children, condition);
-                element = c[index];
+                    TreeScope.Children, condition1);
+                element = c[row];
+                c = element.FindAll(TreeScope.Children, condition2);
+                element = c[column];
                 c = null;
                 if (element != null)
                     return element.Current.Name;
@@ -382,23 +386,23 @@ namespace Ldtpd
             catch (IndexOutOfRangeException)
             {
                 throw new XmlRpcFaultException(123,
-                    "Index out of range: " + index);
+                    "Index out of range: " + "(" + row + ", " + column + ")");
             }
             catch (ArgumentException)
             {
                 throw new XmlRpcFaultException(123,
-                    "Index out of range: " + index);
+                    "Index out of range: " + "(" + row + ", " + column + ")");
             }
             catch (Exception ex)
             {
                 LogMessage(ex);
                 throw new XmlRpcFaultException(123,
-                    "Index out of range: " + index);
+                    "Index out of range: " + "(" + row + ", " + column + ")");
             }
             finally
             {
                 element = childHandle = null;
-                prop1 = prop2 = condition = null;
+                prop1 = prop2 = condition1 = condition2 = null;
             }
             throw new XmlRpcFaultException(123,
                 "Unable to get item value.");
