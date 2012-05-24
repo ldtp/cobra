@@ -102,22 +102,24 @@ namespace Ldtpd
             }
             return 1;
         }
-        public String GetTextValue(String windowName, String objName)
+        public String GetTextValue(String windowName, String objName,
+            int startPos = 0, int endPos = 0)
         {
             AutomationElement childHandle = GetObjectHandle(windowName,
                 objName);
+            String data = null;
             Object pattern = null;
             try
             {
                 if (childHandle.TryGetCurrentPattern(ValuePattern.Pattern,
                     out pattern))
                 {
-                    return ((ValuePattern)pattern).Current.Value;
+                    data = ((ValuePattern)pattern).Current.Value;
                 }
                 else if (childHandle.TryGetCurrentPattern(TextPattern.Pattern,
                     out pattern))
                 {
-                    return ((TextPattern)pattern).DocumentRange.GetText(-1);
+                    data = ((TextPattern)pattern).DocumentRange.GetText(-1);
                 }
                 else if (childHandle.TryGetCurrentPattern(RangeValuePattern.Pattern,
                     out pattern))
@@ -129,6 +131,13 @@ namespace Ldtpd
                 {
                     throw new XmlRpcFaultException(123, "Unable to get text");
                 }
+                if (startPos < 0)
+                    startPos = 0;
+                if (startPos > data.Length)
+                    startPos = data.Length;
+                if (endPos == 0 || endPos < startPos || endPos > data.Length)
+                    endPos = data.Length;
+                return data.Substring(startPos, endPos - startPos);
             }
             catch (Exception ex)
             {
@@ -141,6 +150,7 @@ namespace Ldtpd
             }
             finally
             {
+                data = null;
                 pattern = null;
                 childHandle = null;
             }
