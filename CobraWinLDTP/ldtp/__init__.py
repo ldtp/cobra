@@ -411,6 +411,12 @@ if _ldtp_windows_env:
         return _remote_startprocessmonitor(process_name, interval)
     def generatemouseevent(x, y, eventType = 'b1p'):
         return _remote_generatemouseevent(x, y, eventType)
+    def simulatemousemove(source_x, source_y, dest_x, dest_y, delay = 0.0):
+        return _remote_simulatemousemove(source_x, source_y, dest_x, dest_y, delay)
+    def gettextvalue(window_name, object_name, startPosition = 0, endPosition = 0):
+        return _remote_gettextvalue(window_name, object_name, startPosition, endPosition)
+    def getcellvalue(window_name, object_name, row, column = 0):
+        return _remote_getcellvalue(window_name, object_name, row, column)
 ### WINDOWS
 
 def onwindowcreate(window_name, fn_name, *args):
