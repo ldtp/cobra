@@ -584,13 +584,15 @@ namespace Ldtpd
             if (InternalMenuHandler(windowName, objName,
                 ref menuList, "SubMenu") == 1)
             {
-                menuList = null;
                 return menuList.ToArray(typeof(string)) as string[];
             }
             else
             {
-                menuList = null;
                 throw new XmlRpcFaultException(123, "Unable to get sub menuitem.");
+            }
+            finally
+            {
+                menuList = null;
             }
         }
     }
