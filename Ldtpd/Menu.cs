@@ -78,7 +78,7 @@ namespace Ldtpd
             }
             String mainMenu = objName;
             String currObjName = null;
-            Object invokePattern = null;
+            Object pattern = null;
             AutomationElementCollection c = null;
             ControlType[] type = new ControlType[3] { ControlType.Menu,
                 ControlType.MenuBar, ControlType.MenuItem };
@@ -159,7 +159,8 @@ namespace Ldtpd
                     }
                     childHandle.SetFocus();
                     if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern,
-                        out invokePattern))
+                        out pattern) || childHandle.TryGetCurrentPattern(
+                        ExpandCollapsePattern.Pattern, out pattern))
                     {
                         if (actionType == "Select" || currObjName != objName ||
                              actionType == "SubMenu" || actionType == "VerifyCheck")
@@ -180,7 +181,7 @@ namespace Ldtpd
                                 // MoveToAndClick works for VMware Workstation
                                 // But not for Notepad (on first time)
                                 // Requires 2 clicks !
-                                //((InvokePattern)invokePattern).Invoke();
+                                //((InvokePattern)pattern).Invoke();
                                 utils.InternalWait(1);
                                 c = childHandle.FindAll(TreeScope.Children,
                                     Condition.TrueCondition);
@@ -424,6 +425,7 @@ namespace Ldtpd
             {
                 c = null;
                 w = null;
+                pattern = null;
                 windowHandle = childHandle = null;
                 prevObjHandle = firstObjHandle = null;
             }
