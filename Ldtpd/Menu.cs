@@ -581,14 +581,17 @@ namespace Ldtpd
         public String[] ListSubMenus(String windowName, String objName)
         {
             ArrayList menuList = new ArrayList();
-            if (InternalMenuHandler(windowName, objName,
-                ref menuList, "SubMenu") == 1)
+            try
             {
-                return menuList.ToArray(typeof(string)) as string[];
-            }
-            else
-            {
-                throw new XmlRpcFaultException(123, "Unable to get sub menuitem.");
+                if (InternalMenuHandler(windowName, objName,
+                    ref menuList, "SubMenu") == 1)
+                {
+                    return menuList.ToArray(typeof(string)) as string[];
+                }
+                else
+                {
+                    throw new XmlRpcFaultException(123, "Unable to get sub menuitem.");
+                }
             }
             finally
             {
