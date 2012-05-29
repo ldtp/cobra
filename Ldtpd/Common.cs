@@ -28,6 +28,7 @@
 using System;
 using System.Threading;
 using System.Collections;
+using System.Text.RegularExpressions;
 
 namespace Ldtpd
 {
@@ -78,6 +79,21 @@ namespace Ldtpd
                         Console.WriteLine(ex);
                 }
             }
+        }
+        public bool WildcardMatch(string stringToSearch, string searchPhrase)
+        {
+            if (searchPhrase.Contains("*") || searchPhrase.Contains("?"))
+            {
+                String tmp = Regex.Replace(searchPhrase, @"\*", @".*");
+                tmp = Regex.Replace(tmp, @"\?", @".");
+                tmp = @"\A(?ms)" + tmp + @"\Z(?ms)";
+                Regex rx = new Regex(tmp, RegexOptions.Compiled |
+                    RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline |
+                    RegexOptions.CultureInvariant);
+                return rx.IsMatch(stringToSearch);
+            }
+            else
+                return stringToSearch == searchPhrase;
         }
     }
 }
