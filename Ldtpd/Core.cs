@@ -989,6 +989,21 @@ namespace Ldtpd
                 tree = null;
             }
         }
+        [XmlRpcMethod("verifyselectrow",
+            Description = "Verify the given row in tree or list item is selected.")]
+        public int VerifySelectRow(String windowName, String objName,
+            String text, bool partialMatch = false)
+        {
+            Tree tree = new Tree(this);
+            try
+            {
+                return tree.VerifySelectRow(windowName, objName, text, partialMatch);
+            }
+            finally
+            {
+                tree = null;
+            }
+        }
         [XmlRpcMethod("selectrowpartialmatch",
             Description = "Select the given row partial match in tree or list item.")]
         public int SelectRowPartialMatch(String windowName, String objName,
@@ -1043,6 +1058,21 @@ namespace Ldtpd
             try
             {
                 return tree.GetCellValue(windowName, objName, row, column);
+            }
+            finally
+            {
+                tree = null;
+            }
+        }
+        [XmlRpcMethod("gettablerowindex",
+            Description = "Get the id of the row containing the given cell value")]
+        public int GetTableRowIndex(String windowName,
+            String objName, String cellValue)
+        {
+            Tree tree = new Tree(this);
+            try
+            {
+                return tree.GetTableRowIndex(windowName, objName, cellValue);
             }
             finally
             {
