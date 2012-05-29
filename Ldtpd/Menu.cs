@@ -1,4 +1,4 @@
-﻿/*
+/*
  * WinLDTP 1.0
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
@@ -66,6 +66,37 @@ namespace Ldtpd
             }
             else
                 LogMessage("Unable to get LegacyIAccessiblePattern");
+            return 0;
+        }
+        private int HandleSubMenu(AutomationElement childHandle,
+            AutomationElement firstObjHandle, ref ArrayList menuList)
+        {
+            string matchedKey = null;
+            Hashtable objectHT = new Hashtable();
+            try
+            {
+                menuList.Clear();
+                utils.InternalGetObjectList(childHandle, ref menuList,
+                    ref objectHT, ref matchedKey);
+                if (menuList.Count > 0)
+                {
+                    // Set it back to old state,
+                    // else the menu selection left there
+                    utils.InternalClick(firstObjHandle);
+                    // Don't process the last item
+                    return 1;
+                }
+                else
+                    LogMessage("menuList.Count <= 0: " + menuList.Count);
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+            }
+            finally
+            {
+                objectHT = null;
+            }
             return 0;
         }
         private int InternalMenuHandler(String windowName, String objName,
@@ -157,7 +188,15 @@ namespace Ldtpd
                         throw new XmlRpcFaultException(123,
                             "Object state is disabled");
                     }
-                    childHandle.SetFocus();
+                    try
+                    {	
+						// SetFocus() fails on Windows Explorer
+                        childHandle.SetFocus();
+                    }
+                    catch (Exception ex)
+                    {
+                        LogMessage(ex);
+                    }
                     if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern,
                         out pattern) || childHandle.TryGetCurrentPattern(
                         ExpandCollapsePattern.Pattern, out pattern))
@@ -169,7 +208,15 @@ namespace Ldtpd
                                 " : " + objName + " : " +
                                 childHandle.Current.ControlType.ProgrammaticName +
                                 " : " + childHandle.Current.Name);
-                            childHandle.SetFocus();
+                            try
+                            {
+								// SetFocus() fails on Windows Explorer
+                                childHandle.SetFocus();
+                            }
+                            catch (Exception ex)
+                            {
+                                LogMessage(ex);
+                            }
                             if (!(actionType == "VerifyCheck" && currObjName == objName))
                             {
                                 utils.InternalClick(childHandle);
@@ -260,23 +307,10 @@ namespace Ldtpd
                                     return 1;
                                 break;
                             case "SubMenu":
-                                string matchedKey = null;
-                                Hashtable objectHT = new Hashtable();
-                                menuList.Clear();
-                                utils.InternalGetObjectList(
-                                    w.walker.GetFirstChild(childHandle),
-                                    ref menuList, ref objectHT, ref matchedKey);
-                                objectHT = null;
-                                if (menuList.Count > 0)
-                                {
-                                    // Set it back to old state,
-                                    // else the menu selection left there
-                                    utils.InternalClick(firstObjHandle);
-                                    // Don't process the last item
+                                int status = HandleSubMenu(w.walker.GetFirstChild(childHandle),
+                                    firstObjHandle, ref menuList);
+                                if (status == 1)
                                     return 1;
-                                }
-                                else
-                                    LogMessage("menuList.Count <= 0: " + menuList.Count);
                                 break;
                             case "VerifyCheck":
                                 state = IsMenuChecked(childHandle);
@@ -314,28 +348,28 @@ namespace Ldtpd
                             switch (actionType)
                             {
                                 case "SubMenu":
-                                    string matchedKey = null;
-                                    Hashtable objectHT = new Hashtable();
-                                    menuList.Clear();
-                                    utils.InternalGetObjectList(
-                                        w.walker.GetFirstChild(childHandle),
-                                        ref menuList, ref objectHT, ref matchedKey);
-                                    if (menuList.Count > 0)
-                                    {
-                                        // Set it back to old state,
-                                        // else the menu selection left there
-                                        utils.InternalClick(firstObjHandle);
-                                        // Don't process the last item
+                                    int status = HandleSubMenu(w.walker.GetFirstChild(childHandle),
+                                        firstObjHandle, ref menuList);
+                                    if (status == 1)
                                         return 1;
-                                    }
-                                    else
-                                        LogMessage("menuList.Count <= 0: " + menuList.Count);
                                     break;
                             }
                         }
                     }
                     else if (c != null && c.Count > 0)
                     {
+                        if (currObjName == objName)
+                        {
+                            switch (actionType)
+                            {
+                                case "SubMenu":
+                                    int status = HandleSubMenu(w.walker.GetFirstChild(childHandle),
+                                        firstObjHandle, ref menuList);
+                                    if (status == 1)
+                                        return 1;
+                                    break;
+                            }
+                        }
                         LogMessage("c != null && c.Count > 0");
                         childHandle = windowHandle;
                         continue;
@@ -392,17 +426,11 @@ namespace Ldtpd
                         switch (actionType)
                         {
                             case "SubMenu":
-                                string matchedKey = null;
-                                Hashtable objectHT = new Hashtable();
-                                menuList.Clear();
-                                utils.InternalGetObjectList(w.walker.GetFirstChild(childHandle),
-                                    ref menuList, ref objectHT, ref matchedKey);
-                                // Set it back to old state,
-                                // else the menu selection left there
-                                utils.InternalClick(firstObjHandle);
-                                objectHT = null;
-                                // Don't process the last item
-                                return 1;
+                                int status = HandleSubMenu(w.walker.GetFirstChild(childHandle),
+                                    firstObjHandle, ref menuList);
+                                if (status == 1)
+                                    return 1;
+                                break;
                         }
                     }
                 }
