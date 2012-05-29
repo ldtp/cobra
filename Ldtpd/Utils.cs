@@ -135,6 +135,7 @@ namespace Ldtpd
             ArrayList objectList = new ArrayList();
             // Trying to mimic python fnmatch.translate
             String tmp = Regex.Replace(windowName, @"\*", @".*");
+            tmp = Regex.Replace(tmp, @"\?", @".");
             tmp = Regex.Replace(tmp, @"\\", @"\\");
             tmp = Regex.Replace(tmp, "( |\r|\n)", "");
             tmp = @"\A(?ms)" + tmp + @"\Z(?ms)";
@@ -545,6 +546,7 @@ namespace Ldtpd
             // Trying to mimic python fnmatch.translate
             String tmp = Regex.Replace(objName, @"( |:|\.|_|\r|\n|<|>)", "");
             tmp = Regex.Replace(tmp, @"\*", @".*");
+            tmp = Regex.Replace(tmp, @"\?", @".");
             tmp = Regex.Replace(tmp, @"\\", @"\\");
             tmp = Regex.Replace(tmp, @"\(", @"\(");
             tmp = Regex.Replace(tmp, @"\)", @"\)");
@@ -693,6 +695,7 @@ namespace Ldtpd
             if (objName != null)
             {
                 tmp = Regex.Replace(objName, @"\*", @".*");
+                tmp = Regex.Replace(tmp, @"\?", @".");
                 tmp = Regex.Replace(tmp, @"( |:|\.|_|\r|\n|<|>)", "");
                 tmp = Regex.Replace(tmp, @"\(", @"\(");
                 tmp = Regex.Replace(tmp, @"\)", @"\)");
