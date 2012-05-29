@@ -180,6 +180,65 @@ namespace Ldtpd
             throw new XmlRpcFaultException(123,
                 "Unable to find the item in list: " + text);
         }
+        public int VerifySelectRow(String windowName, String objName,
+            String text, bool partialMatch = false)
+        {
+            if (String.IsNullOrEmpty(text))
+            {
+                LogMessage("Argument cannot be empty.");
+                return 0;
+            }
+            Object pattern;
+            ControlType[] type;
+            AutomationElement elementItem;
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
+            if (!utils.IsEnabled(childHandle))
+            {
+                childHandle = null;
+                LogMessage("Object state is disabled");
+                return 0;
+            }
+            try
+            {
+                childHandle.SetFocus();
+                if (partialMatch)
+                    text += "*";
+                type = new ControlType[2] { ControlType.TreeItem,
+                    ControlType.ListItem };
+                elementItem = utils.GetObjectHandle(childHandle,
+                    text, type, true);
+                if (elementItem != null)
+                {
+                    elementItem.SetFocus();
+                    LogMessage(elementItem.Current.Name + " : " +
+                        elementItem.Current.ControlType.ProgrammaticName);
+                    if (elementItem.TryGetCurrentPattern(
+                        SelectionItemPattern.Pattern, out pattern))
+                    {
+                        LogMessage("SelectionItemPattern");
+                        if (((SelectionItemPattern)pattern).Current.IsSelected ==
+                                true)
+                        {
+                            LogMessage("Selected");
+                            return 1;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+            }
+            finally
+            {
+                type = null;
+                pattern = null;
+                elementItem = childHandle = null;
+            }
+            LogMessage("Unable to find the item in list: " + text);
+            return 0;
+        }
         public int SelectRowPartialMatch(String windowName, String objName,
             String text)
         {
@@ -406,6 +465,55 @@ namespace Ldtpd
             }
             throw new XmlRpcFaultException(123,
                 "Unable to get item value.");
+        }
+        public int GetTableRowIndex(String windowName,
+            String objName, String cellValue)
+        {
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
+            if (!utils.IsEnabled(childHandle))
+            {
+                childHandle = null;
+                throw new XmlRpcFaultException(123,
+                    "Object state is disabled");
+            }
+            AutomationElement element = null;
+            AutomationElementCollection c1, c2;
+            Condition prop1 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.ListItem);
+            Condition prop2 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.TreeItem);
+            Condition condition1 = new OrCondition(prop1, prop2);
+            Condition condition2 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.Text);
+            try
+            {
+                int count = GetRowCount(windowName, objName);
+                childHandle.SetFocus();
+                c1 = childHandle.FindAll(TreeScope.Children, condition1);
+                for (int i = 0; i < count; i++)
+                {
+                    c2 = c1[i].FindAll(TreeScope.Children, condition2);
+                    for (int j = 0; j < c2.Count; j++)
+                    {
+                        if (utils.common.WildcardMatch(c2[j].Current.Name,
+                            cellValue))
+                            return i;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+            }
+            finally
+            {
+                c1 = c2 = null;
+                element = childHandle = null;
+                prop1 = prop2 = condition1 = condition2 = null;
+            }
+            throw new XmlRpcFaultException(123,
+                    "Unable to get row index: " + cellValue);
         }
         public int GetRowCount(String windowName, String objName)
         {
