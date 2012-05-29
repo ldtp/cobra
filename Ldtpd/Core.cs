@@ -53,6 +53,11 @@ namespace Ldtpd
         {
             ps = new ProcessStats(common);
         }
+        [XmlRpcMethod("isalive", Description = "Client checks whether the server runs.")]
+        public bool IsAlive()
+        {
+            return true;
+        }
         [XmlRpcMethod("getlastlog", Description = "Get last log from the stack.")]
         public string GetLastLog()
         {
