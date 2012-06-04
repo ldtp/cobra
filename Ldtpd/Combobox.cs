@@ -207,13 +207,21 @@ namespace Ldtpd
                             case "GetAllItem":
                                 string matchedKey = null;
                                 Hashtable objectHT = new Hashtable();
+                                ArrayList tmpChildList = new ArrayList();
                                 InternalTreeWalker w = new InternalTreeWalker();
                                 utils.InternalGetObjectList(
                                     w.walker.GetFirstChild(childHandle),
-                                    ref childList, ref objectHT, ref matchedKey,
-                                    false, null, null, ControlType.ListItem);
+                                    ref tmpChildList, ref objectHT, ref matchedKey,
+                                    true, null, null, ControlType.ListItem);
+                                Hashtable propertyHT;
+                                foreach ( String key in objectHT.Keys )
+                                {
+                                    propertyHT = (Hashtable)objectHT[key];
+                                    childList.Add(propertyHT["label"]);
+                                }
                                 w = null;
-                                objectHT = null;
+                                tmpChildList = null;
+                                propertyHT = objectHT = null;
                                 if (childList.Count > 0)
                                 {
                                     // Don't process the last item
