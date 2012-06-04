@@ -213,6 +213,7 @@ namespace Ldtpd
                                     w.walker.GetFirstChild(childHandle),
                                     ref tmpChildList, ref objectHT, ref matchedKey,
                                     true, null, null, ControlType.ListItem);
+                                // For Linux compatibility
                                 Hashtable propertyHT;
                                 foreach ( String key in objectHT.Keys )
                                 {
