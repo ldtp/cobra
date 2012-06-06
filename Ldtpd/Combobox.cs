@@ -218,7 +218,11 @@ namespace Ldtpd
                                 foreach ( String key in objectHT.Keys )
                                 {
                                     propertyHT = (Hashtable)objectHT[key];
-                                    childList.Add(propertyHT["label"]);
+                                    string className = (string)propertyHT["class"];
+                                    if (className != null &&
+                                        className.Contains("list_item"))
+                                        // Add only list items
+                                        childList.Add(propertyHT["label"]);
                                 }
                                 w = null;
                                 tmpChildList = null;
