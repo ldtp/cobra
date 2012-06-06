@@ -1310,6 +1310,19 @@ namespace Ldtpd
                 generic = null;
             }
         }
+        [XmlRpcMethod("getobjectnameatcoords", Description = "Get object name at the mouse coordinates.")]
+        public string[] GetObjectNameAtCoords(double waitTime = 0.0)
+        {
+            Generic generic = new Generic(this);
+            try
+            {
+                return generic.GetObjectNameAtCoords(waitTime);
+            }
+            finally
+            {
+                generic = null;
+            }
+        }
         [XmlRpcMethod("getchild", Description = "Get child.")]
         public string[] GetChild(String windowName, String childName = null,
             string role = null, string parentName = null)
