@@ -48,9 +48,9 @@ namespace Ldtpd
         {
             this.debug = debug;
         }
-        public void Wait(int waitTime)
+        public void Wait(double waitTime)
         {
-            Thread.Sleep(waitTime * 1000);
+            Thread.Sleep((int)(waitTime * 1000));
             // Collect all generations of memory.
             GC.Collect();
         }
