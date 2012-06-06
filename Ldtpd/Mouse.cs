@@ -28,7 +28,6 @@
 using System;
 using ATGTestInput;
 using System.Windows;
-using System.Threading;
 using System.Collections;
 using CookComputing.XmlRpc;
 using System.Windows.Forms;
@@ -163,7 +162,7 @@ namespace Ldtpd
                     }
                 }
                 if (delay != 0.0)
-                    Thread.Sleep((int)(delay * 1000));
+					utils.InternalWait(delay);
                 // Start mouse move from source_x, source_y to dest_x, dest_y
                 GenerateMouseEvent(source_x, source_y, "abs");
                 if (source_x == dest_x && source_y == dest_y)
