@@ -55,14 +55,14 @@ namespace Ldtpd
             if (menuHandle.TryGetCurrentPattern(LegacyIAccessiblePattern.Pattern,
                                         out pattern))
             {
-                int ischecked;
-                uint currentstate = ((LegacyIAccessiblePattern)pattern).Current.State;
+                int isChecked;
+                uint state = ((LegacyIAccessiblePattern)pattern).Current.State;
                 // Use fifth bit of current state to determine menu item is checked or not checked
-                ischecked = (currentstate & 16) == 16 ? 1 : 0;
+                isChecked = (state & 16) == 16 ? 1 : 0;
                 LogMessage("IsMenuChecked: " + menuHandle.Current.Name + " : " + "Checked: " +
-                    ischecked + " : " + "Current State: " + currentstate);
+                    isChecked + " : " + "Current State: " + state);
                 pattern = null;
-                return ischecked;
+                return isChecked;
             }
             else
                 LogMessage("Unable to get LegacyIAccessiblePattern");
