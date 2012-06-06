@@ -61,10 +61,6 @@ namespace Ldtpd
         }
         public int SetTextValue(String windowName, String objName, String value)
         {
-            if (String.IsNullOrEmpty(value))
-            {
-                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
-            }
             AutomationElement childHandle = GetObjectHandle(windowName,
                 objName);
             if (!utils.IsEnabled(childHandle))
