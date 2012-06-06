@@ -792,6 +792,180 @@ namespace Ldtpd
             throw new XmlRpcFaultException(123, "Unable to find Object property: " +
                 property + " of object: " + objName);
         }
+        public string[] GetObjectNameAtCoords(double waitTime = 0.0)
+        {
+            ObjInfo objInfo = new ObjInfo(false);
+            CurrentObjInfo currObjInfo;
+            ArrayList objectList = new ArrayList();
+            String parentWindow = null;
+            String objectString = null;
+            System.Drawing.Point mouse;
+            AutomationElement aimElement, parentElement, firstElement;
+            InternalTreeWalker w = new InternalTreeWalker();
+			utils.InternalWait(waitTime);
+            try
+            {
+                mouse = System.Windows.Forms.Cursor.Position;
+                aimElement = AutomationElement.FromPoint(new System.Windows.
+                    Point(mouse.X, mouse.Y));
+                if (aimElement == null ||
+                    aimElement.Current.ClassName == "SysListView32" ||
+                    aimElement.Current.ClassName == "Shell_TrayWnd" ||
+                    aimElement.Current.ClassName == "MSTaskListWClass" ||
+                    aimElement.Current.ControlType == ControlType.Window ||
+                    aimElement.Current.ControlType == ControlType.TitleBar ||
+                    w.walker.GetParent(aimElement).Current.Name == "Context")
+                {
+                    // If mouse is directly on desktop, taskbar, window, titlebar
+                    // and context menu, no other controls, then return None
+                    return new string[] { "None", "None" };
+                }
+                parentElement = aimElement;
+                while (true)
+                {
+                    if (parentElement.Current.ControlType == ControlType.Window ||
+                        parentElement.Current.ClassName == "Progman" ||
+                        parentElement.Current.ClassName == "Shell_TrayWnd")
+                    {
+                        // Use window, desktop and taskbar as parent window
+                        break;
+                    }
+                    parentElement = w.walker.GetParent(parentElement);
+                }
+                currObjInfo = objInfo.GetObjectType(parentElement);
+                parentWindow = parentElement.Current.Name;
+                if (parentWindow != null)
+                    parentWindow = Regex.Replace(parentWindow, "( |\r|\n)", "");
+                if (parentWindow == null || parentWindow.Length == 0)
+                {
+                    // txt0, txt1
+                    parentWindow = currObjInfo.objType + currObjInfo.objCount;
+                }
+                else
+                {
+                    // txtName, txtPassword
+                    parentWindow = currObjInfo.objType + parentWindow;
+                }
+                firstElement = w.walker.GetFirstChild(parentElement);
+                if (firstElement == null)
+                {
+                    LogMessage("Can not get object on window");
+                    return new string[] { "None", "None" };
+                }
+                GetObjectName(firstElement, ref objectList, aimElement, ref objectString);
+                return new string[] { parentWindow, objectString };
+            }
+            catch (ElementNotAvailableException ex)
+            {
+                LogMessage("Exception: " + ex);
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+            }
+            finally
+            {
+                w = null;
+                objectList = null;
+            }
+            throw new XmlRpcFaultException(123, "Unable to get object name");
+        }
+        public bool GetObjectName(AutomationElement firstElement, ref ArrayList objectList,
+            AutomationElement aimElement, ref string actualString)
+        {
+            if (firstElement == null)
+            {
+                LogMessage("Invalid object handle");
+                return false;
+            }
+            CurrentObjInfo currObjInfo;
+            ObjInfo objInfo = new ObjInfo(false);
+            InternalTreeWalker w = new InternalTreeWalker();
+            int index;
+            string s = null;
+            AutomationElement childElement;
+            try
+            {
+                childElement = firstElement;
+                while (childElement != null)
+                {
+                    s = childElement.Current.Name;
+                    currObjInfo = objInfo.GetObjectType(childElement);
+                    if (s == null)
+                    {
+                        LogMessage("Current object Name is null");
+                    }
+                    else
+                    {
+                        s = s.ToString();
+                        if (true)
+                            LogMessage("Obj name: " + s + " : " +
+                                childElement.Current.ControlType.ProgrammaticName);
+                    }
+                    if (currObjInfo.objType != null)
+                    {
+                        if (s != null)
+                            s = Regex.Replace(s, @"( |\t|:|\.|_|\r|\n|<|>)", "");
+                        if (s == null || s.Length == 0)
+                        {
+                            // txt0, txt1
+                            actualString = currObjInfo.objType +
+                                currObjInfo.objCount;
+                        }
+                        else
+                        {
+                            // txtName, txtPassword
+                            actualString = currObjInfo.objType + s;
+                            LogMessage("###" + actualString + "###");
+                            index = 1;
+                            while (true)
+                            {
+                                if (objectList.IndexOf(actualString) < 0)
+                                {
+                                    // Object doesn't exist, assume this is the first
+                                    // element with the name and type
+                                    break;
+                                }
+                                actualString = currObjInfo.objType + s + index;
+                                index++;
+                            }
+                        }
+                        objectList.Add(actualString);
+                    }
+                    if (aimElement == childElement && aimElement.Current.BoundingRectangle ==
+                        childElement.Current.BoundingRectangle)
+                    {
+                        // Different controls on toolbar have same handle, probably it is a
+                        // underlying bug with toolbar, so also use BoundingRectangle here
+                        return true;
+                    }
+                    // If any subchild exist for the current element navigate to it
+                    AutomationElement subChild = w.walker.GetFirstChild(childElement);
+                    if (subChild != null)
+                    {
+                        if (GetObjectName(subChild, ref objectList, aimElement,
+                            ref actualString))
+                            return true;
+                    }
+                    childElement = w.walker.GetNextSibling(childElement);
+                }
+                // If aimElement is not found, set actualString as None
+                actualString = "None";
+            }
+            catch (ElementNotAvailableException ex)
+            {
+                LogMessage("Exception: " + ex);
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+            }
+            finally
+            {
+                w = null;
+            }
+            return false;
+        }
         public string[] GetChild(String windowName, String childName = null,
             string role = null, string parentName = null)
         {
