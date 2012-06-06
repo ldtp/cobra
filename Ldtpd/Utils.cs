@@ -860,6 +860,10 @@ namespace Ldtpd
         {
             common.Wait(time);
         }
+        internal void InternalWait(double time)
+        {
+            common.Wait(time);
+        }
         internal int InternalWaitTillGuiExist(String windowName,
             String objName = null, int guiTimeOut = 30)
         {
