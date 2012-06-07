@@ -393,6 +393,8 @@ if _ldtp_windows_env:
         return _remote_hasstate(window_name, object_name, state, guiTimeOut)
     def selectrow(window_name, object_name, row_text):
         return _remote_selectrow(window_name, object_name, row_text, False)
+    def verifyselectrow(window_name, object_name, row_text):
+        return _remote_verifyselectrow(window_name, object_name, row_text, False)
     def getchild(window_name, child_name = '', role = '', parent = ''):
         return _remote_getchild(window_name, child_name, role, parent)
     def enterstring(window_name, object_name = '', data = ''):
@@ -417,6 +419,8 @@ if _ldtp_windows_env:
         return _remote_gettextvalue(window_name, object_name, startPosition, endPosition)
     def getcellvalue(window_name, object_name, row, column = 0):
         return _remote_getcellvalue(window_name, object_name, row, column)
+    def getobjectnameatcoords(waitTime = 0.0):
+        return _remote_getobjectnameatcoords(waitTime)
 ### WINDOWS
 
 def onwindowcreate(window_name, fn_name, *args):
