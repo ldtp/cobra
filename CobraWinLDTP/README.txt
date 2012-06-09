@@ -1,4 +1,4 @@
-Cobra - Windows version of Linux Desktop Testing Project - http://ldtp.freedesktop.org
+Cobra WinLDTP is based on Linux Desktop Testing Project - http://ldtp.freedesktop.org
 
 Verified with Windows XP SP3 / Windows 7 SP1
 
@@ -53,3 +53,23 @@ netsh http add urlacl url=http://+:4118/ user=User
 If you run WinLDTP where you have logged in as a domain user
 netsh http add urlacl url=http://localhost:4118/ user=DOMAIN\User
 netsh http add urlacl url=http://+:4118/ user=DOMAIN\User
+
+For Java compilation:
+
+Download commons-codec-1.6.jar, ws-commons-util-1.0.2.jar, xmlrpc-client-3.1.3.jar, xmlrpc-common-3.1.3.jar and place it in JavaLDTP/lib/
+
+Download jar files from this location or any other apache mirror. Make sure you have the version mentioned in the jar or latest
+http://mirror.cc.columbia.edu/pub/software/apache/commons/codec/binaries/commons-codec-1.6-bin.zip
+http://www.apache.org/dyn/closer.cgi/ws/xmlrpc/
+
+In eclipse its compiled by default. FIXME: Write how to compile from command line
+
+To create Ldtp.jar
+
+cd ldtp\JavaLDTP\bin
+jar cvf ..\..\Ldtp.jar * # Note: Tested this on Mac with a forward slash though, haven't created Jar on Windows
+
+To use LDTP Java library:
+
+Include Ldtp.jar file available under ldtp folder in your project
+
