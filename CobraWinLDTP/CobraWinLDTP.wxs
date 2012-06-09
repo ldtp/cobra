@@ -214,6 +214,13 @@ SOFTWARE.
                   Source="ldtp\__init__.py" />
             <RemoveFile Id="ldtpinit" Name="__init__.pyc" On="uninstall" />
          </Component>
+         <Component Id="ldtpjar" Guid="B4CB0FA0-B0C8-11E1-AFA6-0800200C9A66">
+            <File Id="ldtpjarfile"
+                  Name="Ldtp.jar"
+                  KeyPath="yes"
+                  Source="ldtp\Ldtp.jar" />
+            <RemoveFile Id="ldtpjar" Name="Ldtp.jar" On="uninstall" />
+         </Component>
       </DirectoryRef>
 
       <DirectoryRef Id="ProgramMenuDir">
@@ -243,6 +250,7 @@ SOFTWARE.
          <ComponentRef Id="ldtplog" />
          <ComponentRef Id="ldtpstate" />
          <ComponentRef Id="ldtpinit" />
+         <ComponentRef Id="ldtpjar" />
          <ComponentRef Id='ProgramMenuDir' />
       </Feature>
 
