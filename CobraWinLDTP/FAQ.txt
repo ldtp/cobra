@@ -4,4 +4,4 @@ administrator to solve the problem.
 
 Q: Why hasstate('Window', 'Object', state.FOCUSED) value is incorrect ?
 A: Some window focus doesn't work, so you have to call first grabfocus('Window', 'Object') and then call hasstate.
- This could be an issue during verification, but we have to live with it, sorry.
+This could be an issue during verification, but we have to live with it, sorry.
