@@ -125,6 +125,16 @@ SOFTWARE.
                   KeyPath='yes' />
          </Component>
 
+         <Component Id='Ldtp'
+                    Guid='9ABA623C-B906-467A-B937-3E4233517AE7'
+                    Win64="$(var.Is64bit)">
+            <File Id='LDTPDLL'
+                  Name='Ldtp.dll'
+                  DiskId='1'
+                  Source='Ldtp.dll'
+                  KeyPath='yes' />
+         </Component>
+
          <Component Id='Interop.UIAutomationClient'
                     Guid='2A0D6CAA-B1B9-4321-84F7-8AED16A4EA2A'
                     Win64="$(var.Is64bit)">
@@ -237,6 +247,7 @@ SOFTWARE.
          <ComponentRef Id='MainExecutable' />
 	 <ComponentRef Id='SetEnvironmentVariable' />
          <ComponentRef Id='CookComputing.XmlRpcV2' />
+         <ComponentRef Id='Ldtp' />
          <ComponentRef Id='Interop.UIAutomationClient' />
          <ComponentRef Id='Ldtpd' />
          <ComponentRef Id='UIAComWrapper' />
