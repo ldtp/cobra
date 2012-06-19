@@ -12,7 +12,14 @@ http://www.microsoft.com/download/en/details.aspx?displaylang=en&id=13821 (KB971
 
 On Windows 7: Default .NET with the system should work fine
 
-Tested with Python 2.5 / 2.6 / 2.7
+Supported languages:
+
+Python >= 2.5
+Java >= 1.5
+C# >= 3.5
+VB.NET
+Power Shell
+Ruby >= 1.8.x
 
 Compile SetEnvironmentVariable and WinLdtpdService solutions, place the binary where you have all the dll's, README.txt, lgpl.rtf, before running Wix installer commands
 
