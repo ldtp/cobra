@@ -399,7 +399,7 @@ if _ldtp_windows_env:
         return _remote_getchild(window_name, child_name, role, parent)
     def enterstring(window_name, object_name = '', data = ''):
         return _remote_enterstring(window_name, object_name, data)
-    def setvalue(window_name, object_name = '', data = ''):
+    def setvalue(window_name, object_name, data):
         return _remote_setvalue(window_name, object_name, float(data))
     def grabfocus(window_name, object_name = ''):
         return _remote_grabfocus(window_name, object_name)
