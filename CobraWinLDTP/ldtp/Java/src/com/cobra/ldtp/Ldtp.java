@@ -473,7 +473,7 @@ public class Ldtp {
      * @return Return String array of possible window name and object name
      */
     public String[] getObjectNameAtCoords() {
-	return getObjectNameAtCoords(0.0);
+	return getObjectNameAtCoords(0);
     }
     /**
      * getObjectNameAtCoords Get object name at co-ordinates
@@ -481,7 +481,7 @@ public class Ldtp {
      * @param waitTime wait for the given time and then try to find the window and object name
      * @return Return String array of possible window name and object name
      */
-    public String[] getObjectNameAtCoords(double waitTime) {
+    public String[] getObjectNameAtCoords(int waitTime) {
 	Object[] params = new Object[]{waitTime};
 	return getStringList("getobjectnameatcoords", params);
     }

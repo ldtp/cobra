@@ -2,6 +2,7 @@
  * WinLDTP 1.0
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
+ * Author: John Yingjun Li <yjli@vmware.com>
  * Copyright: Copyright (c) 2011-12 VMware, Inc. All Rights Reserved.
  * License: MIT license
  * 
@@ -792,7 +793,7 @@ namespace Ldtpd
             throw new XmlRpcFaultException(123, "Unable to find Object property: " +
                 property + " of object: " + objName);
         }
-        public string[] GetObjectNameAtCoords(double waitTime = 0.0)
+        public string[] GetObjectNameAtCoords(int waitTime = 0)
         {
             ObjInfo objInfo = new ObjInfo(false);
             CurrentObjInfo currObjInfo;
