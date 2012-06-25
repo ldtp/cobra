@@ -68,7 +68,7 @@ namespace Ldtp
         [XmlRpcMethod("wait")]
         int WaitTime(int timeout = 5);
         [XmlRpcMethod("getobjectnameatcoords")]
-        String[] GetObjectNameAtCoords(double waitTime = 0.0);
+        String[] GetObjectNameAtCoords(int waitTime = 0);
         [XmlRpcMethod("guiexist")]
         int GuiExist(String windowName, String objName = "");
         [XmlRpcMethod("objectexist")]
@@ -551,7 +551,7 @@ namespace Ldtp
                 throw new LdtpExecutionError(ex.FaultString);
             }
         }
-        public String[] GetObjectNameAtCoords(double waitTime = 0.0)
+        public String[] GetObjectNameAtCoords(int waitTime = 0)
         {
             try
             {
