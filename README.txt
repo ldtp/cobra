@@ -1,7 +1,7 @@
 Cobra - Windows version of Linux Desktop Testing Project (WinLDTP) - http://ldtp.freedesktop.org
 LDTP is a GUI test automation tool works on both Windows and Linux platform
 
-Verified with Windows XP SP3 / Windows 7 SP1
+Verified with Windows XP SP3 / Windows 7 SP1 / Windows 8
 
 Minimum requirement .NET3.5
 
@@ -24,7 +24,7 @@ VB.NET
 Power Shell
 Ruby >= 1.8.x
 
-Compile SetEnvironmentVariable and WinLdtpdService solutions, place the binary where you have all the dll's, README.txt, lgpl.rtf, before running Wix installer commands
+Compile SetEnvironmentVariable and CobraWinLdtp solutions, place the binary where you have all the dll's, README.txt, License.rtf, before running Wix installer commands
 
 LDTP packages are created with WiX installer - http://wix.tramontana.co.hu
 
@@ -42,7 +42,7 @@ netsh http add urlacl url=http://localhost:4118/ user=User
 netsh http add urlacl url=http://+:4118/ user=User
 netsh http add urlacl url=http://*:4118/ user=User
 
-WinLDTP source files are distributed under LGPLv2.1 license
+CobraWinLDTP source files are distributed under MIT X11 license
 Following files are re-distributed as-is
 Microsoft DLL's (Interop.UIAutomationClient.dll, UIAComWrapper.dll, WUIATestLibrary.dll) - http://uiautomationverify.codeplex.com/ - MS-PL license
 XML RPC .NET library (CookComputing.XmlRpcV2.dll) - http://www.xml-rpc.net/ - MIT X11 license
