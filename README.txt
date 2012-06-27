@@ -5,7 +5,7 @@ Verified with Windows XP SP3 / Windows 7 SP1 / Windows 8
 
 Minimum requirement .NET3.5
 
-Test scripts can be written in Python. Ruby is on the way and it can be extended to other languages.
+Test scripts can be written in Python / Ruby / Java / C# / VB.NET / PowerShell and it can be extended to other languages.
 
 On Windows XP SP3 make sure you have installed:
 .NET3.0 and .NET3.5 and KB971513
