@@ -1,0 +1,5 @@
+Nagappan Alagappan <nalagappan@vmware.com> <nagappan@gmail.com>
+John Yingjun Li <yjli@vmware.com>
+
+Contriburtors
+VMware Desktop UI automation team
