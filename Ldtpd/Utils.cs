@@ -539,10 +539,18 @@ namespace Ldtpd
             AutomationElement element;
             CurrentObjInfo currObjInfo;
             String actualString = null;
+            String automationId = null;
+            bool isAutomationId = false;
             if (objInfo == null)
                 objInfo = new ObjInfo(false);
 
             InternalTreeWalker w = new InternalTreeWalker();
+            if (Regex.IsMatch(objName, @"^#"))
+            {
+                isAutomationId = true;
+                // Object id format: #AutomationId
+                automationId = objName.Split(new Char[] { '#' })[1];
+            }
             // Trying to mimic python fnmatch.translate
             String tmp = Regex.Replace(objName, @"( |:|\.|_|\r|\n|<|>)", "");
             tmp = Regex.Replace(tmp, @"\*", @".*");
@@ -624,8 +632,9 @@ namespace Ldtpd
                         }
                         objectList.Add(actualString);
                     }
-                    if ((s != null && rx.Match(s).Success) ||
-                        (actualString != null && rx.Match(actualString).Success))
+                    if ((isAutomationId && automationId == element.Current.AutomationId) ||
+                        (!isAutomationId && (s != null && rx.Match(s).Success) ||
+                        (actualString != null && rx.Match(actualString).Success)))
                     {
                         if (type == null)
                             return element;
