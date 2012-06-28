@@ -170,30 +170,13 @@ public class Ldtp {
      * @param serverPort Server port to connect to
      */
     public Ldtp(String windowName, String serverAddr, String serverPort) {
-    	this(windowName, serverAddr, serverPort, null);
-    }
-    /**
-     * Ldtp
-     *
-     * @param windowName Window to be manipulated
-     * @param serverAddr Server address to connect to
-     * @param serverPort Server port to connect to
-     * @param windowsEnv Running the test in windows environment ("true" or "false" string value)
-     */
-    public Ldtp(String windowName, String serverAddr, String serverPort, String windowsEnv) {
     	if (windowName == null || windowName == "") {
     		throw new LdtpExecutionError("Window name missing");
     	}
     	this.serverAddr = serverAddr;
     	this.serverPort = serverPort;
     	this.windowName = windowName;
-    	if (windowsEnv != null) {
-    		if (windowsEnv.contains("true"))
-    			this.windowsEnv = true;
-    		else
-    			this.windowsEnv = false;
-    	}
-    	connectToServer();
+	connectToServer();
     }
     /**
      * setWindowName Change window name
@@ -473,7 +456,7 @@ public class Ldtp {
      * @return Return String array of possible window name and object name
      */
     public String[] getObjectNameAtCoords() {
-	return getObjectNameAtCoords(0);
+	return getObjectNameAtCoords(0.0);
     }
     /**
      * getObjectNameAtCoords Get object name at co-ordinates
@@ -481,7 +464,7 @@ public class Ldtp {
      * @param waitTime wait for the given time and then try to find the window and object name
      * @return Return String array of possible window name and object name
      */
-    public String[] getObjectNameAtCoords(int waitTime) {
+    public String[] getObjectNameAtCoords(double waitTime) {
 	Object[] params = new Object[]{waitTime};
 	return getStringList("getobjectnameatcoords", params);
     }
