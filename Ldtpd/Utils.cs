@@ -2,6 +2,7 @@
  * WinLDTP 1.0
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
+ * Author: John Yingjun Li <yjli@vmware.com>
  * Copyright: Copyright (c) 2011-12 VMware, Inc. All Rights Reserved.
  * License: MIT license
  * 
@@ -805,6 +806,9 @@ namespace Ldtpd
                         if (element.Current.AcceleratorKey != "")
                             propertyHT.Add("key_binding",
                                 element.Current.AcceleratorKey);
+                        if (!String.IsNullOrEmpty(element.Current.AutomationId))
+                            propertyHT.Add("window_id",
+                                element.Current.AutomationId);
                         // Add individual property to object property
                         objectHT.Add(actualString, propertyHT);
                         if (debug && rx != null)
