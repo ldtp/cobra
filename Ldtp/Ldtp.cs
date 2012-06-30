@@ -318,15 +318,6 @@ namespace Ldtp
                 launchLdtpProcess();
             return isAlive;
         }
-        void InternalLaunchProcess(object data)
-        {
-            Process ps = data as Process;
-            // Wait for the application to quit
-            ps.WaitForExit();
-            // Close the handle, so that we won't leak memory
-            ps.Close();
-            ps = null;
-        }
         private void launchLdtpProcess()
         {
             String cmd;
@@ -345,10 +336,6 @@ namespace Ldtp
                 psi.WindowStyle = ProcessWindowStyle.Hidden;
                 ps.StartInfo = psi;
                 ps.Start();
-                Thread thread = new Thread(new ParameterizedThreadStart(
-                    InternalLaunchProcess));
-                // Clean up in different thread
-                //thread.Start(ps);
                 // Wait 5 seconds after launching
                 Thread.Sleep(5000);
             }
