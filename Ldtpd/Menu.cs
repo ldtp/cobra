@@ -107,7 +107,6 @@ namespace Ldtpd
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
-            String mainMenu = objName;
             String currObjName = null;
             Object pattern = null;
             AutomationElementCollection c = null;

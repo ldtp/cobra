@@ -235,8 +235,11 @@ namespace Ldtpd
                 {
                     try
                     {
+                        // Need to call this once, before calling GetCurrentCpuUsage
                         ProcessPerformanceCounter perf = new ProcessPerformanceCounter(
                             common, processName, p.Id);
+                        if (perf != null)
+                            perf = null;
                         ProcessInfo processInfo = new ProcessInfo();
                         processInfo.process = p;
                         processInfo.monitor = monitor;
@@ -290,9 +293,9 @@ namespace Ldtpd
                 {
                     foreach (string processName in processList)
                     {
-                        long[] memoryUsage = GetPhysicalMemoryUsage(processName,
+                        GetPhysicalMemoryUsage(processName,
                             true);
-                        double[] cpuUsage = GetCpuUsage(processName, true);
+                        GetCpuUsage(processName, true);
                     }
                 }
                 catch (Exception ex)

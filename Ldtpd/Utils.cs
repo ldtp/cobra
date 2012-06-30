@@ -464,7 +464,6 @@ namespace Ldtpd
                 return null;
             }
             InternalTreeWalker w = new InternalTreeWalker();
-            ObjInfo objInfo = new ObjInfo(false);
             int retry = waitForObj ? objectTimeOut : 1;
             // For debugging use the following value
             //int retry = waitForObj ? 1 : 1;
@@ -885,7 +884,7 @@ namespace Ldtpd
                 LogMessage("Argument cannot be empty.");
                 return 0;
             }
-            AutomationElement windowHandle, childHandle;
+            AutomationElement windowHandle, childHandle = null;
             try
             {
                 int waitTime = 0;
@@ -926,7 +925,9 @@ namespace Ldtpd
             }
             finally
             {
-                windowHandle = childHandle = null;
+                if (childHandle != null) // To avoid compilation warning
+                    childHandle = null;
+                windowHandle = null;
             }
             return 0;
         }
@@ -1055,7 +1056,6 @@ namespace Ldtpd
                 throw new XmlRpcFaultException(123,
                     "Unable to find Object: " + objName);
             }
-            AutomationPattern[] patterns = childHandle.GetSupportedPatterns();
             Object pattern = null;
             try
             {

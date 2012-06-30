@@ -477,7 +477,6 @@ namespace Ldtpd
                 throw new XmlRpcFaultException(123,
                     "Object state is disabled");
             }
-            AutomationElement element = null;
             AutomationElementCollection c1, c2;
             Condition prop1 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.ListItem);
@@ -509,7 +508,7 @@ namespace Ldtpd
             finally
             {
                 c1 = c2 = null;
-                element = childHandle = null;
+                childHandle = null;
                 prop1 = prop2 = condition1 = condition2 = null;
             }
             throw new XmlRpcFaultException(123,

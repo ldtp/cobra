@@ -107,7 +107,8 @@ namespace Ldtpd
             }
             finally
             {
-                b = null;
+                if (b != null) // To avoid compilation warning
+                    b = null;
                 ss = null;
                 windowHandle = null;
             }

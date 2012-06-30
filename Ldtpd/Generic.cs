@@ -259,7 +259,6 @@ namespace Ldtpd
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
             string matchedKey = null;
-            ObjInfo objInfo = new ObjInfo(false);
             Hashtable objectHT = new Hashtable();
             ArrayList objectList = new ArrayList();
             AutomationElement windowHandle = utils.GetWindowHandle(windowName);
@@ -641,7 +640,6 @@ namespace Ldtpd
             string matchedKey = "";
             ArrayList objectList = new ArrayList();
             Hashtable objectHT = new Hashtable();
-            ObjInfo objInfo = new ObjInfo(false);
             InternalTreeWalker w;
             AutomationElement windowHandle = utils.GetWindowHandle(windowName);
             if (windowHandle == null)
@@ -704,7 +702,6 @@ namespace Ldtpd
             string matchedKey = "";
             ArrayList objectList = new ArrayList();
             Hashtable objectHT = new Hashtable();
-            ObjInfo objInfo = new ObjInfo(false);
             InternalTreeWalker w;
             AutomationElement windowHandle = utils.GetWindowHandle(windowName);
             if (windowHandle == null)
@@ -980,7 +977,6 @@ namespace Ldtpd
             Hashtable ht;
             string matchedKey = "";
             Hashtable objectHT = new Hashtable();
-            ObjInfo objInfo = new ObjInfo(false);
             ArrayList childList = new ArrayList();
             ArrayList objectList = new ArrayList();
             InternalTreeWalker w;
