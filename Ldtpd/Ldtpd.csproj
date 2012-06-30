@@ -33,10 +33,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="CookComputing.XmlRpcV2">
-      <HintPath>..\WinLdtpdService\CookComputing.XmlRpcV2.dll</HintPath>
+      <HintPath>..\CobraWinLDTP\CookComputing.XmlRpcV2.dll</HintPath>
     </Reference>
     <Reference Include="Interop.UIAutomationClient">
-      <HintPath>..\WinLdtpdService\Interop.UIAutomationClient.dll</HintPath>
+      <HintPath>..\CobraWinLDTP\Interop.UIAutomationClient.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="System" />
@@ -45,11 +45,11 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="UIAComWrapper, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\WinLdtpdService\UIAComWrapper.dll</HintPath>
+      <HintPath>..\CobraWinLDTP\UIAComWrapper.dll</HintPath>
     </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="WUIATestLibrary">
-      <HintPath>..\WinLdtpdService\WUIATestLibrary.dll</HintPath>
+      <HintPath>..\CobraWinLDTP\WUIATestLibrary.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
