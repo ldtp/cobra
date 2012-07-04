@@ -83,6 +83,7 @@ SOFTWARE.
                     Win64="$(var.Is64bit)">
             <Environment Id='UpdatePath' Name='PATH' Action='set' Permanent='no' System='yes' Part='last' Value='[INSTALLDIR]' />
             <Environment Id='UpdatePythonPath' Name='PYTHONPATH' Action='set' Permanent='no' System='yes' Part='last' Value='[INSTALLDIR]' />
+            <Environment Id='UpdateRubyPath' Name='RUBYLIB' Action='set' Permanent='no' System='yes' Part='last' Value='[PYLDTPDIR]' />
             <File Id='CobraWinLDTPEXE'
                   Name='CobraWinLDTP.exe'
                   DiskId='1'
@@ -189,6 +190,12 @@ SOFTWARE.
       </DirectoryRef>
 
       <DirectoryRef Id='PYLDTPDIR'>
+         <Component Id="ldtprubyclient" Guid="FDDD943B-DA40-43B7-8A76-BE0D63D3ED17">
+            <File Id="ldtpclientrb"
+                  Name="ldtp.rb"
+                  KeyPath="yes"
+                  Source="ldtp\ldtp.rb" />
+         </Component>
          <Component Id="ldtpclient" Guid="0FDAFD39-6362-4864-AC4E-3FB39A5E6BA3">
             <File Id="ldtpclientpy"
                   Name="client.py"
