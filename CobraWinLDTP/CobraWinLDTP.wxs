@@ -190,7 +190,7 @@ SOFTWARE.
       </DirectoryRef>
 
       <DirectoryRef Id='PYLDTPDIR'>
-         <Component Id="ldtprubyclient" Guid="FDDD943B-DA40-43B7-8A76-BE0D63D3ED17">
+         <Component Id="ldtprbclient" Guid="FDDD943B-DA40-43B7-8A76-BE0D63D3ED17">
             <File Id="ldtpclientrb"
                   Name="ldtp.rb"
                   KeyPath="yes"
@@ -263,6 +263,7 @@ SOFTWARE.
          <ComponentRef Id='README' />
          <ComponentRef Id='FAQ' />
          <ComponentRef Id='AUTHORS' />
+         <ComponentRef Id="ldtprbclient" />
          <ComponentRef Id="ldtpclient" />
          <ComponentRef Id="ldtpclientexception" />
          <ComponentRef Id="ldtplog" />
