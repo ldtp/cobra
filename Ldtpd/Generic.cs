@@ -974,24 +974,34 @@ namespace Ldtpd
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
-            Hashtable ht;
-            string matchedKey = "";
-            Hashtable objectHT = new Hashtable();
-            ArrayList childList = new ArrayList();
-            ArrayList objectList = new ArrayList();
-            InternalTreeWalker w;
-            AutomationElement childHandle;
             AutomationElement windowHandle = utils.GetWindowHandle(windowName);
             if (windowHandle == null)
             {
                 throw new XmlRpcFaultException(123,
                     "Unable to find window: " + windowName);
             }
-            w = new InternalTreeWalker();
+            AutomationElement childHandle;
+            if (!String.IsNullOrEmpty(childName))
+            {
+                childHandle = utils.GetObjectHandle(windowHandle, childName);
+                if (childHandle == null)
+                {
+                    throw new XmlRpcFaultException(123,
+                        "Unable to find child object: " + childName);
+                }
+            }
+            if (!String.IsNullOrEmpty(role))
+                role = Regex.Replace(role, @" ", @"_");
+            Hashtable ht;
+            string matchedKey = "";
+            Hashtable objectHT = new Hashtable();
+            ArrayList childList = new ArrayList();
+            ArrayList objectList = new ArrayList();
+            InternalTreeWalker w = new InternalTreeWalker();
             try
             {
-                if (childName != null && childName.Length > 0 &&
-                    role != null && role.Length > 0)
+                if (!String.IsNullOrEmpty(childName) ||
+                    !String.IsNullOrEmpty(role))
                 {
                     utils.InternalGetObjectList(w.walker.GetFirstChild(windowHandle),
                         ref objectList, ref objectHT, ref matchedKey,
@@ -1021,13 +1031,15 @@ namespace Ldtpd
                                     LogMessage("Label matched: " +
                                         rx.Match((string)ht["label"]).Success);
                             }
-                            if ((string)ht["class"] == role &&
+                            if ((String.IsNullOrEmpty(role) ||
+                                (!String.IsNullOrEmpty(role) &&
+                                (string)ht["class"] == role)) &&
                                 ((ht.ContainsKey("label") &&
                                 (string)ht["label"] != null &&
                                 rx.Match((string)ht["label"]).Success) ||
-                                ((ht.ContainsKey("key") &&
+                                (ht.ContainsKey("key") &&
                                 (string)ht["key"] != null &&
-                                rx.Match((string)ht["key"]).Success))))
+                                rx.Match((string)ht["key"]).Success)))
                             {
                                 childList.Add(ht["key"]);
                             }
@@ -1039,64 +1051,6 @@ namespace Ldtpd
                         finally
                         {
                             rx = null;
-                        }
-                    }
-                    return childList.ToArray(typeof(string)) as string[];
-                }
-                if (role != null && role.Length > 0)
-                {
-                    childHandle = utils.GetObjectHandle(windowHandle,
-                        childName);
-                    if (childHandle == null)
-                    {
-                        throw new XmlRpcFaultException(123,
-                            "Unable to find child object: " + childName);
-                    }
-                    role = Regex.Replace(role, @" ", @"_");
-                    utils.InternalGetObjectList(w.walker.GetFirstChild(windowHandle),
-                        ref objectList, ref objectHT, ref matchedKey,
-                        true, null, windowHandle.Current.Name);
-                    foreach (string key in objectHT.Keys)
-                    {
-                        try
-                        {
-                            if (utils.debug)
-                                LogMessage("Key: " + key);
-                            ht = (Hashtable)objectHT[key];
-                            if ((string)ht["class"] == role)
-                                childList.Add(ht["key"]);
-                        }
-                        catch (Exception ex)
-                        {
-                            LogMessage(ex);
-                        }
-                    }
-                    return childList.ToArray(typeof(string)) as string[];
-                }
-                if (childName != null && childName.Length > 0)
-                {
-                    childHandle = utils.GetObjectHandle(windowHandle,
-                        childName);
-                    if (childHandle == null)
-                    {
-                        throw new XmlRpcFaultException(123,
-                            "Unable to find child object: " + childName);
-                    }
-                    utils.InternalGetObjectList(w.walker.GetFirstChild(childHandle),
-                        ref objectList, ref objectHT, ref matchedKey,
-                        true, null, windowHandle.Current.Name);
-                    foreach (string key in objectHT.Keys)
-                    {
-                        try
-                        {
-                            if (utils.debug)
-                                LogMessage("Key: " + key);
-                            ht = (Hashtable)objectHT[key];
-                            childList.Add(ht["key"]);
-                        }
-                        catch (Exception ex)
-                        {
-                            LogMessage(ex);
                         }
                     }
                     return childList.ToArray(typeof(string)) as string[];
