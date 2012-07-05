@@ -75,10 +75,10 @@ namespace Ldtp
         int ObjectExist(String windowName, String objName);
         [XmlRpcMethod("waittillguiexist")]
         int WaitTillGuiExist(String windowName, String objName = "",
-            int guiTimeOut = 30);
+            int guiTimeOut = 30, String state = "");
         [XmlRpcMethod("waittillguinotexist")]
         int WaitTillGuiNotExist(String windowName, String objName = "",
-            int guiTimeOut = 30);
+            int guiTimeOut = 30, String state = "");
         [XmlRpcMethod("poll_events")]
         string PollEvents();
         [XmlRpcMethod("getlastlog")]
@@ -318,6 +318,15 @@ namespace Ldtp
                 launchLdtpProcess();
             return isAlive;
         }
+        void InternalLaunchProcess(object data)
+        {
+            Process ps = data as Process;
+            // Wait for the application to quit
+            ps.WaitForExit();
+            // Close the handle, so that we won't leak memory
+            ps.Close();
+            ps = null;
+        }
         private void launchLdtpProcess()
         {
             String cmd;
@@ -336,6 +345,10 @@ namespace Ldtp
                 psi.WindowStyle = ProcessWindowStyle.Hidden;
                 ps.StartInfo = psi;
                 ps.Start();
+                Thread thread = new Thread(new ParameterizedThreadStart(
+                    InternalLaunchProcess));
+                // Clean up in different thread
+                //thread.Start(ps);
                 // Wait 5 seconds after launching
                 Thread.Sleep(5000);
             }
@@ -549,22 +562,22 @@ namespace Ldtp
                 throw new LdtpExecutionError(ex.FaultString);
             }
         }
-        public int WaitTillGuiExist(String objName = "", int guiTimeOut = 30)
+        public int WaitTillGuiExist(String objName = "", int guiTimeOut = 30, String state = "")
         {
             try
             {
-                return proxy.WaitTillGuiExist(windowName, objName, guiTimeOut);
+                return proxy.WaitTillGuiExist(windowName, objName, guiTimeOut, state);
             }
             catch (XmlRpcFaultException ex)
             {
                 throw new LdtpExecutionError(ex.FaultString);
             }
         }
-        public int WaitTillGuiNotExist(String objName = "", int guiTimeOut = 30)
+        public int WaitTillGuiNotExist(String objName = "", int guiTimeOut = 30, String state = "")
         {
             try
             {
-                return proxy.WaitTillGuiNotExist(windowName, objName, guiTimeOut);
+                return proxy.WaitTillGuiNotExist(windowName, objName, guiTimeOut, state);
             }
             catch (XmlRpcFaultException ex)
             {
