@@ -877,7 +877,7 @@ namespace Ldtpd
             common.Wait(time);
         }
         internal int InternalWaitTillGuiExist(String windowName,
-            String objName = null, int guiTimeOut = 30)
+            String objName = null, int guiTimeOut = 30, String state = null)
         {
             if (String.IsNullOrEmpty(windowName))
             {
@@ -932,7 +932,7 @@ namespace Ldtpd
             return 0;
         }
         internal int InternalWaitTillGuiNotExist(String windowName,
-            String objName = null, int guiTimeOut = 30)
+            String objName = null, int guiTimeOut = 30, String state = null)
         {
             if (String.IsNullOrEmpty(windowName))
             {

@@ -380,12 +380,12 @@ if _ldtp_windows_env:
     def waittillguiexist(window_name, object_name = '',
                          guiTimeOut = 30, state = ''):
         return _remote_waittillguiexist(window_name, object_name,
-                                        guiTimeOut)
+                                        guiTimeOut, state)
     
     def waittillguinotexist(window_name, object_name = '',
                             guiTimeOut = 30, state = ''):
         return _remote_waittillguinotexist(window_name, object_name,
-                                           guiTimeOut)
+                                           guiTimeOut, state)
     def guiexist(window_name, object_name = ''):
         return _remote_guiexist(window_name, object_name)
     def launchapp(cmd, args = [], delay = 0, env = 1, lang = "C"):

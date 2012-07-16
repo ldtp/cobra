@@ -112,17 +112,17 @@ namespace Ldtpd
         }
         [XmlRpcMethod("waittillguiexist",
             Description = "Wait till a window or component exists.")]
-        public int WaitTillGuiExist(String windowName,
-            String objName = null, int guiTimeOut = 30)
+        public int WaitTillGuiExist(String windowName, String objName = null,
+            int guiTimeOut = 30, String state = null)
         {
-            return InternalWaitTillGuiExist(windowName, objName, guiTimeOut);
+            return InternalWaitTillGuiExist(windowName, objName, guiTimeOut, state);
         }
         [XmlRpcMethod("waittillguinotexist",
             Description = "Wait till a window or component does not exists.")]
-        public int WaitTillGuiNotExist(String windowName,
-            String objName = null, int guiTimeOut = 30)
+        public int WaitTillGuiNotExist(String windowName, String objName = null,
+            int guiTimeOut = 30, String state = null)
         {
-            return InternalWaitTillGuiNotExist(windowName, objName, guiTimeOut);
+            return InternalWaitTillGuiNotExist(windowName, objName, guiTimeOut, state);
         }
         [XmlRpcMethod("guiexist", Description = "Checks whether a window or component exists.")]
         public int GuiExist(String windowName, String objName = null)
