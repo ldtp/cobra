@@ -2,6 +2,8 @@ Cobra WinLDTP is based on Linux Desktop Testing Project - http://ldtp.freedeskto
 
 Verified with Windows XP SP3 / Windows 7 SP1 / Windows 8
 
+Downloaded latest binary from http://download.freedesktop.org/ldtp/cobra-latest/ and please share your feedback with us.
+
 Minimum requirement .NET3.5
 
 Test scripts can be written in Python / Ruby / Java / C# / VB.NET / PowerShell and it can be extended to other languages.
@@ -46,7 +48,7 @@ Following files are re-distributed as-is
 Microsoft DLL's (Interop.UIAutomationClient.dll, UIAComWrapper.dll, WUIATestLibrary.dll) - http://uiautomationverify.codeplex.com/ - MS-PL license
 XML RPC .NET library (CookComputing.XmlRpcV2.dll) - http://www.xml-rpc.net/ - MIT X11 license
 
-WinLDTP works based on Microsoft accessibility layer.
+CobraWinLDTP works based on Microsoft accessibility layer.
  To check whether your application is accessibility enabled,
  download the binary from http://uiautomationverify.codeplex.com/ and verify the same.
 
@@ -59,7 +61,7 @@ NOTE: Don't select client profile
 netsh http add urlacl url=http://localhost:4118/ user=User
 netsh http add urlacl url=http://+:4118/ user=User
 
-If you run WinLDTP where you have logged in as a domain user
+If you run CobraWinLDTP where you have logged in as a domain user
 netsh http add urlacl url=http://localhost:4118/ user=DOMAIN\User
 netsh http add urlacl url=http://+:4118/ user=DOMAIN\User
 
