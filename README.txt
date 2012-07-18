@@ -65,3 +65,10 @@ netsh http add urlacl url=http://+:4118/ user=User
 If you run CobraWinLDTP where you have logged in as a domain user
 netsh http add urlacl url=http://localhost:4118/ user=DOMAIN\User
 netsh http add urlacl url=http://+:4118/ user=DOMAIN\User
+
+How do I contact LDTP team incase of any help ?
+
+  - Join the LDTP team on IRC for technical help, online
+    Server  : irc.freenode.net
+    Channel : #ldtp
+  - Join the LDTP Mailing List - http://ldtp.freedesktop.org/wiki/Mailing_20list

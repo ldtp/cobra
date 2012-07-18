@@ -83,3 +83,10 @@ jar cvf ..\..\Ldtp.jar * # Note: Tested this on Mac with a forward slash though,
 To use LDTP Java library:
 
 Include Ldtp.jar file available under ldtp folder in your project
+
+How do I contact LDTP team incase of any help ?
+
+  - Join the LDTP team on IRC for technical help, online
+    Server  : irc.freenode.net
+    Channel : #ldtp
+  - Join the LDTP Mailing List - http://ldtp.freedesktop.org/wiki/Mailing_20list
