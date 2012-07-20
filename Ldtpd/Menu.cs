@@ -2,6 +2,7 @@
  * WinLDTP 1.0
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
+ * Author: John Yingjun Li <yjli@vmware.com>
  * Copyright: Copyright (c) 2011-12 VMware, Inc. All Rights Reserved.
  * License: MIT license
  * 
@@ -181,16 +182,23 @@ namespace Ldtpd
                     }
                     if ((actionType == "Select" || actionType == "SubMenu" ||
                         actionType == "Check" || actionType == "UnCheck" ||
-                        actionType == "VerifyCheck") &&
+                        actionType == "VerifyCheck" || actionType == "Window") &&
                         !utils.IsEnabled(childHandle, false))
                     {
                         throw new XmlRpcFaultException(123,
                             "Object state is disabled");
                     }
                     try
-                    {	
-						// SetFocus() fails on Windows Explorer
-                        childHandle.SetFocus();
+                    {
+                        if (actionType == "Window")
+						{
+                            utils.InternalClick(childHandle);
+						}
+                        else
+						{
+                            // SetFocus() fails on Windows Explorer
+                            childHandle.SetFocus();
+						}
                     }
                     catch (Exception ex)
                     {
@@ -201,22 +209,37 @@ namespace Ldtpd
                         ExpandCollapsePattern.Pattern, out pattern))
                     {
                         if (actionType == "Select" || currObjName != objName ||
-                             actionType == "SubMenu" || actionType == "VerifyCheck")
+                             actionType == "SubMenu" || actionType == "VerifyCheck" ||
+                             actionType == "Window")
                         {
-                            LogMessage("Invoking menu item: " + currObjName +
-                                " : " + objName + " : " +
-                                childHandle.Current.ControlType.ProgrammaticName +
-                                " : " + childHandle.Current.Name);
                             try
                             {
-								// SetFocus() fails on Windows Explorer
-                                childHandle.SetFocus();
+                                LogMessage("Invoking menu item: " + currObjName +
+                                    " : " + objName + " : " +
+                                    childHandle.Current.ControlType.ProgrammaticName +
+                                    " : " + childHandle.Current.Name);
                             }
                             catch (Exception ex)
                             {
+                                // Noticed with closewindow() to close Notepad
+                                //    System.UnauthorizedAccessException: Access is denied
+                                //       Exception from HRESULT: 0x80070005 (E_ACCESSDENIED)
                                 LogMessage(ex);
                             }
-                            if (!(actionType == "VerifyCheck" && currObjName == objName))
+                            if (actionType != "Window")
+                            {
+                                try
+                                {
+                                    // SetFocus() fails on Windows Explorer
+                                    childHandle.SetFocus();
+                                }
+                                catch (Exception ex)
+                                {
+                                    LogMessage(ex);
+                                }
+                            }
+                            if (!(actionType == "VerifyCheck" && currObjName == objName) &&
+                                (actionType != "Window"))
                             {
                                 utils.InternalClick(childHandle);
                             }
@@ -260,6 +283,7 @@ namespace Ldtpd
                         switch (actionType)
                         {
                             case "Select":
+                            case "Window":
                                 // No child menu item to be processed
                                 return 1;
                             case "Check":
@@ -437,16 +461,34 @@ namespace Ldtpd
             catch (Exception ex)
             {
                 LogMessage(ex);
-                if (firstObjHandle != null)
+                if (firstObjHandle != null && actionType != "Window")
                 {
                     // Set it back to old state, else the menu selection left there
                     utils.InternalClick(firstObjHandle);
+                }
+                if (((ex is ElementNotAvailableException) ||
+                    (ex is UnauthorizedAccessException)) &&
+                    actionType == "Window")
+                {
+                    // API closewindow() can close Windows Explorer on XP, but:
+                    // -----------------------------------------------------------
+                    // if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern,
+                    //     out pattern) || childHandle.TryGetCurrentPattern(
+                    //     ExpandCollapsePattern.Pattern, out pattern))
+                    // -----------------------------------------------------------
+                    // Sometimes above code will throw exception, sometimes not:
+                    //    System.Runtime.InteropServices.COMException (0x80040201):
+                    //       Exception from HRESULT: 0x80040201
+                    //    System.UnauthorizedAccessException, Access is denied:
+                    //       Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))
+                    // So use this if block as workaround
+                    return 1;
                 }
                 if (ex is XmlRpcFaultException)
                     throw;
                 else
                     throw new XmlRpcFaultException(123,
-                                    "Unhandled exception: " + ex.Message);
+                        "Unhandled exception: " + ex.Message);
             }
             finally
             {
@@ -477,7 +519,7 @@ namespace Ldtpd
             {
                 // FIXME: Verify this for i18n / l10n
                 return InternalMenuHandler(windowName, "mnuSystem;mnuMaximize",
-                    ref menuList, "Select");
+                    ref menuList, "Window");
             }
             finally
             {
@@ -490,7 +532,7 @@ namespace Ldtpd
             try
             {
                 return InternalMenuHandler(windowName, "mnuSystem;mnuMinimize",
-                    ref menuList, "Select");
+                    ref menuList, "Window");
             }
             finally
             {
@@ -503,7 +545,7 @@ namespace Ldtpd
             try
             {
                 return InternalMenuHandler(windowName, "mnuSystem;mnuClose",
-                    ref menuList, "Select");
+                    ref menuList, "Window");
             }
             finally
             {
