@@ -5,7 +5,7 @@ Verified with Windows XP SP3 / Windows 7 SP1 / Windows 8
 
 Minimum requirement .NET3.5
 
-Downloaded latest binary from http://download.freedesktop.org/ldtp/cobra-latest/ and please share your feedback with us.
+Downloaded latest binary from http://download.freedesktop.org/ldtp/cobra-latest/ and please share your feedback with us (nagappan@gmail.com).
 
 Test scripts can be written in Python / Ruby / Java / C# / VB.NET / PowerShell and it can be extended to other languages.
 

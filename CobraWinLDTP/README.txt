@@ -2,7 +2,7 @@ Cobra WinLDTP is based on Linux Desktop Testing Project - http://ldtp.freedeskto
 
 Verified with Windows XP SP3 / Windows 7 SP1 / Windows 8
 
-Downloaded latest binary from http://download.freedesktop.org/ldtp/cobra-latest/ and please share your feedback with us.
+Downloaded latest binary from http://download.freedesktop.org/ldtp/cobra-latest/ and please share your feedback with us (nagappan@gmail.com).
 
 Minimum requirement .NET3.5
 
