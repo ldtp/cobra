@@ -40,12 +40,14 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
  */
 public class Ldtp {
     Process p = null;
+	boolean debug = false;
     String windowName = null;
     String serverAddr = null;
     String serverPort = null;
     ProcessBuilder pb;
     Boolean windowsEnv = false;
     XmlRpcClient client = null;
+	PollEvents pollEvents = null;
     XmlRpcClientConfigImpl config = null;
     /**
      * connectToServer (private), which connects to the running instance of LDTP server
@@ -59,6 +61,8 @@ public class Ldtp {
     		serverPort = System.getenv("LDTP_SERVER_PORT");
     	if (serverPort == null)
     		serverPort = "4118";
+    	if (System.getenv("LDTP_DEBUG") != null)
+    		debug = true;
     	String tmpEnv = System.getenv("LDTP_WINDOWS");
     	if (tmpEnv != null)
     		windowsEnv = true;
@@ -140,10 +144,12 @@ public class Ldtp {
      * terminateLdtpProcess (private) Terminate LDTP executable started by this instance
      */
     private void terminateLdtpProcess() {
-	if (p != null) {
-	    // Kill LDTP executable
-	    p.destroy();
-	}
+    	if (p != null) {
+    		// Kill LDTP executable
+    		p.destroy();
+    	}
+		if (pollEvents != null)
+			pollEvents.pollServer = false;
     }
     /**
      * Ldtp
@@ -176,7 +182,9 @@ public class Ldtp {
     	this.serverAddr = serverAddr;
     	this.serverPort = serverPort;
     	this.windowName = windowName;
-	connectToServer();
+    	connectToServer();
+    	pollEvents = new PollEvents(this);
+    	pollEvents.start();
     }
     /**
      * setWindowName Change window name
@@ -689,8 +697,7 @@ public class Ldtp {
      *
      * @return Return event generated on the server
      */
-    private String pollEvents() {
-	// FIXME: Use this API and implement relevant stuff
+    String pollEvents() {
 	return getString("poll_events", null);
     }
     /**
@@ -755,25 +762,29 @@ public class Ldtp {
 	return doAction("windowuptime", params);
     }
     /**
-     * onWindowCreate On new window opened callback the method
+     * onWindowCreate On new window opened call the given method
      *
-     * @param callback Callback method to be called
+     * @param obj Class instance
+     * @param isStatic Passed method name is static ?
+     * @param methodName Method name to be called from the class
+     * @param args Optional arguments to the callback method
      * @return Return 1 on success
      * @throws LdtpExecutionError on failure
      */
-    // FIXME: Get callback function as argument and find way to call that
-    public int onWindowCreate(String callback) throws LdtpExecutionError {
-	Object[] params = new Object[]{windowName};
-	return doAction("onwindowcreate", params);
+    public int onWindowCreate(Object obj, final boolean isStatic, final String methodName, final Object... args) throws LdtpExecutionError {
+    	Object[] params = new Object[]{windowName};
+    	pollEvents.addCallbacks("onwindowcreate-" + windowName, obj, isStatic, methodName, args);
+    	return doAction("onwindowcreate", params);
     }
     /**
-     * removeCallback Remove callback method
+     * removeCallback Remove window name from callback method
      *
      * @return Return 1 on success
      * @throws LdtpExecutionError on failure
      */
     public int removeCallback() throws LdtpExecutionError {
 	Object[] params = new Object[]{windowName};
+	pollEvents.removeCallbacks("onwindowcreate-" + windowName);
 	return doAction("removecallback", params);
     }
     /**
@@ -2598,7 +2609,7 @@ public class Ldtp {
 	System.out.println(ldtp.getTextValue("txt1"));
 	System.out.println(ldtp.click("btnNew"));
 	*/
-	Ldtp ldtp = new Ldtp("*Notepad");
-	System.out.println(ldtp.getTextValue("txt0"));
+	//Ldtp ldtp = new Ldtp("*Notepad");
+	//System.out.println(ldtp.getTextValue("txt0"));
     }
 }
