@@ -46,6 +46,94 @@ namespace Ldtpd
         {
             utils.LogMessage(o);
         }
+        public int MouseLeftClick(String windowName, String objName)
+        {
+            Object pattern = null;
+            AutomationElement childHandle;
+            try
+            {
+                childHandle = utils.GetObjectHandle(windowName, objName);
+                if (!utils.IsEnabled(childHandle))
+                {
+                    throw new XmlRpcFaultException(123,
+                        "Object state is disabled");
+                }
+                try
+                {
+                    childHandle.SetFocus();
+                }
+                catch (Exception ex)
+                {
+                    // Have noticed exception with
+                    // maximize / minimize button
+                    LogMessage(ex);
+                }
+                if (childHandle.Current.ControlType == ControlType.Pane)
+                {
+                    // NOTE: Work around, as the pane doesn't seem to work
+                    // with any actions. Noticed this window, when Windows
+                    // Security Warning dialog pop's up
+                    utils.InternalClick(childHandle);
+                    return 1;
+                }
+                else if (childHandle.TryGetCurrentPattern(InvokePattern.Pattern,
+                    out pattern))
+                {
+                    if (childHandle.Current.ControlType == ControlType.Menu ||
+                        childHandle.Current.ControlType == ControlType.MenuBar ||
+                        childHandle.Current.ControlType == ControlType.MenuItem ||
+                        childHandle.Current.ControlType == ControlType.ListItem)
+                    {
+                        //((InvokePattern)invokePattern).Invoke();
+                        // NOTE: Work around, as the above doesn't seem to work
+                        // with UIAComWrapper and UIAComWrapper is required
+                        // to Edit value in Spin control
+                        utils.InternalClick(childHandle);
+                    }
+                    else
+                    {
+                        try
+                        {
+                            ((InvokePattern)pattern).Invoke();
+                        }
+                        catch (Exception ex)
+                        {
+                            LogMessage(ex);
+                            // Have noticed exception with
+                            // maximize / minimize button
+                            utils.InternalClick(childHandle);
+                        }
+                    }
+                    return 1;
+                }
+                else if (childHandle.TryGetCurrentPattern(SelectionItemPattern.Pattern,
+                    out pattern))
+                {
+                    ((SelectionItemPattern)pattern).Select();
+                    return 1;
+                }
+                else
+                {
+                    utils.InternalClick(childHandle);
+                    return 1;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                if (ex is XmlRpcFaultException)
+                    throw;
+                else
+                    throw new XmlRpcFaultException(123,
+                        "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                pattern = null;
+                childHandle = null;
+            }
+            throw new XmlRpcFaultException(123, "Unable to perform action");
+        }
         public int GenerateMouseEvent(int x, int y, String type = "b1p")
         {
             Point pt = new Point(x, y);
