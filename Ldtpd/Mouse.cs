@@ -62,6 +62,13 @@ namespace Ldtpd
                     Input.SendMouseInput(0, 0, 0, SendMouseInputFlags.LeftDown);
                     Input.SendMouseInput(0, 0, 0, SendMouseInputFlags.LeftUp);
                     break;
+                case "b1d":
+                    Input.MoveTo(pt);
+                    Input.SendMouseInput(0, 0, 0, SendMouseInputFlags.LeftDown);
+                    Input.SendMouseInput(0, 0, 0, SendMouseInputFlags.LeftUp);
+                    Input.SendMouseInput(0, 0, 0, SendMouseInputFlags.LeftDown);
+                    Input.SendMouseInput(0, 0, 0, SendMouseInputFlags.LeftUp);
+                    break;
                 case "b2p":
                     Input.SendMouseInput(x, y, 0, SendMouseInputFlags.MiddleDown);
                     break;
@@ -89,8 +96,7 @@ namespace Ldtpd
                         SendMouseInputFlags.Move | SendMouseInputFlags.Absolute);
                     break;
                 case "rel":
-                    ATGTestInput.Input.SendMouseInput(pt.X, pt.Y, 0,
-                        SendMouseInputFlags.Move);
+                    Input.SendMouseInput(pt.X, pt.Y, 0, SendMouseInputFlags.Move);
                     break;
                 default:
                     throw new XmlRpcFaultException(123,
