@@ -197,6 +197,8 @@ namespace Ldtp
         int GenerateMouseEvent(int x, int y, String type = "b1p");
         [XmlRpcMethod("mouseleftclick")]
         int MouseLeftClick(String windowName, String objName);
+        [XmlRpcMethod("mouserightclick")]
+        int MouseRightClick(String windowName, String objName);
         [XmlRpcMethod("simulatemousemove")]
         int SimulateMouseMove(int source_x, int source_y, int dest_x,
             int dest_y, double delay = 0.0);
@@ -1211,6 +1213,17 @@ namespace Ldtp
             try
             {
                 return proxy.MouseLeftClick(windowName, objName);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public int MouseRightClick(String objName)
+        {
+            try
+            {
+                return proxy.MouseRightClick(windowName, objName);
             }
             catch (XmlRpcFaultException ex)
             {

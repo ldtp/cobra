@@ -1405,6 +1405,20 @@ namespace Ldtpd
                 mouse = null;
             }
         }
+        [XmlRpcMethod("mouserightclick",
+            Description = "Mouse left click on an object.")]
+        public int MouseRightClick(String windowName, String objName)
+        {
+            Mouse mouse = new Mouse(this);
+            try
+            {
+                return mouse.MouseRightClick(windowName, objName);
+            }
+            finally
+            {
+                mouse = null;
+            }
+        }
         [XmlRpcMethod("getapplist",
             Description = "Get the current running application list.")]
         public string[] GetAppList()
