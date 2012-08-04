@@ -703,9 +703,9 @@ namespace Ldtpd
             InternalTreeWalker w = new InternalTreeWalker();
             if (objName != null)
             {
-                tmp = Regex.Replace(objName, @"\*", @".*");
-                tmp = Regex.Replace(tmp, @"\?", @".");
+                tmp = Regex.Replace(objName, @"\?", @".");
                 tmp = Regex.Replace(tmp, @"( |:|\.|_|\r|\n|<|>)", "");
+                tmp = Regex.Replace(tmp, @"\*", @".*");
                 tmp = Regex.Replace(tmp, @"\(", @"\(");
                 tmp = Regex.Replace(tmp, @"\)", @"\)");
                 //tmp += @"\Z(?ms)";
