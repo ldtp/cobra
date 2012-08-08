@@ -1405,6 +1405,20 @@ namespace Ldtpd
                 mouse = null;
             }
         }
+        [XmlRpcMethod("rightclick",
+            Description = "Mouse right click on row in the given table.")]
+        public int RightClick(String windowName, String objName, String text)
+        {
+            Tree tree = new Tree(this);
+            try
+            {
+                return tree.RightClick(windowName, objName, text);
+            }
+            finally
+            {
+                tree = null;
+            }
+        }
         [XmlRpcMethod("mouserightclick",
             Description = "Mouse left click on an object.")]
         public int MouseRightClick(String windowName, String objName)

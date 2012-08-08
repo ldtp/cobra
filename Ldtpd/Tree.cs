@@ -180,6 +180,59 @@ namespace Ldtpd
             throw new XmlRpcFaultException(123,
                 "Unable to find the item in list: " + text);
         }
+        public int RightClick(String windowName, String objName, String text)
+        {
+            if (String.IsNullOrEmpty(text))
+            {
+                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+            }
+            ControlType[] type;
+            AutomationElement elementItem;
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
+            if (!utils.IsEnabled(childHandle))
+            {
+                childHandle = null;
+                throw new XmlRpcFaultException(123,
+                    "Object state is disabled");
+            }
+            Mouse mouse = new Mouse(utils);
+            try
+            {
+                childHandle.SetFocus();
+                type = new ControlType[2] { ControlType.TreeItem,
+                    ControlType.ListItem };
+                elementItem = utils.GetObjectHandle(childHandle,
+                    text, type, true);
+                if (elementItem != null)
+                {
+                    elementItem.SetFocus();
+                    LogMessage(elementItem.Current.Name + " : " +
+                        elementItem.Current.ControlType.ProgrammaticName);
+                    Rect rect = elementItem.Current.BoundingRectangle;
+                    mouse.GenerateMouseEvent((int)(rect.X + rect.Width / 2),
+                        (int)(rect.Y + rect.Height / 2), "b3c");
+                    return 1;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                if (ex is XmlRpcFaultException)
+                    throw;
+                else
+                    throw new XmlRpcFaultException(123,
+                        "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                type = null;
+                mouse = null;
+                elementItem = childHandle = null;
+            }
+            throw new XmlRpcFaultException(123,
+                "Unable to find the item in list: " + text);
+        }
         public int VerifySelectRow(String windowName, String objName,
             String text, bool partialMatch = false)
         {
