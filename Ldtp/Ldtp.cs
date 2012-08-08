@@ -27,6 +27,7 @@
  * SOFTWARE.
 */
 using System;
+using System.IO;
 using System.Threading;
 using System.Diagnostics;
 using CookComputing.XmlRpc;
@@ -1561,11 +1562,25 @@ namespace Ldtp
                 throw new LdtpExecutionError(ex.FaultString);
             }
         }
-        public string ImageCapture(int x = 0, int y = 0, int width = -1, int height = -1)
+        public string ImageCapture(String windowName = null, String outFile = null,
+            int x = 0, int y = 0, int width = -1, int height = -1)
         {
             try
             {
-                return proxy.ImageCapture(windowName, x, y, width, height);
+                string path;
+                if (outFile == null)
+                    path = Path.GetTempPath() + Path.GetRandomFileName() + ".png";
+                else
+                    path = outFile;
+                string data = proxy.ImageCapture(windowName, x, y, width, height);
+                using (FileStream fs = File.Open(path, FileMode.Open,
+                    FileAccess.Write))
+                {
+                    Byte[] decodedText = Convert.FromBase64String(data);
+                    fs.Write(decodedText, 0, decodedText.Length);
+                    fs.Close();
+                }
+                return path;
             }
             catch (XmlRpcFaultException ex)
             {
