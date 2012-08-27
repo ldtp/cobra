@@ -1148,7 +1148,7 @@ namespace Ldtpd
         }
         [XmlRpcMethod("generatemouseevent",
             Description = "Generate mouse event.")]
-        public int GenerateMouseEvent(int x, int y, String type = "b1p")
+        public int GenerateMouseEvent(int x, int y, String type = "b1c")
         {
             Mouse mouse = new Mouse(this);
             try

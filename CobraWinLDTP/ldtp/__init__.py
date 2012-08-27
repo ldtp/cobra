@@ -412,7 +412,7 @@ if _ldtp_windows_env:
         return _remote_deletetext(window_name, object_name, start, end)
     def startprocessmonitor(process_name, interval = 2):
         return _remote_startprocessmonitor(process_name, interval)
-    def generatemouseevent(x, y, eventType = 'b1p'):
+    def generatemouseevent(x, y, eventType = 'b1c'):
         return _remote_generatemouseevent(x, y, eventType)
     def simulatemousemove(source_x, source_y, dest_x, dest_y, delay = 0.0):
         return _remote_simulatemousemove(source_x, source_y, dest_x, dest_y, delay)

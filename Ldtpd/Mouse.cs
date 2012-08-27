@@ -175,7 +175,7 @@ namespace Ldtpd
             }
             throw new XmlRpcFaultException(123, "Unable to perform action");
         }
-        public int GenerateMouseEvent(int x, int y, String type = "b1p")
+        public int GenerateMouseEvent(int x, int y, String type = "b1c")
         {
             Point pt = new Point(x, y);
             switch (type)
