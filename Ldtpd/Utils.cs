@@ -888,7 +888,7 @@ namespace Ldtpd
             try
             {
                 int waitTime = 0;
-                if (objName == null || objName.Length == 0)
+                if (String.IsNullOrEmpty(objName))
                 {
                     while (waitTime < guiTimeOut)
                     {
@@ -939,7 +939,7 @@ namespace Ldtpd
                 LogMessage("Argument cannot be empty.");
                 return 0;
             }
-            AutomationElement windowHandle, childHandle;
+            AutomationElement windowHandle, childHandle = null;
             try
             {
                 int waitTime = 0;
@@ -980,6 +980,12 @@ namespace Ldtpd
             catch (Exception ex)
             {
                 LogMessage(ex);
+            }
+            finally
+            {
+                if (childHandle != null) // To avoid compilation warning
+                    childHandle = null;
+                windowHandle = null;
             }
             return 0;
         }
