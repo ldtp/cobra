@@ -26,7 +26,7 @@
  * SOFTWARE.
 */
 using System;
-//using System.Threading;
+using System.Threading;
 //using System.Runtime.Remoting;
 //using System.Runtime.Remoting.Channels;
 //using System.Runtime.Remoting.Channels.Http;
@@ -40,14 +40,120 @@ namespace WinLdtpdService
 {
     class LdtpdService
     {
-        [STAThread]
-        static void Main()
+        public bool debug = false;
+        string ldtpDebugEnv = Environment.GetEnvironmentVariable("LDTP_DEBUG");
+        string listenAllInterface = Environment.GetEnvironmentVariable(
+            "LDTP_LISTEN_ALL_INTERFACE");
+        public Common common = null;
+        public WindowList windowList = null;
+        public HttpListener listener = null;
+        public XmlRpcListenerService svc = null;
+        LdtpdService()
+        {
+            if (ldtpDebugEnv != null && ldtpDebugEnv.Length > 0)
+                debug = true;
+            common = new Common(debug);
+            windowList = new WindowList(common);
+            listener = new HttpListener();
+            listener.Prefixes.Add("http://localhost:4118/");
+            listener.Prefixes.Add("http://+:4118/");
+            // Listen on all possible IP address
+            if (listenAllInterface != null && listenAllInterface.Length > 0)
+            {
+                if (debug)
+                    Console.WriteLine("Listening on all interface");
+                listener.Prefixes.Add("http://*:4118/");
+            }
+            else
+            {
+                // For Windows 8, still you need to add firewall rules
+                // Refer: README.txt
+                if (debug)
+                    Console.WriteLine("Listening only on local interface");
+            }
+            listener.Start();
+            svc = new Core(windowList, common, debug);
+        }
+
+        void ListenerCallback(IAsyncResult result)
+        {
+            HttpListenerContext context;
+            try
+            {
+                if (debug)
+                    Console.WriteLine("Processing request");
+                HttpListener listener = (HttpListener)result.AsyncState;
+                // Call EndGetContext to complete the asynchronous operation.
+                context = listener.EndGetContext(result);
+                try
+                {
+                    svc.ProcessRequest(context);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    common.LogMessage(ex);
+                }
+                context.Response.Close();
+                listener = null;
+            }
+            catch (Exception ex)
+            {
+                common.LogMessage(ex);
+            }
+            finally
+            {
+                context = null;
+                GC.Collect();
+            }
+        }
+
+        static void MultiThreadExec()
+        {
+            IAsyncResult result;
+            LdtpdService ldtpService = new LdtpdService();
+            try
+            {
+                while (true)
+                {
+                    try
+                    {
+                        GC.Collect();
+                        if (ldtpService.debug)
+                            Console.WriteLine("Waiting for clients");
+                        result = ldtpService.listener.BeginGetContext(
+                            new AsyncCallback(ldtpService.ListenerCallback),
+                            ldtpService.listener);
+                        result.AsyncWaitHandle.WaitOne();
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        ldtpService.common.LogMessage(ex);
+                    }
+                    finally
+                    {
+                        result = null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ldtpService.common.LogMessage(ex);
+            }
+            finally
+            {
+                ldtpService.svc = null;
+                ldtpService.windowList = null;
+                ldtpService.listener.Stop();
+            }
+        }
+
+        static void SingleThreadExec()
         {
             bool debug = false;
             string ldtpDebugEnv = Environment.GetEnvironmentVariable("LDTP_DEBUG");
             string listenAllInterface = Environment.GetEnvironmentVariable(
                 "LDTP_LISTEN_ALL_INTERFACE");
-            if (ldtpDebugEnv != null && ldtpDebugEnv.Length > 0)
+            if (String.IsNullOrEmpty(ldtpDebugEnv))
                 debug = true;
             Common common = new Common(debug);
             /*
@@ -109,18 +215,27 @@ namespace WinLdtpdService
                         if (debug)
                             Console.WriteLine("Processing request");
                         svc.ProcessRequest(context);
-                        context = null;
                         /*
                         // FIXME: If trying to do parallel process
                         // memory usage goes high and never comes back
                         // This is required for startprocessmonitor API
                         Thread parallelProcess = new Thread(delegate()
                         {
-                            svc.ProcessRequest(context);
-                            context = null;
+                            try
+                            {
+                                svc.ProcessRequest(context);
+                            }
+                            finally
+                            {
+                                context.Response.Close();
+                                context = null;
+                                GC.Collect();
+                            }
                         });
                         parallelProcess.Start();
                         /* */
+                        context.Response.Close();
+                        context = null;
                     }
                     catch (InvalidOperationException ex)
                     {
@@ -138,6 +253,17 @@ namespace WinLdtpdService
                 windowList = null;
                 listener.Stop();
             }
+        }
+
+        [STAThread]
+        static void Main()
+        {
+            string ldtpParallelMemLeak = Environment.GetEnvironmentVariable(
+                "LDTP_PARALLEL_MEM_LEAK");
+            if (String.IsNullOrEmpty(ldtpParallelMemLeak))
+                MultiThreadExec();
+            else
+                SingleThreadExec();
         }
     }
 }
