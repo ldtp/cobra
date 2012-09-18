@@ -267,7 +267,6 @@ namespace Ldtpd
                 throw new XmlRpcFaultException(123, "Unable to find window: " +
                     windowName);
             }
-            windowHandle.SetFocus();
             InternalTreeWalker walker = new InternalTreeWalker();
             utils.InternalGetObjectList(walker.walker.GetFirstChild(windowHandle),
                 ref objectList, ref objectHT, ref matchedKey,
@@ -303,7 +302,6 @@ namespace Ldtpd
             try
             {
                 childHandle = GetObjectHandle(windowName, objName, null);
-                childHandle.SetFocus();
                 if (childHandle != null)
                     return 1;
                 LogMessage("Unable to find Object: " + objName);
@@ -324,7 +322,6 @@ namespace Ldtpd
             try
             {
                 childHandle = GetObjectHandle(windowName, objName, null);
-                childHandle.SetFocus();
                 if (utils.IsEnabled(childHandle))
                     return 1;
             }
