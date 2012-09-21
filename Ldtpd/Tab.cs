@@ -78,7 +78,17 @@ namespace Ldtpd
             Object pattern;
             try
             {
-                childHandle.SetFocus();
+                try
+                {
+                    childHandle.SetFocus();
+                }
+                catch (System.Runtime.InteropServices.COMException ex)
+                {
+                    // Noticed this with Notepad
+                    LogMessage("Error HRESULT E_FAIL has been" +
+                        " returned from a call to a COM component.");
+                    LogMessage(ex.StackTrace);
+                }
                 elementItem = utils.GetObjectHandle(childHandle,
                     tabName);
                 if (elementItem != null)
