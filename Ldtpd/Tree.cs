@@ -125,7 +125,14 @@ namespace Ldtpd
             }
             try
             {
-                childHandle.SetFocus();
+                try
+                {
+                    childHandle.SetFocus();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    LogMessage(ex);
+                }
                 if (partialMatch)
                     text += "*";
                 type = new ControlType[2] { ControlType.TreeItem,
