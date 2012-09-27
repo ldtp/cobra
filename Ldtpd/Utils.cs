@@ -557,6 +557,7 @@ namespace Ldtpd
             tmp = Regex.Replace(tmp, @"\\", @"\\");
             tmp = Regex.Replace(tmp, @"\(", @"\(");
             tmp = Regex.Replace(tmp, @"\)", @"\)");
+            tmp = Regex.Replace(tmp, @"\+", @"\+");
             tmp = @"\A(?ms)" + tmp + @"\Z(?ms)";
             // This fails for some reason, commenting out for now
             //tmp += @"\Z(?ms)";
@@ -570,7 +571,7 @@ namespace Ldtpd
                 {
                     s = element.Current.Name;
                     currObjInfo = objInfo.GetObjectType(element);
-                    if (s == null)
+                    if (String.IsNullOrEmpty(s))
                     {
                         LogMessage("Current object Name is null");
                     }
@@ -598,7 +599,7 @@ namespace Ldtpd
                     {
                         if (s != null)
                             s = Regex.Replace(s, @"( |\t|:|\.|_|\r|\n|<|>)", "");
-                        if (s == null || s.Length == 0)
+                        if (String.IsNullOrEmpty(s))
                         {
                             // txt0, txt1
                             actualString = currObjInfo.objType +
