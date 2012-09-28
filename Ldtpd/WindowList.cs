@@ -29,6 +29,7 @@ using System;
 using System.Threading;
 using System.Collections;
 using System.Globalization;
+using System.Windows;
 using System.Windows.Automation;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -86,6 +87,11 @@ namespace Ldtpd
                     try
                     {
                         common.LogMessage(el.Current.Name);
+                        Rect rect = el.Current.BoundingRectangle;
+                        if (rect.X == 0 && rect.Y == 0 &&
+                            rect.Width == 0 && rect.Height == 0)
+                            // Window no longer exist
+                            windowTmpList.Add(el);
                     }
                     catch (ElementNotAvailableException ex)
                     {
@@ -171,7 +177,7 @@ namespace Ldtpd
             s1 = e.Current.Name;
             if (s1 != null)
                 s1 = (new Regex(" ")).Replace(s1, "");
-            if (s1 == null || s1.Length == 0)
+            if (String.IsNullOrEmpty(s1))
             {
                 return false;
             }
