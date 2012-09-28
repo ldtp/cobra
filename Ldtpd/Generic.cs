@@ -195,7 +195,7 @@ namespace Ldtpd
                     s = element.Current.Name;
                     LogMessage("Window name: " + s);
                     currObjInfo = objInfo.GetObjectType(element);
-                    if (s == null || s == "")
+                    if (String.IsNullOrEmpty(s))
                         actualString = currObjInfo.objType + currObjInfo.objCount;
                     else
                         actualString = currObjInfo.objType + s;
@@ -215,7 +215,7 @@ namespace Ldtpd
                         {
                             s = e.Current.Name;
                             currObjInfo = objInfo.GetObjectType(e);
-                            if (s == null || s == "")
+                            if (String.IsNullOrEmpty(s))
                                 actualString = currObjInfo.objType + currObjInfo.objCount;
                             else
                             {
@@ -612,7 +612,7 @@ namespace Ldtpd
                 }
                 Rect rect = windowHandle.Current.BoundingRectangle;
                 return new int[] { (int)rect.X, (int)rect.Y,
-                (int)rect.Width, (int)rect.Height };
+                    (int)rect.Width, (int)rect.Height };
             }
             catch (Exception ex)
             {
@@ -832,7 +832,7 @@ namespace Ldtpd
                 parentWindow = parentElement.Current.Name;
                 if (parentWindow != null)
                     parentWindow = Regex.Replace(parentWindow, "( |\r|\n)", "");
-                if (parentWindow == null || parentWindow.Length == 0)
+                if (String.IsNullOrEmpty(parentWindow))
                 {
                     // txt0, txt1
                     parentWindow = currObjInfo.objType + currObjInfo.objCount;
@@ -902,7 +902,7 @@ namespace Ldtpd
                     {
                         if (s != null)
                             s = Regex.Replace(s, @"( |\t|:|\.|_|\r|\n|<|>)", "");
-                        if (s == null || s.Length == 0)
+                        if (String.IsNullOrEmpty(s))
                         {
                             // txt0, txt1
                             actualString = currObjInfo.objType +
@@ -1086,7 +1086,7 @@ namespace Ldtpd
                 throw new XmlRpcFaultException(123,
                     "Unable to find window: " + windowName);
             }
-            if (objName == null || objName.Length == 0)
+            if (String.IsNullOrEmpty(objName))
             {
                 // If objName is not provided, just grab window focus
                 windowHandle.SetFocus();

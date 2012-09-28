@@ -155,7 +155,7 @@ namespace Ldtpd
                         s = e.Current.Name;
                         if (s != null)
                             s = Regex.Replace(s, "( |\r|\n)", "");
-                        if (s == null || s.Length == 0)
+                        if (String.IsNullOrEmpty(s))
                         {
                             // txt0, txt1
                             actualString = currObjInfo.objType +
@@ -734,7 +734,7 @@ namespace Ldtpd
                     actualString = null;
                     if (s != null)
                         s = Regex.Replace(s, @"( |\t|:|\.|_|\r|\n|<|>)", "");
-                    if (s == null || s.Length == 0)
+                    if (String.IsNullOrEmpty(s))
                     {
                         // txt0, txt1
                         actualString = currObjInfo.objType + currObjInfo.objCount;
