@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='windows-1252'?>
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
 <!--
-CobraWinLDTP 2.0
+CobraWinLDTP 2.5
 
 @author: Nagappan Alagappan <nalagappan@vmware.com>
 @copyright: Copyright (c) 2011-12 VMware Inc.,
@@ -29,7 +29,7 @@ SOFTWARE.
 -->
 
 <?define UpgradeCode=F0C8AC98-8C96-40F3-8D51-0EF5B40343EC?>
-<?define Version=2.0.0?>
+<?define Version=2.5.0?>
 <?if $(sys.BUILDARCH)=x64?>
    <?define Is64bit="yes"?>
    <?define CommonFilesFolder="CommonFiles64Folder"?>
@@ -67,7 +67,11 @@ SOFTWARE.
          <Directory Id='$(var.ProgramFilesFolder)'>
             <Directory Id='CompanyFolder' Name='VMware'>
                <Directory Id='INSTALLDIR' Name='CobraWinLDTP'>
-                  <Directory Id='PYLDTPDIR' Name='ldtp' />
+                  <Directory Id='PYLDTPDIR' Name='ldtp'>
+                     <Directory Id='PERLLDTPDIR' Name='LDTP'>
+                        <Directory Id='ROLEDIR' Name='Role' />
+                     </Directory>
+                  </Directory>
                </Directory>
             </Directory>
          </Directory>
@@ -84,6 +88,7 @@ SOFTWARE.
             <Environment Id='UpdatePath' Name='PATH' Action='set' Permanent='no' System='yes' Part='last' Value='[INSTALLDIR]' />
             <Environment Id='UpdatePythonPath' Name='PYTHONPATH' Action='set' Permanent='no' System='yes' Part='last' Value='[INSTALLDIR]' />
             <Environment Id='UpdateRubyPath' Name='RUBYLIB' Action='set' Permanent='no' System='yes' Part='last' Value='[PYLDTPDIR]' />
+            <Environment Id='UpdatePerlPath' Name='PERL5LIB' Action='set' Permanent='no' System='yes' Part='last' Value='[PYLDTPDIR]' />
             <File Id='CobraWinLDTPEXE'
                   Name='CobraWinLDTP.exe'
                   DiskId='1'
@@ -238,6 +243,45 @@ SOFTWARE.
                   Source="ldtp\Ldtp.jar" />
             <RemoveFile Id="ldtpjar" Name="Ldtp.jar" On="uninstall" />
          </Component>
+         <Component Id="ldtpperl" Guid="4E798C3B-F351-499F-B5F1-0C9FD9FF1697">
+            <File Id="ldtpperlfile"
+                  Name="LDTP.pm"
+                  KeyPath="yes"
+                  Source="ldtp\Perl\LDTP.pm" />
+            <RemoveFile Id="ldtpperl" Name="LDTP.pm" On="uninstall" />
+         </Component>
+         <Component Id="perlreadme" Guid="4D72AD92-EBCA-4F7A-AD5A-75285B2A31FF">
+            <File Id="perlreadmefile"
+                  Name="README"
+                  KeyPath="yes"
+                  Source="ldtp\Perl\Readme" />
+            <RemoveFile Id="perlreadme" Name="README" On="uninstall" />
+         </Component>
+      </DirectoryRef>
+      <DirectoryRef Id='PERLLDTPDIR'>
+         <Component Id="servicepm" Guid="952804A0-ADA5-45DD-9870-81F3AC60AC1F">
+            <File Id="servicefile"
+                  Name="Service.pm"
+                  KeyPath="yes"
+                  Source="ldtp\Perl\LDTP\Service.pm" />
+            <RemoveFile Id="servicepm" Name="Service.pm" On="uninstall" />
+         </Component>
+         <Component Id="windowpm" Guid="3E7C3288-C482-4650-AD22-3F6460A1D475">
+            <File Id="windowfile"
+                  Name="Window.pm"
+                  KeyPath="yes"
+                  Source="ldtp\Perl\LDTP\Window.pm" />
+            <RemoveFile Id="windowpm" Name="Window.pm" On="uninstall" />
+         </Component>
+      </DirectoryRef>
+      <DirectoryRef Id='ROLEDIR'>
+         <Component Id="rpchandlerpm" Guid="9705456A-B2A6-4E0B-AC2F-6CB165B928AF">
+            <File Id="rpchandlerfile"
+                  Name="RPCHandler.pm"
+                  KeyPath="yes"
+                  Source="ldtp\Perl\LDTP\Role\RPCHandler.pm" />
+            <RemoveFile Id="rpchandlerpm" Name="RPCHandler.pm" On="uninstall" />
+         </Component>
       </DirectoryRef>
 
       <DirectoryRef Id="ProgramMenuDir">
@@ -270,6 +314,11 @@ SOFTWARE.
          <ComponentRef Id="ldtpstate" />
          <ComponentRef Id="ldtpinit" />
          <ComponentRef Id="ldtpjar" />
+         <ComponentRef Id="ldtpperl" />
+         <ComponentRef Id="perlreadme" />
+         <ComponentRef Id="servicepm" />
+         <ComponentRef Id="windowpm" />
+         <ComponentRef Id="rpchandlerpm" />
          <ComponentRef Id='ProgramMenuDir' />
       </Feature>
 
