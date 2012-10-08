@@ -151,6 +151,13 @@ namespace Ldtpd
                 {
                     try
                     {
+                        Rect rect = e.Current.BoundingRectangle;
+                        if (rect.Width == 0 && rect.Height == 0)
+                        {
+                            // Window no longer exist
+                            windowTmpList.Add(e);
+                            continue;
+                        }
                         currObjInfo = objInfo.GetObjectType(e);
                         s = e.Current.Name;
                         if (s != null)
