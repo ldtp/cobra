@@ -483,6 +483,7 @@ namespace Ldtpd
             {
                 c = null;
                 pattern = null;
+                stateList = null;
                 childHandle = null;
             }
         }

@@ -88,8 +88,7 @@ namespace Ldtpd
                     {
                         common.LogMessage(el.Current.Name);
                         Rect rect = el.Current.BoundingRectangle;
-                        if (rect.X == 0 && rect.Y == 0 &&
-                            rect.Width == 0 && rect.Height == 0)
+                        if (rect.Width == 0 && rect.Height == 0)
                             // Window no longer exist
                             windowTmpList.Add(el);
                     }
