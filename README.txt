@@ -40,6 +40,8 @@ LDTP_LISTEN_ALL_INTERFACE and then run WinLdtpdService.exe as an user with
 administrator privillage in Windows 7, else you will get exception Access Denied.
 Other option is: Disable ACL in Control Panel->User Accounts->Change User Account Control settings
 Other option (Still you need to set LDTP_LISTEN_ALL_INTERFACE), you need to run as administrator:
+set LDTP_LISTEN_ALL_INTERFACE=1 # To listen on all interface
+Required for Windows >= 7
 netsh http add urlacl url=http://localhost:4118/ user=User
 netsh http add urlacl url=http://+:4118/ user=User
 netsh http add urlacl url=http://*:4118/ user=User
@@ -59,6 +61,7 @@ Minimum requirement .NET4.0
 To compile for Windows 8 environment (You can compile it from Windows 7, Visual studio 2010), but make sure you change target framework as .NET 4.0 for Windows 8 and .NET 3.5 for Windows XP/7
 NOTE: Don't select client profile
 
+For Windows 7 the following step is optional, but its required in Windows 8
 netsh http add urlacl url=http://localhost:4118/ user=User
 netsh http add urlacl url=http://+:4118/ user=User
 
