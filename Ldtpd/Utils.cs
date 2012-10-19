@@ -1011,7 +1011,6 @@ namespace Ldtpd
                 {
                     return 0;
                 }
-                windowHandle.SetFocus();
                 if (!String.IsNullOrEmpty(objName))
                 {
                     childHandle = GetObjectHandle(windowHandle,
