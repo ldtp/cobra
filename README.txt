@@ -61,7 +61,7 @@ Minimum requirement .NET4.0
 To compile for Windows 8 environment (You can compile it from Windows 7, Visual studio 2010), but make sure you change target framework as .NET 4.0 for Windows 8 and .NET 3.5 for Windows XP/7
 NOTE: Don't select client profile
 
-For Windows 7 the following step is optional, but its required in Windows 8
+For Windows 7 the following steps are optional, but its required for Windows 8
 netsh http add urlacl url=http://localhost:4118/ user=User
 netsh http add urlacl url=http://+:4118/ user=User
 
