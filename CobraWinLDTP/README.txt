@@ -1,10 +1,11 @@
 Cobra WinLDTP is based on Linux Desktop Testing Project - http://ldtp.freedesktop.org
+LDTP works on Windows/Linux/Mac/Solairs/FreeBSD/NetBSD/Palm Source, yes its Cross Platform GUI testing tool
 
 Verified with Windows XP SP3 / Windows 7 SP1 / Windows 8
 
 Please share your feedback with us (nagappan@gmail.com).
 
-Minimum requirement .NET3.5
+Minimum requirement .NET3.5 for Windows Xp/7
 
 Test scripts can be written in Python / Ruby / Java / C# / VB.NET / PowerShell / Perl and it can be extended to other languages.
 
