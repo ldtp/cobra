@@ -7,7 +7,7 @@ Please share your feedback with us (nagappan@gmail.com).
 
 Minimum requirement .NET3.5 for Windows Xp/7
 
-Test scripts can be written in Python / Ruby / Java / C# / VB.NET / PowerShell / Perl and it can be extended to other languages.
+Test scripts can be written in Python / Ruby / Java / C# / VB.NET / PowerShell / Clojure / Perl and it can be extended to other languages.
 
 On Windows XP SP3 make sure you have installed:
 .NET3.0 and .NET3.5 and KB971513
@@ -26,6 +26,7 @@ VB.NET
 Power Shell
 Ruby >= 1.8.x
 Perl
+Clojure
 
 Compile SetEnvironmentVariable and CobraWinLdtp solutions, place the binary where you have all the dll's, README.txt, License.rtf, before running Wix installer commands
 
