@@ -32,9 +32,9 @@ from socket import error as SocketError
 from client_exception import LdtpExecutionError, ERROR_CODE
 from log import logger
 
-_python25 = False
-if sys.version_info[:2] <= (2, 5):
-    _python25 = True
+_python26 = False
+if sys.version_info[:2] <= (2, 6):
+    _python26 = True
 _ldtp_windows_env = False
 if 'LDTP_DEBUG' in os.environ:
     verbose = 1
@@ -100,7 +100,7 @@ class Transport(xmlrpclib.Transport):
     # @param host Target host.
     # @return A connection handle.
 
-    if not _python25:
+    if not _python26:
         def make_connection(self, host):
             # create a HTTP connection object from a host descriptor
             import httplib
@@ -120,13 +120,12 @@ class Transport(xmlrpclib.Transport):
         retry_count = 1
         while True:
             try:
-                if _python25:
+                if _python26:
                     # Noticed this in Hutlab environment (Windows 7 SP1)
                     # Activestate python 2.5, use the old method
                     return xmlrpclib.Transport.request(
                         self, host, handler, request_body, verbose=verbose)
-		# Follwing implementation not supported in Python <= 2.5
-		# FIXME: Verify with Python 2.6
+		# Follwing implementation not supported in Python <= 2.6
                 h = self.make_connection(host)
                 if verbose:
                     h.set_debuglevel(1)
