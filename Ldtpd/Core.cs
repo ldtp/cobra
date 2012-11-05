@@ -142,7 +142,7 @@ namespace Ldtpd
                 generic = null;
             }
         }
-        [XmlRpcMethod("objtimeout ",
+        [XmlRpcMethod("objtimeout",
             Description = "Object timeout period, default 5 seconds.")]
         public int ObjectTimeOut(int objectTimeOut)
         {
