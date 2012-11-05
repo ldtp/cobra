@@ -1779,6 +1779,17 @@ public class Ldtp {
 	return doAction("mouseleftclick", params);
     }
     /**
+     * doubleClick Generate double click on the object
+     *
+     * @param objName Object name inside the current window
+     * @return Return 1 on success
+     * @throws LdtpExecutionError on failure
+     */
+    public int doubleClick(String objName) throws LdtpExecutionError {
+    	Object[] params = new Object[]{windowName, objName};
+    	return doAction("doubleclick", params);
+    }
+    /**
      * mouseMove Move mouse to the object
      *
      * @param objName Object name inside the current window
@@ -2018,6 +2029,18 @@ public class Ldtp {
     public int rightClick(String objName, String rowText) throws LdtpExecutionError {
 	Object[] params = new Object[]{windowName, objName, rowText};
 	return doAction("rightclick", params);
+    }
+    /**
+     * doubleClickRow Double click on table cell with matching row text
+     *
+     * @param objName Object name inside the current window
+     * @param rowText Row text to be matched
+     * @return Return 1 on success
+     * @throws LdtpExecutionError on failure
+     */
+    public int doubleClickRow(String objName, String rowText) throws LdtpExecutionError {
+    	Object[] params = new Object[]{windowName, objName, rowText};
+    	return doAction("doubleclickrow", params);
     }
     /**
      * checkRow Checkbox the table cell based on row index and column 0
