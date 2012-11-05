@@ -980,6 +980,21 @@ namespace Ldtpd
                 tree = null;
             }
         }
+        [XmlRpcMethod("doubleclickrow",
+            Description = "Double click on row text.")]
+        public int DoubleClickRow(String windowName, String objName,
+            String text)
+        {
+            Tree tree = new Tree(this);
+            try
+            {
+                return tree.DoubleClickRow(windowName, objName, text);
+            }
+            finally
+            {
+                tree = null;
+            }
+        }
         [XmlRpcMethod("selectrow",
             Description = "Select the given row in tree or list item.")]
         public int SelectRow(String windowName, String objName,
