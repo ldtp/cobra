@@ -362,7 +362,7 @@ namespace Ldtpd
                                 return 1;
                             break;
                         case "enabled":
-                            if (utils.IsEnabled(childHandle))
+                            if (utils.IsEnabled(childHandle, false))
                                 return 1;
                             break;
                         case "focused":

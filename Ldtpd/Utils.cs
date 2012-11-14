@@ -869,8 +869,9 @@ namespace Ldtpd
             {
                 if (e.Current.IsEnabled)
                     return true;
-                // Wait 1 second before retrying
-                Thread.Sleep(1000);
+                // Wait 1 second before retrying when wait is true
+		if (wait)
+                    Thread.Sleep(1000);
             }
             LogMessage("e.Current.IsEnabled: " + e.Current.IsEnabled);
             return false;
