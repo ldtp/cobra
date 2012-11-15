@@ -327,7 +327,7 @@ namespace Ldtpd
                     else if (!capsLock && key.shift)
                     {
                         ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.LeftShift,
-                            !shiftKeyPressed);
+                            shiftKeyPressed);
                     }
                     else if (shiftKeyPressed)
                     {
