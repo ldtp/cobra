@@ -59,11 +59,12 @@ netsh http add urlacl url=http://+:4118/ user=DOMAIN\User
 
 For Java compilation:
 
-Download commons-codec-1.6.jar, ws-commons-util-1.0.2.jar, xmlrpc-client-3.1.3.jar, xmlrpc-common-3.1.3.jar and place it in JavaLDTP/lib/
+Download commons-codec-1.6.jar, ws-commons-util-1.0.2.jar, xmlrpc-client-3.1.3.jar, xmlrpc-common-3.1.3.jar, commons-logging-1.1.1.jar, commons-logging-adapters-1.1.1.jar, commons-logging-api-1.1.1.jar and place it in ldtp/Java/lib/
 
 Download jar files from this location or any other apache mirror. Make sure you have the version mentioned in the jar or latest
 http://mirror.cc.columbia.edu/pub/software/apache/commons/codec/binaries/commons-codec-1.6-bin.zip
 http://www.apache.org/dyn/closer.cgi/ws/xmlrpc/
+http://commons.apache.org/logging/download_logging.cgi
 
 In eclipse its compiled by default. FIXME: Write how to compile from command line
 
