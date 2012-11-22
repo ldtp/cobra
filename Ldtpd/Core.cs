@@ -1547,5 +1547,19 @@ namespace Ldtpd
             ps.StopProcessMonitor(processName);
             return 1;
         }
+        [XmlRpcMethod("activatewindow",
+            Description = "Activate window.")]
+        public int ActivateWindow(String windowName)
+        {
+            Generic generic = new Generic(this);
+            try
+            {
+                return generic.GrabFocus(windowName);
+            }
+            finally
+            {
+                generic = null;
+            }
+        }
     }
 }
