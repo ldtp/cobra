@@ -72,6 +72,7 @@ SOFTWARE.
                         <Directory Id='ROLEDIR' Name='Role' />
                      </Directory>
                   </Directory>
+		  <Directory Id='PYLDTPUTILSDIR' Name='ldtputils' />
                </Directory>
             </Directory>
          </Directory>
@@ -191,6 +192,16 @@ SOFTWARE.
          </Component>
 	 <Component Id="AUTHORS" Guid="DF606170-5DA8-11E1-B86C-0800200C9A66">
                 <File Id="AUTHORStxt" KeyPath="yes" Source="AUTHORS.txt" />
+         </Component>
+      </DirectoryRef>
+
+      <DirectoryRef Id='PYLDTPUTILSDIR'>
+         <Component Id="ldtputilsinit" Guid="51F04CEC-92EF-4B6B-B484-0224E240603C">
+            <File Id="ldtputilsinitpy"
+                  Name="__init__.py"
+                  KeyPath="yes"
+                  Source="ldtputils\__init__.py" />
+            <RemoveFile Id="ldtputilsinit" Name="__init__.pyc" On="uninstall" />
          </Component>
       </DirectoryRef>
 
@@ -319,6 +330,7 @@ SOFTWARE.
          <ComponentRef Id="servicepm" />
          <ComponentRef Id="windowpm" />
          <ComponentRef Id="rpchandlerpm" />
+         <ComponentRef Id="ldtputilsinit" />
          <ComponentRef Id='ProgramMenuDir' />
       </Feature>
 
