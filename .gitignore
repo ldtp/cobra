@@ -5,3 +5,4 @@ dist/
 build/
 doc/html/
 .DS_Store
+CobraWinLDTP/ldtp/Java/lib/
