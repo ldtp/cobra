@@ -1070,6 +1070,21 @@ namespace Ldtpd
                 tree = null;
             }
         }
+        [XmlRpcMethod("getcellsize",
+            Description = "Get tree table cell size on the row index.")]
+        public int[] GetCellSize(String windowName,
+            String objName, int row, int column = 0)
+        {
+            Tree tree = new Tree(this);
+            try
+            {
+                return tree.GetCellSize(windowName, objName, row, column);
+            }
+            finally
+            {
+                tree = null;
+            }
+        }
         [XmlRpcMethod("getcellvalue",
             Description = "Get tree table cell value on the row index.")]
         public String GetCellValue(String windowName,
