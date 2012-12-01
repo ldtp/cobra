@@ -1,5 +1,5 @@
 ﻿/*
- * WinLDTP 1.0
+ * CobraWinLDTP 1.0
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Author: John Yingjun Li <yjli@vmware.com>
@@ -200,6 +200,10 @@ namespace Ldtp
         int MouseLeftClick(String windowName, String objName);
         [XmlRpcMethod("mouserightclick")]
         int MouseRightClick(String windowName, String objName);
+        [XmlRpcMethod("doubleclick")]
+        int DoubleClick(String windowName, String objName);
+        [XmlRpcMethod("doubleclickrow")]
+        int DoubleClickRow(String windowName, String objName, String text);
         [XmlRpcMethod("rightclick")]
         int RightClick(String windowName, String objName, String text);
         [XmlRpcMethod("simulatemousemove")]
@@ -229,6 +233,9 @@ namespace Ldtp
         int SelectRowIndex(String windowName, String objName, int index);
         [XmlRpcMethod("getcellvalue")]
         String GetCellValue(String windowName, String objName, int row,
+            int column = 0);
+        [XmlRpcMethod("getcellsize")]
+        String GetCellSize(String windowName, String objName, int row,
             int column = 0);
         [XmlRpcMethod("expandtablecell")]
         int ExpandTableCell(String windowName, String objName, int index);
@@ -1233,6 +1240,28 @@ namespace Ldtp
                 throw new LdtpExecutionError(ex.FaultString);
             }
         }
+        public int DoubleClick(String objName)
+        {
+            try
+            {
+                return proxy.DoubleClick(windowName, objName);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public int DoubleClickRow(String objName, String text)
+        {
+            try
+            {
+                return proxy.DoubleClickRow(windowName, objName, text);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
         public int RightClick(String objName, String text)
         {
             try
@@ -1371,6 +1400,17 @@ namespace Ldtp
             try
             {
                 return proxy.GetCellValue(windowName, objName, row, column);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public String GetCellSize(String objName, int row, int column = 0)
+        {
+            try
+            {
+                return proxy.GetCellSize(windowName, objName, row, column);
             }
             catch (XmlRpcFaultException ex)
             {

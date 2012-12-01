@@ -1,6 +1,5 @@
-package com.cobra.ldtp;
 /*
-LDTP v2 java client.
+LDTP v2 java callback test client.
 
 @author: Nagappan Alagappan <nagappan@gmail.com>
 @copyright: Copyright (c) 2009-12 Nagappan Alagappan
@@ -17,6 +16,7 @@ See 'COPYING' in the source distribution for more information.
 
 Headers in this file shall remain intact.
 */
+import com.cobra.ldtp;
 
 public class CallbackTest {
     public void callbackMethodNoArgs(Object... dummyArgs) {

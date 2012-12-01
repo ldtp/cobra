@@ -526,6 +526,65 @@ namespace Ldtpd
             throw new XmlRpcFaultException(123,
                 "Unable to get item value.");
         }
+        public int[] GetCellSize(String windowName,
+            String objName, int row, int column = 0)
+        {
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
+            if (!utils.IsEnabled(childHandle))
+            {
+                childHandle = null;
+                throw new XmlRpcFaultException(123,
+                    "Object state is disabled");
+            }
+            AutomationElement element = null;
+            Condition prop1 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.ListItem);
+            Condition prop2 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.TreeItem);
+            Condition condition1 = new OrCondition(prop1, prop2);
+            Condition condition2 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.Text);
+            try
+            {
+                childHandle.SetFocus();
+                AutomationElementCollection c = childHandle.FindAll(
+                    TreeScope.Children, condition1);
+                element = c[row];
+                c = element.FindAll(TreeScope.Children, condition2);
+                element = c[column];
+                c = null;
+                if (element != null)
+                {
+                    Rect rect = childHandle.Current.BoundingRectangle;
+                    return new int[] { (int)rect.X, (int)rect.Y,
+                        (int)rect.Width, (int)rect.Height };
+                }
+            }
+            catch (IndexOutOfRangeException)
+            {
+                throw new XmlRpcFaultException(123,
+                    "Index out of range: " + "(" + row + ", " + column + ")");
+            }
+            catch (ArgumentException)
+            {
+                throw new XmlRpcFaultException(123,
+                    "Index out of range: " + "(" + row + ", " + column + ")");
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                throw new XmlRpcFaultException(123,
+                    "Index out of range: " + "(" + row + ", " + column + ")");
+            }
+            finally
+            {
+                element = childHandle = null;
+                prop1 = prop2 = condition1 = condition2 = null;
+            }
+            throw new XmlRpcFaultException(123,
+                "Unable to get item size.");
+        }
         public int GetTableRowIndex(String windowName,
             String objName, String cellValue)
         {
@@ -592,7 +651,6 @@ namespace Ldtpd
             Condition condition = new OrCondition(prop1, prop2);
             try
             {
-                childHandle.SetFocus();
                 c = childHandle.FindAll(TreeScope.Children, condition);
                 if (c == null)
                     throw new XmlRpcFaultException(123,
@@ -614,6 +672,88 @@ namespace Ldtpd
                 childHandle = null;
                 prop1 = prop2 = condition = null;
             }
+        }
+        public int DoubleClickRow(String windowName, String objName, String text)
+        {
+            if (String.IsNullOrEmpty(text))
+            {
+                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+            }
+            Object pattern;
+            ControlType[] type;
+            AutomationElement elementItem;
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
+            if (!utils.IsEnabled(childHandle))
+            {
+                childHandle = null;
+                throw new XmlRpcFaultException(123,
+                    "Object state is disabled");
+            }
+            try
+            {
+                try
+                {
+                    childHandle.SetFocus();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    LogMessage(ex);
+                }
+                type = new ControlType[2] { ControlType.TreeItem,
+                    ControlType.ListItem };
+                elementItem = utils.GetObjectHandle(childHandle,
+                    text, type, true);
+                if (elementItem != null)
+                {
+                    elementItem.SetFocus();
+                    LogMessage(elementItem.Current.Name + " : " +
+                        elementItem.Current.ControlType.ProgrammaticName);
+                    if (elementItem.TryGetCurrentPattern(
+                        SelectionItemPattern.Pattern, out pattern))
+                    {
+                        LogMessage("SelectionItemPattern");
+                        //((SelectionItemPattern)pattern).Select();
+                        // NOTE: Work around, as the above doesn't seem to work
+                        // with UIAComWrapper and UIAComWrapper is required
+                        // to Edit value in Spin control
+                        Mouse mouse = new Mouse(utils);
+                        Rect rect = elementItem.Current.BoundingRectangle;
+                        mouse.GenerateMouseEvent((int)(rect.X + rect.Width / 2),
+                            (int)(rect.Y + rect.Height / 2), "b1d");
+                        return 1;
+                    }
+                    else if (elementItem.TryGetCurrentPattern(
+                        ExpandCollapsePattern.Pattern, out pattern))
+                    {
+                        LogMessage("ExpandCollapsePattern");
+                        ((ExpandCollapsePattern)pattern).Expand();
+                        return 1;
+                    }
+                    else
+                    {
+                        throw new XmlRpcFaultException(123,
+                            "Unsupported pattern.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                if (ex is XmlRpcFaultException)
+                    throw;
+                else
+                    throw new XmlRpcFaultException(123,
+                        "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                type = null;
+                pattern = null;
+                elementItem = childHandle = null;
+            }
+            throw new XmlRpcFaultException(123,
+                "Unable to find the item in list: " + text);
         }
     }
 }

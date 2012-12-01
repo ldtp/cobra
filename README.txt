@@ -1,5 +1,9 @@
 Cobra WinLDTP is based on Linux Desktop Testing Project - http://ldtp.freedesktop.org LDTP works on Windows/Linux/Mac/Solairs/FreeBSD/NetBSD/Palm Source, yes its Cross Platform GUI testing tool. Please share your feedback with us (nagappan@gmail.com).
 
+ * Linux GUI testing is known to work on GNOME / KDE (QT >= 4.8) / Java Swing / LibreOffice / Mozilla application on all major Linux distribution
+ * Windows GUI testing is known to work on application written in .NET / C++ / Java / QT on Windows XP SP3 / Vista SP2 / Windows 7 / Windows 8 development version
+ * Mac GUI testing is known to work on OS X Snow Leopard/Lion/Mountain Lion. Where ever ATOMac runs, LDTP should work on it
+
 Verified with Windows XP SP3 / Windows 7 SP1 / Windows 8. Minimum requirement >= .NET3.5 for Windows XP/7. Test scripts can be written in Python / Ruby / Java / C# / VB.NET / PowerShell / Clojure / Perl and it can be extended to other languages.
 
 On Windows XP SP3 make sure you have installed:
@@ -55,11 +59,12 @@ netsh http add urlacl url=http://+:4118/ user=DOMAIN\User
 
 For Java compilation:
 
-Download commons-codec-1.6.jar, ws-commons-util-1.0.2.jar, xmlrpc-client-3.1.3.jar, xmlrpc-common-3.1.3.jar and place it in JavaLDTP/lib/
+Download commons-codec-1.6.jar, ws-commons-util-1.0.2.jar, xmlrpc-client-3.1.3.jar, xmlrpc-common-3.1.3.jar, commons-logging-1.1.1.jar, commons-logging-adapters-1.1.1.jar, commons-logging-api-1.1.1.jar and place it in ldtp/Java/lib/
 
 Download jar files from this location or any other apache mirror. Make sure you have the version mentioned in the jar or latest
 http://mirror.cc.columbia.edu/pub/software/apache/commons/codec/binaries/commons-codec-1.6-bin.zip
 http://www.apache.org/dyn/closer.cgi/ws/xmlrpc/
+http://commons.apache.org/logging/download_logging.cgi
 
 In eclipse its compiled by default. FIXME: Write how to compile from command line
 

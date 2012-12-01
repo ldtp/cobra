@@ -18,29 +18,29 @@ See 'COPYING' in the source distribution for more information.
 Headers in this file shall remain intact.
 */
 
+import java.util.Hashtable;
+import java.util.Enumeration;
 import java.lang.reflect.Method;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
-import java.util.Hashtable;
-import java.util.Enumeration;
 
 public class PollEvents extends Thread {
-	// Based on http://stackoverflow.com/questions/443708/callback-functions-in-java
-	Hashtable<String, Callback> callbacks = new Hashtable<String, Callback>();
-	boolean pollServer = false;
-	Ldtp ldtp = null;
-	public PollEvents(Ldtp ldtp) {
-		pollServer = true;
-		this.ldtp = ldtp;
-	}
-	public void addCallbacks(String eventType, Object obj, final boolean isStatic, final String methodName, final Object... args) {
-		Callback cb = new Callback(eventType, obj, isStatic, methodName, args);
-		callbacks.put(methodName, cb);
-	}
-	public void removeCallbacks(final String methodName) {
-		if (callbacks.containsKey(methodName))
-			callbacks.remove(methodName);
-	}
+    // Based on http://stackoverflow.com/questions/443708/callback-functions-in-java
+    Hashtable<String, Callback> callbacks = new Hashtable<String, Callback>();
+    boolean pollServer = false;
+    Ldtp ldtp = null;
+    public PollEvents(Ldtp ldtp) {
+	pollServer = true;
+	this.ldtp = ldtp;
+    }
+    public void addCallbacks(String eventType, Object obj, final boolean isStatic, final String methodName, final Object... args) {
+	Callback cb = new Callback(eventType, obj, isStatic, methodName, args);
+	callbacks.put(methodName, cb);
+    }
+    public void removeCallbacks(final String methodName) {
+	if (callbacks.containsKey(methodName))
+	    callbacks.remove(methodName);
+    }
     void callbackMethod(final Object obj, final boolean isStatic, final String methodName, final Object... args)
     {
     	ExecutorService EXE = Executors.newSingleThreadExecutor();
@@ -82,32 +82,32 @@ public class PollEvents extends Thread {
     	}
     }
     public void run() {
-		String event;
-		while(pollServer) {
-			try {
-				event = ldtp.pollEvents();
-				if (event.equals("")) {
-					// Sleep 1 second
-					Thread.sleep(1000);
-					continue;
-				}
-				/*
-				[0] - Event type
-		        [1] - Window name (methodName)
-		        */
-				Enumeration<String> keys = callbacks.keys();
-				while (keys.hasMoreElements()) {
-		            Object key = keys.nextElement();
-		            Callback cb = (Callback)callbacks.get(key);
-		            if (event.equals(cb.eventType)) {
-		            	// eventType-windowName matched
-		            	callbackMethod(cb.obj, cb.isStatic, cb.methodName, cb.args);
-		            	break;
-		            }
-		        }
-			} catch(InterruptedException ex) {
-				break;
-			}
+	String event;
+	while(pollServer) {
+	    try {
+		event = ldtp.pollEvents();
+		if (event.equals("")) {
+		    // Sleep 1 second
+		    Thread.sleep(1000);
+		    continue;
 		}
+		/*
+		  [0] - Event type
+		  [1] - Window name (methodName)
+		*/
+		Enumeration<String> keys = callbacks.keys();
+		while (keys.hasMoreElements()) {
+		    Object key = keys.nextElement();
+		    Callback cb = (Callback)callbacks.get(key);
+		    if (event.equals(cb.eventType)) {
+			// eventType-windowName matched
+			callbackMethod(cb.obj, cb.isStatic, cb.methodName, cb.args);
+			break;
+		    }
+		}
+	    } catch(InterruptedException ex) {
+		break;
+	    }
 	}
+    }
 }

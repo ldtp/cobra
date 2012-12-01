@@ -142,7 +142,7 @@ namespace Ldtpd
                 generic = null;
             }
         }
-        [XmlRpcMethod("objtimeout ",
+        [XmlRpcMethod("objtimeout",
             Description = "Object timeout period, default 5 seconds.")]
         public int ObjectTimeOut(int objectTimeOut)
         {
@@ -980,6 +980,21 @@ namespace Ldtpd
                 tree = null;
             }
         }
+        [XmlRpcMethod("doubleclickrow",
+            Description = "Double click on row text.")]
+        public int DoubleClickRow(String windowName, String objName,
+            String text)
+        {
+            Tree tree = new Tree(this);
+            try
+            {
+                return tree.DoubleClickRow(windowName, objName, text);
+            }
+            finally
+            {
+                tree = null;
+            }
+        }
         [XmlRpcMethod("selectrow",
             Description = "Select the given row in tree or list item.")]
         public int SelectRow(String windowName, String objName,
@@ -1049,6 +1064,21 @@ namespace Ldtpd
             try
             {
                 return tree.ExpandTableCell(windowName, objName, index);
+            }
+            finally
+            {
+                tree = null;
+            }
+        }
+        [XmlRpcMethod("getcellsize",
+            Description = "Get tree table cell size on the row index.")]
+        public int[] GetCellSize(String windowName,
+            String objName, int row, int column = 0)
+        {
+            Tree tree = new Tree(this);
+            try
+            {
+                return tree.GetCellSize(windowName, objName, row, column);
             }
             finally
             {
@@ -1433,6 +1463,20 @@ namespace Ldtpd
                 mouse = null;
             }
         }
+        [XmlRpcMethod("doubleclick",
+            Description = "Mouse double click on an object.")]
+        public int DoubleClick(String windowName, String objName)
+        {
+            Mouse mouse = new Mouse(this);
+            try
+            {
+                return mouse.DoubleClick(windowName, objName);
+            }
+            finally
+            {
+                mouse = null;
+            }
+        }
         [XmlRpcMethod("getapplist",
             Description = "Get the current running application list.")]
         public string[] GetAppList()
@@ -1517,6 +1561,20 @@ namespace Ldtpd
         {
             ps.StopProcessMonitor(processName);
             return 1;
+        }
+        [XmlRpcMethod("activatewindow",
+            Description = "Activate window.")]
+        public int ActivateWindow(String windowName)
+        {
+            Generic generic = new Generic(this);
+            try
+            {
+                return generic.GrabFocus(windowName);
+            }
+            finally
+            {
+                generic = null;
+            }
         }
     }
 }
