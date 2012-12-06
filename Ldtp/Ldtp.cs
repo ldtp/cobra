@@ -182,6 +182,8 @@ namespace Ldtp
         int VerifyComboSelect(String windowName, String objName, String item);
         [XmlRpcMethod("selectindex")]
         int SelectIndex(String windowName, String objName, int index);
+        [XmlRpcMethod("getcombovalue")]
+        String GetComboValue(String windowName, String objName);
         [XmlRpcMethod("showlist")]
         int ShowList(String windowName, String objName);
         [XmlRpcMethod("hidelist")]
@@ -1135,6 +1137,17 @@ namespace Ldtp
             try
             {
                 return proxy.SelectIndex(windowName, objName, index);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public String GetComboValue(String objName)
+        {
+            try
+            {
+                return proxy.GetComboValue(windowName, objName);
             }
             catch (XmlRpcFaultException ex)
             {

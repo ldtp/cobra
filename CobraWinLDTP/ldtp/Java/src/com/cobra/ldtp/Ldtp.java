@@ -1661,6 +1661,17 @@ public class Ldtp {
 	return doAction("selecteditemcount", params);
     }
     /**
+     * getComboValue Get combobox value
+     *
+     * @param objName Object name inside the current window
+     * @return Return combobox value on success
+     * @throws LdtpExecutionError on failure
+     */
+    public String getComboValue(String objName) throws LdtpExecutionError {
+	Object[] params = new Object[]{windowName, objName};
+	return doAction("getcombovalue", params);
+    }
+    /**
      * showList Show combo box entries
      *
      * @param objName Object name inside the current window

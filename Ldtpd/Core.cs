@@ -375,6 +375,20 @@ namespace Ldtpd
                 comboBox = null;
             }
         }
+        [XmlRpcMethod("getcombovalue",
+            Description = "Get combo box current value.")]
+        public String GetComboValue(String windowName, String objName)
+        {
+            Combobox comboBox = new Combobox(this);
+            try
+            {
+                return comboBox.GetComboValue(windowName, objName);
+            }
+            finally
+            {
+                comboBox = null;
+            }
+        }
         [XmlRpcMethod("showlist",
             Description = "Show combo box item based on name.")]
         public int ShowList(String windowName, String objName)

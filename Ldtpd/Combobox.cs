@@ -145,7 +145,7 @@ namespace Ldtpd
                 "Unable to find item in the list: " + itemText);
         }
         private int InternalComboHandler(String windowName, String objName,
-            String item, String actionType = "Select",
+            String item, ref String selectedItem, String actionType = "Select",
             ArrayList childList = null)
         {
             bool verify = actionType == "Verify" ? true : false;
@@ -218,6 +218,45 @@ namespace Ldtpd
                                     }
                                 }
                                 break;
+                            case "GetComboValue":
+                                Object selectionPattern = null;
+                                LogMessage("GetComboValue");
+                                elementItem = utils.GetObjectHandle(childHandle, "Open",
+                                    type, true);
+                                if (elementItem != null &&
+                                    elementItem.TryGetCurrentPattern(InvokePattern.Pattern,
+                                    out invokePattern))
+                                {
+                                    ((InvokePattern)invokePattern).Invoke();
+                                }
+                                else
+                                    ((ExpandCollapsePattern)pattern).Expand();
+                                // Required to wait 1 second,
+                                // before checking the state and retry expanding
+                                utils.InternalWait(1);
+                                AutomationElementCollection c = childHandle.FindAll(TreeScope.Subtree,
+                                    Condition.TrueCondition);
+                                foreach (AutomationElement e in c)
+                                {
+                                    LogMessage(e.Current.Name + " : " + e.Current.ControlType.ProgrammaticName);
+                                    bool status = false;
+                                    if (e.TryGetCurrentPattern(SelectionItemPattern.Pattern,
+                                        out selectionPattern))
+                                    {
+                                        status = ((SelectionItemPattern)selectionPattern).Current.IsSelected;
+                                        if (status)
+                                        {
+                                            LogMessage("Selected: " + e.Current.Name);
+                                            selectedItem = e.Current.Name;
+                                            ((ExpandCollapsePattern)pattern).Collapse();
+                                            return 1;
+                                        }
+                                    }
+                                }
+                                c = null;
+                                selectionPattern = null;
+                                ((ExpandCollapsePattern)pattern).Collapse();
+                                return 0;
                             case "GetAllItem":
                                 string matchedKey = null;
                                 Hashtable objectHT = new Hashtable();
@@ -388,8 +427,9 @@ namespace Ldtpd
         }
         public string[] GetAllItem(String windowName, String objName)
         {
+            String selectedItem = null;
             ArrayList childList = new ArrayList();
-            InternalComboHandler(windowName, objName, null,
+            InternalComboHandler(windowName, objName, null, ref selectedItem,
                 "GetAllItem", childList);
             return childList.ToArray(typeof(string)) as string[];
         }
@@ -397,17 +437,35 @@ namespace Ldtpd
         {
             return ComboSelect(windowName, objName, item);
         }
+        public String GetComboValue(String windowName, String objName)
+        {
+            String selectedItem = null;
+            if (InternalComboHandler(windowName, objName, null,
+                ref selectedItem, "GetComboValue") == 1)
+            {
+                LogMessage("Item selected: " + selectedItem);
+                return selectedItem;
+            }
+            else
+                throw new XmlRpcFaultException(123, "Unable to get combobox value");
+        }
         public int ShowList(String windowName, String objName)
         {
-            return InternalComboHandler(windowName, objName, null, "Show");
+            String selectedItem = null;
+            return InternalComboHandler(windowName, objName,
+                null, ref selectedItem, "Show");
         }
         public int HideList(String windowName, String objName)
         {
-            return InternalComboHandler(windowName, objName, null, "Hide");
+            String selectedItem = null;
+            return InternalComboHandler(windowName, objName, null,
+                ref selectedItem, "Hide");
         }
         public int ComboSelect(String windowName, String objName, String item)
         {
-            return InternalComboHandler(windowName, objName, item, "Select");
+            String selectedItem = null;
+            return InternalComboHandler(windowName, objName, item,
+                ref selectedItem, "Select");
         }
         public int VerifyDropDown(String windowName, String objName)
         {
@@ -493,7 +551,9 @@ namespace Ldtpd
         {
             try
             {
-                return InternalComboHandler(windowName, objName, item, "Verify");
+                String selectedItem = null;
+                return InternalComboHandler(windowName, objName, item,
+                    ref selectedItem, "Verify");
             }
             catch (Exception ex)
             {
