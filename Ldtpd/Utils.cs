@@ -535,13 +535,15 @@ namespace Ldtpd
             ControlType[] type, ref ArrayList objectList,
             ObjInfo objInfo = null)
         {
-            if (childHandle == null)
+            if (childHandle == null || String.IsNullOrEmpty(objName))
             {
                 LogMessage("InternalGetObjectHandle: Child handle NULL");
                 return null;
             }
             int index;
             String s = null;
+            String objIndex;
+            bool isObjIndex = false;
             AutomationElement element;
             CurrentObjInfo currObjInfo;
             String actualString = null;
@@ -557,6 +559,10 @@ namespace Ldtpd
                 // Object id format: #AutomationId
                 automationId = objName.Split(new Char[] { '#' })[1];
             }
+            else if (Regex.IsMatch(objName, @"#"))
+            {
+                isObjIndex = true;
+            }
             // Trying to mimic python fnmatch.translate
             String tmp = Regex.Replace(objName, @"( |:|\.|_|\r|\n|<|>)", "");
             tmp = Regex.Replace(tmp, @"\*", @".*");
@@ -565,6 +571,7 @@ namespace Ldtpd
             tmp = Regex.Replace(tmp, @"\(", @"\(");
             tmp = Regex.Replace(tmp, @"\)", @"\)");
             tmp = Regex.Replace(tmp, @"\+", @"\+");
+            tmp = Regex.Replace(tmp, @"\#", @"\#");
             tmp = @"\A(?ms)" + tmp + @"\Z(?ms)";
             // This fails for some reason, commenting out for now
             //tmp += @"\Z(?ms)";
@@ -576,6 +583,7 @@ namespace Ldtpd
                 element = childHandle;
                 while (null != element)
                 {
+                    objIndex = null;
                     s = element.Current.Name;
                     currObjInfo = objInfo.GetObjectType(element);
                     if (String.IsNullOrEmpty(s))
@@ -638,9 +646,13 @@ namespace Ldtpd
                                 (rx.Match(actualString).Success));
                         }
                         objectList.Add(actualString);
+                        if (isObjIndex)
+                            objIndex = currObjInfo.objType + "#" + currObjInfo.objCount;
                     }
                     if ((isAutomationId && automationId == element.Current.AutomationId) ||
-                        (!isAutomationId && (s != null && rx.Match(s).Success) ||
+                        (isObjIndex && !String.IsNullOrEmpty(objIndex) && rx.Match(objIndex).Success) ||
+                        (!isAutomationId && !isObjIndex &&
+                        (s != null && rx.Match(s).Success) ||
                         (actualString != null && rx.Match(actualString).Success)))
                     {
                         if (type == null)
@@ -701,30 +713,48 @@ namespace Ldtpd
             String s = null;
             if (objInfo == null)
                 objInfo = new ObjInfo(false);
-            String actualString = null;
-            CurrentObjInfo currObjInfo;
-            Hashtable propertyHT;
+            String objIndex;
             // Trying to mimic python fnmatch.translate
             String tmp = null;
+            Hashtable propertyHT;
+            bool isObjIndex = false;
+            String actualString = null;
+            String automationId = null;
+            CurrentObjInfo currObjInfo;
+            bool isAutomationId = false;
 
             InternalTreeWalker w = new InternalTreeWalker();
             if (objName != null)
             {
-                tmp = Regex.Replace(objName, @"\?", @".");
-                tmp = Regex.Replace(tmp, @"( |:|\.|_|\r|\n|<|>)", "");
+                if (Regex.IsMatch(objName, @"^#"))
+                {
+                    isAutomationId = true;
+                    // Object id format: #AutomationId
+                    automationId = objName.Split(new Char[] { '#' })[1];
+                }
+                else if (Regex.IsMatch(objName, @"#"))
+                {
+                    isObjIndex = true;
+                }
+                tmp = Regex.Replace(objName, @"( |:|\.|_|\r|\n|<|>)", "");
                 tmp = Regex.Replace(tmp, @"\*", @".*");
+                tmp = Regex.Replace(tmp, @"\?", @".");
+                tmp = Regex.Replace(tmp, @"\\", @"\\");
                 tmp = Regex.Replace(tmp, @"\(", @"\(");
                 tmp = Regex.Replace(tmp, @"\)", @"\)");
-                //tmp += @"\Z(?ms)";
+                tmp = Regex.Replace(tmp, @"\+", @"\+");
+                tmp = Regex.Replace(tmp, @"\#", @"\#");
+                tmp = @"\A(?ms)" + tmp + @"\Z(?ms)";
                 rx = new Regex(tmp, RegexOptions.Compiled |
-                    RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline |
-                    RegexOptions.CultureInvariant);
+                       RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline |
+                       RegexOptions.CultureInvariant);
             }
             try
             {
                 AutomationElement element = windowHandle;
                 while (null != element)
                 {
+                    objIndex = null;
                     s = element.Current.Name;
                     currObjInfo = objInfo.GetObjectType(element);
                     if (s == null)
@@ -817,6 +847,8 @@ namespace Ldtpd
                                 element.Current.AutomationId);
                         // Add individual property to object property
                         objectHT.Add(actualString, propertyHT);
+                        if (isObjIndex)
+                            objIndex = currObjInfo.objType + "#" + currObjInfo.objCount;
                         if (debug && rx != null)
                         {
                             LogMessage(objName + " : " + actualString + " : " + s
@@ -824,8 +856,12 @@ namespace Ldtpd
                             LogMessage((s != null && rx.Match(s).Success) + " : " +
                                 (actualString != null && rx.Match(actualString).Success));
                         }
-                        if ((s != null && rx != null && rx.Match(s).Success) ||
-                        (actualString != null && rx != null && rx.Match(actualString).Success))
+                        if ((isAutomationId && !String.IsNullOrEmpty(automationId) &&
+                            automationId == element.Current.AutomationId) ||
+                            (isObjIndex && !String.IsNullOrEmpty(objIndex) && rx.Match(objIndex).Success) ||
+                            (!isAutomationId && !isObjIndex &&
+                            (s != null && rx != null && rx.Match(s).Success) ||
+                            (actualString != null && rx != null && rx.Match(actualString).Success)))
                         {
                             matchedKey = actualString;
                             LogMessage("String matched: " + needAll);
@@ -870,7 +906,7 @@ namespace Ldtpd
                 if (e.Current.IsEnabled)
                     return true;
                 // Wait 1 second before retrying when wait is true
-		if (wait)
+                if (wait)
                     Thread.Sleep(1000);
             }
             LogMessage("e.Current.IsEnabled: " + e.Current.IsEnabled);
