@@ -53,6 +53,8 @@ namespace Ldtp
         [XmlRpcMethod("getobjectproperty")]
         String GetObjectProperty(String windowName, String objName,
             String property);
+        [XmlRpcMethod("getaccesskey")]
+        String GetAccessKey(String windowName, String objName);
         [XmlRpcMethod("getchild")]
         String[] GetChild(String windowName, String childName,
             String role = "", String property = "");
@@ -471,6 +473,17 @@ namespace Ldtp
             try
             {
                 return proxy.GetObjectInfo(windowName, objName);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public String GetAccessKey(String objName)
+        {
+            try
+            {
+                return proxy.GetAccessKey(windowName, objName);
             }
             catch (XmlRpcFaultException ex)
             {

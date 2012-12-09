@@ -1315,6 +1315,19 @@ namespace Ldtpd
                 generic = null;
             }
         }
+        [XmlRpcMethod("getaccesskey", Description = "Get access key.")]
+        public String GetAccessKey(String windowName, String objName)
+        {
+            Generic generic = new Generic(this);
+            try
+            {
+                return generic.GetAccessKey(windowName, objName);
+            }
+            finally
+            {
+                generic = null;
+            }
+        }
         [XmlRpcMethod("getwindowsize", Description = "Get window size.")]
         public int[] GetWindowSize(String windowName)
         {

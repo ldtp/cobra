@@ -359,7 +359,7 @@ public class Ldtp {
 	return getStringList("getobjectlist", params);
     }
     /**
-     * getObjectList Get current object info
+     * getObjectInfo Get current object info
      *
      * @param objName Object name
      * @return Return the properties of the current object as String array
@@ -367,6 +367,16 @@ public class Ldtp {
     public String[] getObjectInfo(String objName) throws LdtpExecutionError {
 	Object[] params = new Object[]{windowName, objName};
 	return getStringList("getobjectinfo", params);
+    }
+    /**
+     * getAccessKey Get access key
+     *
+     * @param objName Object name
+     * @return Return the access key as String
+     */
+    public String getAccessKey(String objName) throws LdtpExecutionError {
+	Object[] params = new Object[]{windowName, objName};
+	return getString("getaccesskey", params);
     }
     /**
      * getObjectProperty Get current object property

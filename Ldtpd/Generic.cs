@@ -600,6 +600,30 @@ namespace Ldtpd
                 childHandle = null;
             }
         }
+        public String GetAccessKey(String windowName, String objName)
+        {
+            AutomationElement childHandle;
+            try
+            {
+                childHandle = utils.GetObjectHandle(windowName, objName);
+                if (String.IsNullOrEmpty(childHandle.Current.AccessKey))
+                    throw new XmlRpcFaultException(123, "No access key associated");
+                return childHandle.Current.AccessKey;
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                if (ex is XmlRpcFaultException)
+                    throw;
+                else
+                    throw new XmlRpcFaultException(123,
+                        "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                childHandle = null;
+            }
+        }
         public int[] GetWindowSize(String windowName)
         {
             AutomationElement windowHandle;
