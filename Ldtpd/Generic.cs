@@ -210,7 +210,7 @@ namespace Ldtpd
                     windowArrayList.Add(actualString);
                     try
                     {
-                        c = element.FindAll(TreeScope.Children, condition);
+                        c = element.FindAll(TreeScope.Subtree, condition);
                         foreach (AutomationElement e in c)
                         {
                             s = e.Current.Name;
