@@ -126,72 +126,10 @@ namespace Ldtpd
             try
             {
                 AutomationElementCollection c;
-                List<AutomationElement> windowTmpList = new List<AutomationElement>();
-                LogMessage("GetWindowList - Window list count: " +
-                    utils.windowList.Count);
-                try
-                {
-                    foreach (AutomationElement e in utils.windowList)
-                    {
-                        try
-                        {
-                            s = e.Current.Name;
-                            LogMessage("Cached window name: " + s);
-                            currObjInfo = objInfo.GetObjectType(e);
-                            actualString = currObjInfo.objType + s;
-                            index = 1;
-                            while (true)
-                            {
-                                if (windowArrayList.IndexOf(actualString) < 0)
-                                    break;
-                                actualString = currObjInfo.objType + s + index;
-                                index++;
-                            }
-                            windowArrayList.Add(actualString);
-                        }
-                        catch (ElementNotAvailableException ex)
-                        {
-                            // If window doesn't exist, remove it from list
-                            windowTmpList.Add(e);
-                            LogMessage(ex);
-                        }
-                        catch (Exception ex)
-                        {
-                            // Capture any unhandled exception,
-                            // so that the framework won't crash
-                            windowTmpList.Add(e);
-                            LogMessage(ex);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Since window list is added / removed in different thread
-                    // values of windowList might be altered and an exception is thrown
-                    // Just handle the global exception
-                    LogMessage(ex);
-                }
-                try
-                {
-                    foreach (AutomationElement e in windowTmpList)
-                        utils.windowList.Remove(e);
-                }
-                catch (Exception ex)
-                {
-                    LogMessage(ex);
-                }
                 // FIXME: Check whether resetting the ObjInfo is appropriate here
                 objInfo = new ObjInfo(false);
                 while (null != element)
                 {
-                    if (utils.windowList.IndexOf(element) != -1)
-                    {
-                        // As the window info already added to the windowArrayList
-                        // let us not re-add it
-                        LogMessage(element.Current.Name + " already in windowList");
-                        element = w.walker.GetNextSibling(element);
-                        continue;
-                    }
                     s = element.Current.Name;
                     LogMessage("Window name: " + s);
                     currObjInfo = objInfo.GetObjectType(element);

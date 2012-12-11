@@ -145,7 +145,7 @@ namespace Ldtpd
                 RegexOptions.IgnorePatternWhitespace | RegexOptions.Multiline |
                 RegexOptions.CultureInvariant);
             List<AutomationElement> windowTmpList = new List<AutomationElement>();
-            InternalTreeWalker w = new InternalTreeWalker();
+            InternalTreeWalker w;
             Condition condition = new PropertyCondition(
                 AutomationElement.ControlTypeProperty,
                 ControlType.Window);
@@ -198,10 +198,8 @@ namespace Ldtpd
                             if (type == null)
                             {
                                 LogMessage(windowName + " - Window found");
-                                w = null;
                                 rx = null;
                                 objectList = null;
-                                windowTmpList = null;
                                 return e;
                             }
                             else
@@ -213,10 +211,8 @@ namespace Ldtpd
                                             " : " + e.Current.ControlType.ProgrammaticName);
                                     if (t == e.Current.ControlType)
                                     {
-                                        w = null;
                                         rx = null;
                                         objectList = null;
-                                        windowTmpList = null;
                                         return e;
                                     }
                                 }
@@ -242,23 +238,28 @@ namespace Ldtpd
             {
                 LogMessage(ex);
             }
-            try
+            finally
             {
-                foreach (AutomationElement e in windowTmpList)
-                    try
-                    {
-                        // Remove element from the list
-                        windowList.Remove(e);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogMessage(ex);
-                    }
+                try
+                {
+                    foreach (AutomationElement e in windowTmpList)
+                        try
+                        {
+                            // Remove element from the list
+                            windowList.Remove(e);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogMessage(ex);
+                        }
+                    windowTmpList = null;
+                }
+                catch (Exception ex)
+                {
+                    LogMessage(ex);
+                }
             }
-            catch (Exception ex)
-            {
-                LogMessage(ex);
-            }
+            w = new InternalTreeWalker();
             windowTmpList = null;
             objectList.Clear();
             objInfo = new ObjInfo(false);
@@ -270,6 +271,8 @@ namespace Ldtpd
                     c = element.FindAll(TreeScope.Subtree, condition);
                     foreach (AutomationElement e in c)
                     {
+                        if (windowList.IndexOf(e) == -1)
+                            windowList.Add(e);
                         currObjInfo = objInfo.GetObjectType(e);
                         s = e.Current.Name;
                         if (s != null)
