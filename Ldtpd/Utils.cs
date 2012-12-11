@@ -131,6 +131,7 @@ namespace Ldtpd
             String actualString;
             AutomationElement element;
             CurrentObjInfo currObjInfo;
+            AutomationElementCollection c;
             ObjInfo objInfo = new ObjInfo(false);
             ArrayList objectList = new ArrayList();
             // Trying to mimic python fnmatch.translate
@@ -145,6 +146,9 @@ namespace Ldtpd
                 RegexOptions.CultureInvariant);
             List<AutomationElement> windowTmpList = new List<AutomationElement>();
             InternalTreeWalker w = new InternalTreeWalker();
+            Condition condition = new PropertyCondition(
+                AutomationElement.ControlTypeProperty,
+                ControlType.Window);
             try
             {
                 foreach (AutomationElement e in windowList)
@@ -263,129 +267,62 @@ namespace Ldtpd
             {
                 while (null != element)
                 {
-                    currObjInfo = objInfo.GetObjectType(element);
-                    s = element.Current.Name;
-                    if (s != null)
-                        s = Regex.Replace(s, "( |\r|\n)", "");
-                    if (s == null || s == "")
+                    c = element.FindAll(TreeScope.Subtree, condition);
+                    foreach (AutomationElement e in c)
                     {
-                        // txt0, txt1
-                        actualString = currObjInfo.objType +
-                            currObjInfo.objCount;
-                    }
-                    else
-                    {
-                        // txtName, txtPassword
-                        actualString = currObjInfo.objType + s;
-                        index = 1;
-                        while (true)
+                        currObjInfo = objInfo.GetObjectType(e);
+                        s = e.Current.Name;
+                        if (s != null)
+                            s = Regex.Replace(s, "( |\r|\n)", "");
+                        if (s == null || s == "")
                         {
-                            if (objectList.IndexOf(actualString) < 0)
-                            {
-                                // Object doesn't exist, assume this is the first
-                                // element with the name and type
-                                break;
-                            }
-                            actualString = currObjInfo.objType + s + index;
-                            index++;
-                        }
-                    }
-                    LogMessage("Window: " + actualString + " : " + tmp);
-                    objectList.Add(actualString);
-                    // FIXME: Handle dlg0 as in Linux
-                    if ((s != null && rx.Match(s).Success) ||
-                        rx.Match(actualString).Success)
-                    {
-                        if (type == null)
-                        {
-                            LogMessage(windowName + " - Window found");
-                            return element;
+                            // txt0, txt1
+                            actualString = currObjInfo.objType +
+                                currObjInfo.objCount;
                         }
                         else
                         {
-                            foreach (ControlType t in type)
+                            // txtName, txtPassword
+                            actualString = currObjInfo.objType + s;
+                            index = 1;
+                            while (true)
                             {
-                                if (debug)
-                                    LogMessage((t == element.Current.ControlType) +
-                                        " : " + element.Current.ControlType.ProgrammaticName);
-                                if (t == element.Current.ControlType)
+                                if (objectList.IndexOf(actualString) < 0)
                                 {
-                                    return element;
+                                    // Object doesn't exist, assume this is the first
+                                    // element with the name and type
+                                    break;
                                 }
+                                actualString = currObjInfo.objType + s + index;
+                                index++;
                             }
-                            LogMessage("type doesn't match !!!!!!!!!!!!!!");
                         }
-                    }
-                    element = w.walker.GetNextSibling(element);
-                }
-                element = w.walker.GetFirstChild(
-                    AutomationElement.RootElement);
-                // Reset object info
-                objInfo = new ObjInfo(false);
-                objectList.Clear();
-                AutomationElement subChild;
-                while (null != element)
-                {
-                    subChild = w.walker.GetFirstChild(
-                        element);
-                    while (subChild != null)
-                    {
-                        if (subChild.Current.Name != null)
+                        LogMessage("Window: " + actualString + " : " + tmp);
+                        objectList.Add(actualString);
+                        // FIXME: Handle dlg0 as in Linux
+                        if ((s != null && rx.Match(s).Success) ||
+                            rx.Match(actualString).Success)
                         {
-                            currObjInfo = objInfo.GetObjectType(subChild);
-                            s = subChild.Current.Name;
-                            if (s != null)
-                                s = Regex.Replace(s, "( |\r|\n)", "");
-                            if (s == null || s == "")
+                            if (type == null)
                             {
-                                // txt0, txt1
-                                actualString = currObjInfo.objType +
-                                    currObjInfo.objCount;
+                                LogMessage(windowName + " - Window found");
+                                return e;
                             }
                             else
                             {
-                                // txtName, txtPassword
-                                actualString = currObjInfo.objType + s;
-                                index = 1;
-                                while (true)
+                                foreach (ControlType t in type)
                                 {
-                                    if (objectList.IndexOf(actualString) < 0)
+                                    if (debug)
+                                        LogMessage((t == e.Current.ControlType) +
+                                            " : " + e.Current.ControlType.ProgrammaticName);
+                                    if (t == e.Current.ControlType)
                                     {
-                                        // Object doesn't exist, assume this is the first
-                                        // element with the name and type
-                                        break;
+                                        return e;
                                     }
-                                    actualString = currObjInfo.objType + s + index;
-                                    index++;
                                 }
-                            }
-                            LogMessage("SubWindow: " + actualString + " : " + tmp);
-                            if ((s != null && rx.Match(s).Success) ||
-                                rx.Match(actualString).Success)
-                            {
-                                if (type == null)
-                                {
-                                    LogMessage(windowName + " - Window found");
-                                    return subChild;
-                                }
-                                else
-                                {
-                                    foreach (ControlType t in type)
-                                    {
-                                        if (debug)
-                                            LogMessage((t == subChild.Current.ControlType) +
-                                                " : " + subChild.Current.ControlType.ProgrammaticName);
-                                        if (t == subChild.Current.ControlType)
-                                        {
-                                            LogMessage(windowName + " - Window found");
-                                            return subChild;
-                                        }
-                                    }
-                                    LogMessage("type doesn't match !!!!!!!!!!!!!!");
-                                }
+                                LogMessage("type doesn't match !!!!!!!!!!!!!!");
                             }
                         }
-                        subChild = w.walker.GetNextSibling(subChild);
                     }
                     element = w.walker.GetNextSibling(element);
                 }
@@ -396,6 +333,7 @@ namespace Ldtpd
             }
             finally
             {
+                c = null;
                 w = null;
                 rx = null;
                 objectList = null;
