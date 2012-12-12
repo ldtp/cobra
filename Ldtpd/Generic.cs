@@ -130,6 +130,8 @@ namespace Ldtpd
                 objInfo = new ObjInfo(false);
                 while (null != element)
                 {
+                    if (utils.windowList.IndexOf(element) == -1)
+                        utils.windowList.Add(element);
                     s = element.Current.Name;
                     LogMessage("Window name: " + s);
                     currObjInfo = objInfo.GetObjectType(element);
@@ -151,6 +153,8 @@ namespace Ldtpd
                         c = element.FindAll(TreeScope.Subtree, condition);
                         foreach (AutomationElement e in c)
                         {
+                            if (utils.windowList.IndexOf(e) == -1)
+                                utils.windowList.Add(e);
                             s = e.Current.Name;
                             currObjInfo = objInfo.GetObjectType(e);
                             if (String.IsNullOrEmpty(s))
