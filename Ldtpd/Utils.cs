@@ -268,6 +268,8 @@ namespace Ldtpd
             {
                 while (null != element)
                 {
+                    if (windowList.IndexOf(element) == -1)
+                        windowList.Add(element);
                     c = element.FindAll(TreeScope.Subtree, condition);
                     foreach (AutomationElement e in c)
                     {
@@ -300,7 +302,7 @@ namespace Ldtpd
                                 index++;
                             }
                         }
-                        LogMessage("Window: " + actualString + " : " + tmp);
+                        LogMessage("Window dynamic: " + actualString + " : " + tmp);
                         objectList.Add(actualString);
                         // FIXME: Handle dlg0 as in Linux
                         if ((s != null && rx.Match(s).Success) ||
@@ -361,6 +363,7 @@ namespace Ldtpd
                 Thread thread = new Thread(delegate()
                 {
                     o = InternalGetWindowHandle(windowName, type);
+                    InternalWait(1);
                 });
                 thread.Start();
                 // Wait 30 seconds (30 seconds * 1000 milli seconds)
