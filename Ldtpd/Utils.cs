@@ -47,6 +47,7 @@ namespace Ldtpd
         public bool debug = false;
         internal Common common;
         internal WindowList windowList;
+        protected int windowRetry = 3;
         protected int objectTimeOut = 5;
         public Utils(WindowList windowList, Common common, bool debug)
         {
@@ -355,7 +356,7 @@ namespace Ldtpd
                 LogMessage("Invalid window name");
                 return o;
             }
-            int retry = waitForObj ? objectTimeOut : 1;
+            int retry = waitForObj ? windowRetry : 1;
             // For debugging use the following value
             //int retry = waitForObj ? 1 : 1;
             for (int i = 0; i < retry; i++)
@@ -363,7 +364,6 @@ namespace Ldtpd
                 Thread thread = new Thread(delegate()
                 {
                     o = InternalGetWindowHandle(windowName, type);
-                    InternalWait(1);
                 });
                 thread.Start();
                 // Wait 30 seconds (30 seconds * 1000 milli seconds)
