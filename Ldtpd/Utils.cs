@@ -49,6 +49,7 @@ namespace Ldtpd
         internal WindowList windowList;
         protected int windowRetry = 3;
         protected int objectTimeOut = 5;
+        protected String appUnderTest = null;
         public Utils(WindowList windowList, Common common, bool debug)
         {
             this.debug = debug;
@@ -125,7 +126,7 @@ namespace Ldtpd
             GC.Collect();
         }
         private AutomationElement InternalGetWindowHandle(String windowName,
-            ControlType[] type = null)
+            ControlType[] type = null, bool waitTillGuiNotExist = false)
         {
             String s;
             int index;
@@ -260,6 +261,10 @@ namespace Ldtpd
                     LogMessage(ex);
                 }
             }
+            if (waitTillGuiNotExist)
+                // If window doesn't exist for waitTillGuiNotExist
+                // return here as we don't need to find the window handle
+                return null;
             w = new InternalTreeWalker();
             windowTmpList = null;
             objectList.Clear();
@@ -271,6 +276,25 @@ namespace Ldtpd
                 {
                     if (windowList.IndexOf(element) == -1)
                         windowList.Add(element);
+                    if (!String.IsNullOrEmpty(appUnderTest))
+                    {
+                        Process process;
+                        // Get a process using the process id.
+                        try
+                        {
+                            process = Process.GetProcessById(element.Current.ProcessId);
+                            if (process.ProcessName != appUnderTest)
+                            {
+                                element = w.walker.GetNextSibling(element);
+                                continue;
+                            }
+                        }
+                        catch
+                        {
+                            element = w.walker.GetNextSibling(element);
+                            continue;
+                        }
+                    }
                     c = element.FindAll(TreeScope.Subtree, condition);
                     foreach (AutomationElement e in c)
                     {
@@ -348,9 +372,11 @@ namespace Ldtpd
             return null;
         }
         internal AutomationElement GetWindowHandle(String windowName,
-            bool waitForObj = true, ControlType[] type = null)
+            bool waitForObj = true, ControlType[] type = null,
+            bool waitTillGuiNotExist = false)
         {
             AutomationElement o = null;
+            String tmpAppUnderTest = null;
             if (String.IsNullOrEmpty(windowName))
             {
                 LogMessage("Invalid window name");
@@ -364,6 +390,21 @@ namespace Ldtpd
                 Thread thread = new Thread(delegate()
                 {
                     o = InternalGetWindowHandle(windowName, type);
+                    if (!String.IsNullOrEmpty(tmpAppUnderTest))
+                    {
+                        // For alternate lookup, change
+                        // appUnderTest, so all the apps are looked
+                        appUnderTest = tmpAppUnderTest;
+                        tmpAppUnderTest = null;
+                    }
+                    else if (String.IsNullOrEmpty(tmpAppUnderTest) &&
+                      !String.IsNullOrEmpty(appUnderTest))
+                    {
+                        // For alternate lookup, change
+                        // appUnderTest, so all the apps are looked
+                        tmpAppUnderTest = appUnderTest;
+                        appUnderTest = null;
+                    }
                 });
                 thread.Start();
                 // Wait 30 seconds (30 seconds * 1000 milli seconds)
@@ -394,10 +435,19 @@ namespace Ldtpd
                             LogMessage(ex.StackTrace);
                             continue;
                         }
+                        finally
+                        {
+                            if (!String.IsNullOrEmpty(tmpAppUnderTest))
+                                // Reset appUnderTest with the value back
+                                appUnderTest = tmpAppUnderTest;
+                        }
                         return o;
                     }
                 }
             }
+            if (!String.IsNullOrEmpty(tmpAppUnderTest))
+                // Reset appUnderTest with the value back
+                appUnderTest = tmpAppUnderTest;
             return o;
         }
         internal AutomationElement GetObjectHandle(AutomationElement e, String objName)
@@ -935,7 +985,8 @@ namespace Ldtpd
                 {
                     while (waitTime < guiTimeOut)
                     {
-                        windowHandle = GetWindowHandle(windowName, false);
+                        windowHandle = GetWindowHandle(windowName, false,
+                            null, true);
                         if (windowHandle == null)
                             return 1;
                         waitTime++;
@@ -947,7 +998,8 @@ namespace Ldtpd
                 {
                     while (waitTime < guiTimeOut)
                     {
-                        windowHandle = GetWindowHandle(windowName, false);
+                        windowHandle = GetWindowHandle(windowName, false,
+                            null, true);
                         if (windowHandle == null)
                             // If window doesn't exist, no Point in checking for object
                             // inside the window
