@@ -84,6 +84,12 @@ namespace Ldtpd
             InternalWait(time);
             return 1;
         }
+        [XmlRpcMethod("appundertest", Description = "Application under test")]
+        public int AppUnderTest(String appName)
+        {
+            appUnderTest = appName;
+            return 1;
+        }
         [XmlRpcMethod("getobjectlist", Description = "Get object list")]
         public String[] GetObjectList(String windowName)
         {
