@@ -42,6 +42,8 @@ namespace Ldtp
         [XmlRpcMethod("launchapp")]
         int LaunchApp(string cmd, string[] args, int delay = 5,
             int env = 1, string lang = "");
+        [XmlRpcMethod("appundertest")]
+        int AppUnderTest(String appUnderTest);
         [XmlRpcMethod("getapplist")]
         string[] GetAppList();
         [XmlRpcMethod("getwindowlist")]
@@ -53,6 +55,8 @@ namespace Ldtp
         [XmlRpcMethod("getobjectproperty")]
         String GetObjectProperty(String windowName, String objName,
             String property);
+        [XmlRpcMethod("getaccesskey")]
+        String GetAccessKey(String windowName, String objName);
         [XmlRpcMethod("getchild")]
         String[] GetChild(String windowName, String childName,
             String role = "", String property = "");
@@ -182,6 +186,8 @@ namespace Ldtp
         int VerifyComboSelect(String windowName, String objName, String item);
         [XmlRpcMethod("selectindex")]
         int SelectIndex(String windowName, String objName, int index);
+        [XmlRpcMethod("getcombovalue")]
+        String GetComboValue(String windowName, String objName);
         [XmlRpcMethod("showlist")]
         int ShowList(String windowName, String objName);
         [XmlRpcMethod("hidelist")]
@@ -409,6 +415,17 @@ namespace Ldtp
                 throw new LdtpExecutionError(ex.FaultString);
             }
         }
+        public int AppUnderTest(String appUnderTest)
+        {
+            try
+            {
+                return proxy.AppUnderTest(appUnderTest);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
         public String[] GetAppList()
         {
             try
@@ -469,6 +486,17 @@ namespace Ldtp
             try
             {
                 return proxy.GetObjectInfo(windowName, objName);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public String GetAccessKey(String objName)
+        {
+            try
+            {
+                return proxy.GetAccessKey(windowName, objName);
             }
             catch (XmlRpcFaultException ex)
             {
@@ -1135,6 +1163,17 @@ namespace Ldtp
             try
             {
                 return proxy.SelectIndex(windowName, objName, index);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public String GetComboValue(String objName)
+        {
+            try
+            {
+                return proxy.GetComboValue(windowName, objName);
             }
             catch (XmlRpcFaultException ex)
             {

@@ -73,6 +73,7 @@ namespace Ldtpd
             AutomationElement elementItem;
             try
             {
+                utils.InternalWait(1);
                 elementItem = utils.GetObjectHandle(element, itemText);
                 if (elementItem != null)
                 {
@@ -144,17 +145,23 @@ namespace Ldtpd
                 "Unable to find item in the list: " + itemText);
         }
         private int InternalComboHandler(String windowName, String objName,
-            String item, String actionType = "Select",
+            String item, ref String selectedItem, String actionType = "Select",
             ArrayList childList = null)
         {
-            AutomationElement childHandle = GetObjectHandle(windowName,
-                objName);
+            bool verify = actionType == "Verify" ? true : false;
+            ControlType[] type = new ControlType[3] { ControlType.ComboBox,
+                ControlType.ListItem, ControlType.List/*, ControlType.Text */ };
+            AutomationElement childHandle = utils.GetObjectHandle(windowName,
+                objName, type, !verify);
             Object pattern = null;
+            Object invokePattern = null;
+            AutomationElement elementItem = null;
+            type = new ControlType[1] { ControlType.Button };
             try
             {
                 LogMessage("Handle name: " + childHandle.Current.Name +
                     " - " + childHandle.Current.ControlType.ProgrammaticName);
-                if (!utils.IsEnabled(childHandle))
+                if (!utils.IsEnabled(childHandle, !verify))
                 {
                     throw new XmlRpcFaultException(123, "Object state is disabled");
                 }
@@ -184,7 +191,16 @@ namespace Ldtpd
                             case "Show":
                             case "Select":
                             case "Verify":
-                                ((ExpandCollapsePattern)pattern).Expand();
+                                elementItem = utils.GetObjectHandle(childHandle, "Open",
+                                    type, !verify);
+                                if (elementItem != null &&
+                                    elementItem.TryGetCurrentPattern(InvokePattern.Pattern,
+                                    out invokePattern))
+                                {
+                                    ((InvokePattern)invokePattern).Invoke();
+                                }
+                                else
+                                    ((ExpandCollapsePattern)pattern).Expand();
                                 // Required to wait 1 second,
                                 // before checking the state and retry expanding
                                 utils.InternalWait(1);
@@ -198,24 +214,75 @@ namespace Ldtpd
                                         return 1;
                                     else
                                     {
-                                        childHandle.SetFocus();
-                                        bool verify = actionType == "Verify" ? true : false;
                                         return SelectListItem(childHandle, item, verify) ? 1 : 0;
                                     }
                                 }
                                 break;
+                            case "GetComboValue":
+                                Object selectionPattern = null;
+                                LogMessage("GetComboValue");
+                                elementItem = utils.GetObjectHandle(childHandle, "Open",
+                                    type, true);
+                                if (elementItem != null &&
+                                    elementItem.TryGetCurrentPattern(InvokePattern.Pattern,
+                                    out invokePattern))
+                                {
+                                    ((InvokePattern)invokePattern).Invoke();
+                                }
+                                else
+                                    ((ExpandCollapsePattern)pattern).Expand();
+                                // Required to wait 1 second,
+                                // before checking the state and retry expanding
+                                utils.InternalWait(1);
+                                AutomationElementCollection c = childHandle.FindAll(TreeScope.Subtree,
+                                    Condition.TrueCondition);
+                                foreach (AutomationElement e in c)
+                                {
+                                    LogMessage(e.Current.Name + " : " + e.Current.ControlType.ProgrammaticName);
+                                    bool status = false;
+                                    if (e.TryGetCurrentPattern(SelectionItemPattern.Pattern,
+                                        out selectionPattern))
+                                    {
+                                        status = ((SelectionItemPattern)selectionPattern).Current.IsSelected;
+                                        if (status)
+                                        {
+                                            LogMessage("Selected: " + e.Current.Name);
+                                            selectedItem = e.Current.Name;
+                                            ((ExpandCollapsePattern)pattern).Collapse();
+                                            return 1;
+                                        }
+                                    }
+                                }
+                                c = null;
+                                selectionPattern = null;
+                                ((ExpandCollapsePattern)pattern).Collapse();
+                                return 0;
                             case "GetAllItem":
                                 string matchedKey = null;
                                 Hashtable objectHT = new Hashtable();
                                 ArrayList tmpChildList = new ArrayList();
                                 InternalTreeWalker w = new InternalTreeWalker();
+                                elementItem = utils.GetObjectHandle(childHandle, "Open",
+                                    type, true);
+                                if (elementItem != null &&
+                                    elementItem.TryGetCurrentPattern(InvokePattern.Pattern,
+                                    out invokePattern))
+                                {
+                                    ((InvokePattern)invokePattern).Invoke();
+                                }
+                                else
+                                    ((ExpandCollapsePattern)pattern).Expand();
+                                // Required to wait 1 second,
+                                // before checking the state and retry expanding
+                                utils.InternalWait(1);
                                 utils.InternalGetObjectList(
                                     w.walker.GetFirstChild(childHandle),
                                     ref tmpChildList, ref objectHT, ref matchedKey,
                                     true, null, null, ControlType.ListItem);
+                                ((ExpandCollapsePattern)pattern).Collapse();
                                 // For Linux compatibility
                                 Hashtable propertyHT;
-                                foreach ( String key in objectHT.Keys )
+                                foreach (String key in objectHT.Keys)
                                 {
                                     propertyHT = (Hashtable)objectHT[key];
                                     string className = (string)propertyHT["class"];
@@ -247,7 +314,6 @@ namespace Ldtpd
                 else
                 {
                     childHandle.SetFocus();
-                    bool verify = actionType == "Verify" ? true : false;
                     return SelectListItem(childHandle, item, verify) ? 1 : 0;
                 }
             }
@@ -262,8 +328,9 @@ namespace Ldtpd
             }
             finally
             {
-                pattern = null;
-                childHandle = null;
+                type = null;
+                pattern = invokePattern = null;
+                elementItem = childHandle = null;
             }
             return 0;
         }
@@ -360,28 +427,45 @@ namespace Ldtpd
         }
         public string[] GetAllItem(String windowName, String objName)
         {
+            String selectedItem = null;
             ArrayList childList = new ArrayList();
-            InternalComboHandler(windowName, objName, null, "Show");
-            InternalComboHandler(windowName, objName, null,
+            InternalComboHandler(windowName, objName, null, ref selectedItem,
                 "GetAllItem", childList);
-            InternalComboHandler(windowName, objName, null, "Hide");
             return childList.ToArray(typeof(string)) as string[];
         }
         public int SelectItem(String windowName, String objName, String item)
         {
             return ComboSelect(windowName, objName, item);
         }
+        public String GetComboValue(String windowName, String objName)
+        {
+            String selectedItem = null;
+            if (InternalComboHandler(windowName, objName, null,
+                ref selectedItem, "GetComboValue") == 1)
+            {
+                LogMessage("Item selected: " + selectedItem);
+                return selectedItem;
+            }
+            else
+                throw new XmlRpcFaultException(123, "Unable to get combobox value");
+        }
         public int ShowList(String windowName, String objName)
         {
-            return InternalComboHandler(windowName, objName, null, "Show");
+            String selectedItem = null;
+            return InternalComboHandler(windowName, objName,
+                null, ref selectedItem, "Show");
         }
         public int HideList(String windowName, String objName)
         {
-            return InternalComboHandler(windowName, objName, null, "Hide");
+            String selectedItem = null;
+            return InternalComboHandler(windowName, objName, null,
+                ref selectedItem, "Hide");
         }
         public int ComboSelect(String windowName, String objName, String item)
         {
-            return InternalComboHandler(windowName, objName, item, "Select");
+            String selectedItem = null;
+            return InternalComboHandler(windowName, objName, item,
+                ref selectedItem, "Select");
         }
         public int VerifyDropDown(String windowName, String objName)
         {
@@ -467,7 +551,9 @@ namespace Ldtpd
         {
             try
             {
-                return InternalComboHandler(windowName, objName, item, "Verify");
+                String selectedItem = null;
+                return InternalComboHandler(windowName, objName, item,
+                    ref selectedItem, "Verify");
             }
             catch (Exception ex)
             {

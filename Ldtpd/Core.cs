@@ -84,6 +84,12 @@ namespace Ldtpd
             InternalWait(time);
             return 1;
         }
+        [XmlRpcMethod("appundertest", Description = "Application under test")]
+        public int AppUnderTest(String appName)
+        {
+            appUnderTest = appName;
+            return 1;
+        }
         [XmlRpcMethod("getobjectlist", Description = "Get object list")]
         public String[] GetObjectList(String windowName)
         {
@@ -369,6 +375,20 @@ namespace Ldtpd
             try
             {
                 return comboBox.SelectItem(windowName, objName, item);
+            }
+            finally
+            {
+                comboBox = null;
+            }
+        }
+        [XmlRpcMethod("getcombovalue",
+            Description = "Get combo box current value.")]
+        public String GetComboValue(String windowName, String objName)
+        {
+            Combobox comboBox = new Combobox(this);
+            try
+            {
+                return comboBox.GetComboValue(windowName, objName);
             }
             finally
             {
@@ -1295,6 +1315,19 @@ namespace Ldtpd
             try
             {
                 return generic.GetObjectSize(windowName, objName);
+            }
+            finally
+            {
+                generic = null;
+            }
+        }
+        [XmlRpcMethod("getaccesskey", Description = "Get access key.")]
+        public String GetAccessKey(String windowName, String objName)
+        {
+            Generic generic = new Generic(this);
+            try
+            {
+                return generic.GetAccessKey(windowName, objName);
             }
             finally
             {

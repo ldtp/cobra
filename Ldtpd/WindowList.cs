@@ -74,6 +74,53 @@ namespace Ldtpd
             if (watchWindowList.Contains(windowName))
                 watchWindowList.Remove(windowName);
         }
+        private void CheckNewWindows()
+        {
+            /*
+             * Need this API, as the OnWindowCreate doesn't
+             * get all the subwindow events (WindowOpenedEvent), let us add such window
+             * with this API
+             * */
+            AutomationElementCollection c;
+            InternalTreeWalker w = new InternalTreeWalker();
+            Condition condition = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.Window);
+            AutomationElement element = w.walker.GetFirstChild(AutomationElement.RootElement);
+            try
+            {
+                while (null != element)
+                {
+                    if (this.IndexOf(element) == -1)
+                    {
+                        // New parent window is available, add it to the list
+                        this.Add(element);
+                        common.LogMessage(element.Current.Name);
+                    }
+                    c = element.FindAll(TreeScope.Subtree, condition);
+                    foreach (AutomationElement e in c)
+                    {
+                        if (this.IndexOf(e) == -1)
+                        {
+                            // New subwindow is available, add it to the list
+                            this.Add(e);
+                            common.LogMessage(e.Current.Name);
+                        }
+                    }
+                    // Get next application in the list
+                    element = w.walker.GetNextSibling(element);
+                }
+            }
+            catch (Exception ex)
+            {
+                common.LogMessage(ex);
+            }
+            finally
+            {
+                c = null;
+                w = null;
+            }
+
+        }
         private void CleanUpWindowElements()
         {
             /*
@@ -145,6 +192,9 @@ namespace Ldtpd
             {
                 try
                 {
+                    // At start, get all the running app and its window
+                    // name and also subwindow names
+                    CheckNewWindows();
                     // Wait 10 second before starting the next
                     // cleanup cycle
                     common.Wait(10);
