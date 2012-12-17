@@ -980,6 +980,13 @@ public class Ldtp {
 	return doAction("activatewindow", params);
     }
     /**
+     * appUnderTest Application under test
+     */
+    public String appUnderTest(String appName) {
+    	Object[] params = new Object[]{appName};
+    	return doAction("appundertest", params);
+    }
+    /**
      * getAllStates Get all states of given object
      *
      * @return Return String array of states on success

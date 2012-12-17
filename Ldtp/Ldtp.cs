@@ -42,6 +42,8 @@ namespace Ldtp
         [XmlRpcMethod("launchapp")]
         int LaunchApp(string cmd, string[] args, int delay = 5,
             int env = 1, string lang = "");
+        [XmlRpcMethod("appundertest")]
+        int AppUnderTest(String appUnderTest);
         [XmlRpcMethod("getapplist")]
         string[] GetAppList();
         [XmlRpcMethod("getwindowlist")]
@@ -407,6 +409,17 @@ namespace Ldtp
             try
             {
                 return proxy.LaunchApp(cmd, args, delay, env, lang);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public int AppUnderTest(String appUnderTest)
+        {
+            try
+            {
+                return proxy.AppUnderTest(appUnderTest);
             }
             catch (XmlRpcFaultException ex)
             {
