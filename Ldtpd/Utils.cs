@@ -275,9 +275,13 @@ namespace Ldtpd
                 while (null != element)
                 {
                     if (windowList.IndexOf(element) == -1)
+                        // Add parent window handle,
+                        // if it doesn't exist
                         windowList.Add(element);
                     if (!String.IsNullOrEmpty(appUnderTest))
                     {
+                        // If app under test doesn't match
+                        // continue searching next app
                         Process process;
                         // Get a process using the process id.
                         try
@@ -285,12 +289,15 @@ namespace Ldtpd
                             process = Process.GetProcessById(element.Current.ProcessId);
                             if (process.ProcessName != appUnderTest)
                             {
+                                // app name doesn't match
                                 element = w.walker.GetNextSibling(element);
                                 continue;
                             }
                         }
                         catch
                         {
+                            // Something went wrong, since app name
+                            // is provided, search for next app
                             element = w.walker.GetNextSibling(element);
                             continue;
                         }
@@ -299,6 +306,8 @@ namespace Ldtpd
                     foreach (AutomationElement e in c)
                     {
                         if (windowList.IndexOf(e) == -1)
+                            // Add sub window handle, if it doesn't
+                            // exist
                             windowList.Add(e);
                         currObjInfo = objInfo.GetObjectType(e);
                         s = e.Current.Name;
@@ -354,6 +363,7 @@ namespace Ldtpd
                             }
                         }
                     }
+                    // Get next parent window handle in the list
                     element = w.walker.GetNextSibling(element);
                 }
             }
