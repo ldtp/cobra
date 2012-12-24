@@ -36,6 +36,7 @@ namespace Ldtpd
 {
     class Menu
     {
+        int processId = 0;
         Utils utils;
         public Menu(Utils utils)
         {
@@ -72,6 +73,10 @@ namespace Ldtpd
         private int HandleSubMenu(AutomationElement childHandle,
             AutomationElement firstObjHandle, ref ArrayList menuList)
         {
+            if (childHandle == null || firstObjHandle == null)
+            {
+                throw new XmlRpcFaultException(123, "Argument cannot be null.");
+            }
             string matchedKey = null;
             Hashtable objectHT = new Hashtable();
             try
@@ -108,14 +113,14 @@ namespace Ldtpd
             {
                 throw new XmlRpcFaultException(123, "Argument cannot be empty.");
             }
-            String currObjName = null;
             Object pattern = null;
+            String currObjName = null;
             AutomationElementCollection c = null;
             ControlType[] type = new ControlType[3] { ControlType.Menu,
                 ControlType.MenuBar, ControlType.MenuItem };
             ControlType[] controlType = new ControlType[3] { ControlType.Menu,
                 ControlType.MenuItem, ControlType.MenuBar };
-            bool bContextNavigated = false;
+            AutomationElement tmpContextHandle = null;
             AutomationElement windowHandle, childHandle;
             AutomationElement prevObjHandle = null, firstObjHandle = null;
 
@@ -128,6 +133,7 @@ namespace Ldtpd
                     throw new XmlRpcFaultException(123,
                         "Unable to find window: " + windowName);
                 }
+                processId = windowHandle.Current.ProcessId;
                 windowHandle.SetFocus();
                 LogMessage("Window name: " + windowHandle + " : " +
                     windowHandle.Current.Name +
@@ -191,14 +197,14 @@ namespace Ldtpd
                     try
                     {
                         if (actionType == "Window")
-			{
+						{
                             utils.InternalClick(childHandle);
-			}
+						}
                         else
-			{
+						{
                             // SetFocus() fails on Windows Explorer
                             childHandle.SetFocus();
-			}
+						}
                     }
                     catch (Exception ex)
                     {
@@ -343,27 +349,13 @@ namespace Ldtpd
                                 break;
                         }
                     }
-                    else if (!bContextNavigated && utils.InternalWaitTillGuiExist(
-                        "Context", null, 3) == 1)
+                    else if ((tmpContextHandle = utils.InternalWaitTillControlTypeExist(
+                        ControlType.Menu, processId, 3)) != null)
                     {
-                        LogMessage("Context");
-                        AutomationElement tmpWindowHandle;
-                        // Menu item under Menu are listed under Menu Window
-                        if (actionType == "VerifyCheck")
-                            tmpWindowHandle = utils.GetWindowHandle("Context",
-                                true, controlType);
-                        else
-                            tmpWindowHandle = utils.GetWindowHandle("Context");
-                        if (tmpWindowHandle == null)
-                        {
-                            throw new XmlRpcFaultException(123,
-                                "Unable to find window: Context");
-                        }
+                        LogMessage("InternalWaitTillControlTypeExist");
                         // Find object from current handle, rather than navigating
                         // the complete window
-                        childHandle = tmpWindowHandle;
-                        bContextNavigated = true;
-                        LogMessage("bContextNavigated: " + bContextNavigated);
+                        childHandle = tmpContextHandle;
                         if (actionType != "SubMenu")
                             continue;
                         else if (currObjName == objName)
