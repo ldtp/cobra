@@ -389,31 +389,6 @@ namespace Ldtpd
                         childHandle = windowHandle;
                         continue;
                     }
-                    else if (utils.InternalWaitTillGuiExist(prevObjHandle.Current.Name,
-                        null, 3) == 1)
-                    {
-                        LogMessage("prevObjHandle: " + prevObjHandle.Current.Name);
-                        // Menu item under Menu are listed under Menu Window
-                        LogMessage("Menu item under Menu are listed under Menu Window: " +
-                            prevObjHandle.Current.Name);
-                        AutomationElement tmpWindowHandle;
-                        if (actionType == "VerifyCheck")
-                            tmpWindowHandle = utils.GetWindowHandle(
-                                prevObjHandle.Current.Name,
-                                true, controlType);
-                        else
-                            tmpWindowHandle = utils.GetWindowHandle(
-                                prevObjHandle.Current.Name);
-                        if (tmpWindowHandle != null)
-                        {
-                            // Find object from current handle, rather than navigating
-                            // the complete window
-                            LogMessage("Assigning tmpWindowHandle as childHandle");
-                            childHandle = tmpWindowHandle;
-                            LogMessage("childHandle: " + childHandle.Current.Name + " : " +
-                                childHandle.Current.ControlType.ProgrammaticName);
-                        }
-                    }
                     // Required for Notepad like app
                     if ((c == null || c.Count == 0))
                     {
