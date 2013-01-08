@@ -4,7 +4,7 @@ Cobra WinLDTP is based on Linux Desktop Testing Project - http://ldtp.freedeskto
  * Windows GUI testing is known to work on application written in .NET / C++ / Java / QT on Windows XP SP3 / Vista SP2 / Windows 7 / Windows 8 development version
  * Mac GUI testing is known to work on OS X Snow Leopard/Lion/Mountain Lion. Where ever ATOMac runs, LDTP should work on it
 
-Verified with Windows XP SP3 / Windows 7 SP1 / Windows 8. Minimum requirement >= .NET3.5 for Windows XP/7. Test scripts can be written in Python / Ruby / Java / C# / VB.NET / PowerShell / Clojure / Perl and it can be extended to other languages.
+Verified with Windows XP SP3 / Vista SP2 / Windows 7 SP1 / Windows 8. Minimum requirement >= .NET3.5 for Windows XP/Vista/7. Test scripts can be written in Python / Ruby / Java / C# / VB.NET / PowerShell / Clojure / Perl and it can be extended to other languages.
 
 On Windows XP SP3 make sure you have installed:
 .NET3.0 and .NET3.5 and KB971513
@@ -46,7 +46,7 @@ XML RPC .NET library (CookComputing.XmlRpcV2.dll) - http://www.xml-rpc.net/ - MI
 CobraWinLDTP works based on Microsoft accessibility layer. To check whether your application is accessibility enabled, download the binary from http://uiautomationverify.codeplex.com/ and verify the same.
 
 Verified with Windows 8 developer edition. Minimum requirement .NET4.0
-To compile for Windows 8 environment (You can compile it from Windows 7, Visual studio 2010), but make sure you change target framework as .NET 4.0 for Windows 8 and .NET 3.5 for Windows XP/7
+To compile for Windows 8 environment (You can compile it from Windows 7, Visual studio 2010), but make sure you change target framework as .NET 4.0 for Windows 8 and .NET 3.5 for Windows XP/Vista/7
 NOTE: Don't select client profile
 
 For Windows 7 the following steps are optional, but its required for Windows 8
