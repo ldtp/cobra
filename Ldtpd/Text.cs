@@ -280,15 +280,18 @@ namespace Ldtpd
         }
         public int IsTextStateEnabled(String windowName, String objName)
         {
+            Object pattern;
             AutomationElement childHandle;
             try
             {
                 childHandle = GetObjectHandle(windowName,
                     objName);
-                if (utils.IsEnabled(childHandle, false))
-                {
-                    return 1;
-                }
+                if (childHandle.TryGetCurrentPattern(ValuePattern.Pattern,
+                    out pattern))
+                    if (((ValuePattern)pattern).Current.IsReadOnly)
+                        return 0;
+                    else
+                        return 1;
             }
             catch (Exception ex)
             {
@@ -296,6 +299,7 @@ namespace Ldtpd
             }
             finally
             {
+                pattern = null;
                 childHandle = null;
             }
             return 0;
