@@ -288,10 +288,18 @@ namespace Ldtpd
                     objName);
                 if (childHandle.TryGetCurrentPattern(ValuePattern.Pattern,
                     out pattern))
+                {
                     if (((ValuePattern)pattern).Current.IsReadOnly)
                         return 0;
                     else
                         return 1;
+                }
+                else
+                {
+                    // Fallback to object state enabled
+                    // if value pattern is not available
+                    return utils.IsEnabled(childHandle, false) ? 1 : 0;
+                }
             }
             catch (Exception ex)
             {
