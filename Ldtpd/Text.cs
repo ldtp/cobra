@@ -49,8 +49,8 @@ namespace Ldtpd
         private AutomationElement GetObjectHandle(string windowName,
             string objName)
         {
-            ControlType[] type = new ControlType[2] { ControlType.Edit,
-                ControlType.Document };
+            ControlType[] type = new ControlType[3] { ControlType.Edit,
+                ControlType.Document, ControlType.ComboBox };
             try
             {
                 return utils.GetObjectHandle(windowName, objName, type);
