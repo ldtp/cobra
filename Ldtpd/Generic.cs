@@ -342,6 +342,16 @@ namespace Ldtpd
                                 return 1;
                             }
                             break;
+                        case "editable":
+                            if (childHandle.TryGetCurrentPattern(ValuePattern.Pattern,
+                                out pattern))
+                            {
+                                if (((ValuePattern)pattern).Current.IsReadOnly)
+                                    return 0;
+                                else
+                                    return 1;
+                            }
+                            break;
                     }
                     if (guiTimeOut > 0)
                     {
