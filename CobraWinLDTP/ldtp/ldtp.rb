@@ -1,4 +1,3 @@
-
 """
 LDTP v2 ruby client.
 

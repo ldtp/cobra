@@ -1,9 +1,9 @@
 ﻿/*
- * WinLDTP 1.0
+ * Cobra WinLDTP 3.0
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Author: John Yingjun Li <yjli@vmware.com>
- * Copyright: Copyright (c) 2011-12 VMware, Inc. All Rights Reserved.
+ * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
  * License: MIT license
  * 
  * http://ldtp.freedesktop.org
@@ -340,6 +340,16 @@ namespace Ldtpd
                                 // Assuming, if its enabled and has selection item pattern
                                 // then its selectable
                                 return 1;
+                            }
+                            break;
+                        case "editable":
+                            if (childHandle.TryGetCurrentPattern(ValuePattern.Pattern,
+                                out pattern))
+                            {
+                                if (((ValuePattern)pattern).Current.IsReadOnly)
+                                    return 0;
+                                else
+                                    return 1;
                             }
                             break;
                     }

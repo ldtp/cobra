@@ -1,8 +1,8 @@
 ﻿/*
- * WinLDTP 1.0
+ * Cobra WinLDTP 3.0
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
- * Copyright: Copyright (c) 2011-12 VMware, Inc. All Rights Reserved.
+ * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
  * License: MIT license
  * 
  * http://ldtp.freedesktop.org
@@ -49,8 +49,8 @@ namespace Ldtpd
         private AutomationElement GetObjectHandle(string windowName,
             string objName)
         {
-            ControlType[] type = new ControlType[2] { ControlType.Edit,
-                ControlType.Document };
+            ControlType[] type = new ControlType[3] { ControlType.Edit,
+                ControlType.Document, ControlType.ComboBox };
             try
             {
                 return utils.GetObjectHandle(windowName, objName, type);
@@ -280,14 +280,25 @@ namespace Ldtpd
         }
         public int IsTextStateEnabled(String windowName, String objName)
         {
+            Object pattern;
             AutomationElement childHandle;
             try
             {
                 childHandle = GetObjectHandle(windowName,
                     objName);
-                if (utils.IsEnabled(childHandle, false))
+                if (childHandle.TryGetCurrentPattern(ValuePattern.Pattern,
+                    out pattern))
                 {
-                    return 1;
+                    if (((ValuePattern)pattern).Current.IsReadOnly)
+                        return 0;
+                    else
+                        return 1;
+                }
+                else
+                {
+                    // Fallback to object state enabled
+                    // if value pattern is not available
+                    return utils.IsEnabled(childHandle, false) ? 1 : 0;
                 }
             }
             catch (Exception ex)
@@ -296,6 +307,7 @@ namespace Ldtpd
             }
             finally
             {
+                pattern = null;
                 childHandle = null;
             }
             return 0;

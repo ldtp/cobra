@@ -1,9 +1,9 @@
 ﻿/*
- * CobraWinLDTP 1.0
+ * Cobra WinLDTP 3.0
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Author: John Yingjun Li <yjli@vmware.com>
- * Copyright: Copyright (c) 2011-12 VMware, Inc. All Rights Reserved.
+ * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
  * License: MIT license
  * 
  * http://ldtp.freedesktop.org

@@ -1,9 +1,9 @@
 ﻿/*
- * WinLDTP 1.0
+ * Cobra WinLDTP 3.0
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Author: John Yingjun Li <yjli@vmware.com>
- * Copyright: Copyright (c) 2011-12 VMware, Inc. All Rights Reserved.
+ * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
  * License: MIT license
  * 
  * http://ldtp.freedesktop.org
@@ -923,6 +923,73 @@ namespace Ldtpd
         internal void InternalWait(double time)
         {
             common.Wait(time);
+        }
+        internal AutomationElement InternalWaitTillControlTypeExist(ControlType type,
+            int processId, int guiTimeOut = 30)
+        {
+            InternalTreeWalker w;
+            AutomationElementCollection c;
+            Condition condition = new PropertyCondition(
+                AutomationElement.ControlTypeProperty,
+                ControlType.Menu);
+            w = new InternalTreeWalker();
+            try
+            {
+                int waitTime = 0;
+                while (waitTime < guiTimeOut)
+                {
+                    AutomationElement element = w.walker.GetFirstChild(AutomationElement.RootElement);
+                    while (null != element)
+                    {
+                        if (windowList.IndexOf(element) == -1)
+                            // Add parent window handle,
+                            // if it doesn't exist
+                            windowList.Add(element);
+                        try
+                        {
+                            if (element.Current.ProcessId != processId)
+                            {
+                                // app name doesn't match
+                                element = w.walker.GetNextSibling(element);
+                                continue;
+                            }
+                            if (element.Current.ControlType == type)
+                                return element;
+                        }
+                        catch
+                        {
+                            // Something went wrong, since app name
+                            // is provided, search for next app
+                            element = w.walker.GetNextSibling(element);
+                            continue;
+                        }
+                        c = element.FindAll(TreeScope.Subtree, condition);
+                        foreach (AutomationElement e in c)
+                        {
+                            try
+                            {
+                                if (e.Current.ControlType == type)
+                                    return e;
+                            }
+                            catch
+                            {
+                                // Something went wrong, since app name
+                                // is provided, search for next app
+                                element = w.walker.GetNextSibling(element);
+                                continue;
+                            }
+                        }
+                        element = w.walker.GetNextSibling(element);
+                        waitTime++;
+                        //InternalWait(1);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+            }
+            return null;
         }
         internal int InternalWaitTillGuiExist(String windowName,
             String objName = null, int guiTimeOut = 30, String state = null)
