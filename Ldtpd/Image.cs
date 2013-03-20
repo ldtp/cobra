@@ -69,9 +69,12 @@ namespace Ldtpd
                     }
                     windowHandle.SetFocus();
                     Rect rect = windowHandle.Current.BoundingRectangle;
+                    x = (x != 0) ? x : (int)rect.X;
+                    y = (y != 0) ? y : (int)rect.Y;
+                    width = (width != -1) ? width : (int)rect.Width;
+                    height = (height != -1) ? height : (int)rect.Height;
                     System.Drawing.Rectangle rectangle = new 
-                        System.Drawing.Rectangle((int)rect.X, (int)rect.Y,
-                        (int)rect.Width, (int)rect.Height);
+                        System.Drawing.Rectangle(x, y, width, height);
                     b = ss.CaptureSize(path, rectangle);
                 }
                 else if (width != -1 && height != -1)
