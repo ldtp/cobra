@@ -26,6 +26,7 @@
  * SOFTWARE.
 */
 using System;
+using System.Threading;
 using System.Collections;
 using CookComputing.XmlRpc;
 using System.Globalization;
@@ -165,6 +166,13 @@ namespace Ldtpd
             return SetTextValue(windowName, objName,
                 existingText + value);
         }
+        protected Thread clipboardThread = null;
+        private void CopyToClipboard(object textData)
+        {
+            Clipboard.Clear();
+            LogMessage(textData);
+            Clipboard.SetText((string)textData);
+        }
         public int CopyText(String windowName,
             String objName, int start, int end = -1)
         {
@@ -183,8 +191,22 @@ namespace Ldtpd
                 end = existingText.Length - start;
             else
                 end = existingText.Length - end;
-            LogMessage(existingText.Substring(start, end));
-            Clipboard.SetText(existingText.Substring(start, end));
+            string textData = existingText.Substring(start, end);
+            // To workaround the exception
+            // Current thread must be set to single thread apartment (STA)
+            // mode before OLE calls can be made. Ensure that your Main
+            // function has STAThreadAttribute marked on it.
+            if (clipboardThread == null)
+            {
+                clipboardThread = new Thread(CopyToClipboard);
+                clipboardThread.SetApartmentState(ApartmentState.STA);
+                clipboardThread.IsBackground = false;
+            }
+            if (!clipboardThread.IsAlive)
+            {
+                clipboardThread.Start(textData);
+            }
+            clipboardThread.Join();
             return 1;
         }
         public int CutText(String windowName,
