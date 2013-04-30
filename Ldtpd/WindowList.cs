@@ -26,10 +26,10 @@
  * SOFTWARE.
 */
 using System;
+using System.Windows;
 using System.Threading;
 using System.Collections;
 using System.Globalization;
-using System.Windows;
 using System.Windows.Automation;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -119,7 +119,6 @@ namespace Ldtpd
                 c = null;
                 w = null;
             }
-
         }
         private void CleanUpWindowElements()
         {

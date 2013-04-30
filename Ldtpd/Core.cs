@@ -1454,6 +1454,20 @@ namespace Ldtpd
                 keyboard = null;
             }
         }
+        [XmlRpcMethod("mousemove",
+            Description = "Move mouse on an object.")]
+        public int MouseMove(String windowName, String objName)
+        {
+            Mouse mouse = new Mouse(this);
+            try
+            {
+                return mouse.MouseMove(windowName, objName);
+            }
+            finally
+            {
+                mouse = null;
+            }
+        }
         [XmlRpcMethod("mouseleftclick",
             Description = "Mouse left click on an object.")]
         public int MouseLeftClick(String windowName, String objName)
