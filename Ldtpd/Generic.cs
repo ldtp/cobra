@@ -441,11 +441,11 @@ namespace Ldtpd
         }
         public int Click(String windowName, String objName)
         {
-            ControlType[] type = new ControlType[10] { ControlType.Button,
+            ControlType[] type = new ControlType[11] { ControlType.Button,
                 ControlType.CheckBox, ControlType.RadioButton,
                 ControlType.SplitButton, ControlType.Menu, ControlType.ListItem,
                 ControlType.MenuItem, ControlType.MenuBar, ControlType.Pane,
-                ControlType.Hyperlink };
+                ControlType.Hyperlink, ControlType.ToolBar };
             Object pattern = null;
             AutomationElement childHandle;
             try
