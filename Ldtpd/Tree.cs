@@ -49,8 +49,8 @@ namespace Ldtpd
             string objName, ControlType[] type = null, bool waitForObj = true)
         {
             if (type == null)
-                type = new ControlType[2] { ControlType.Tree,
-                    ControlType.List };
+                type = new ControlType[3] { ControlType.Tree,
+                    ControlType.List, ControlType.Table };
             try
             {
                 return utils.GetObjectHandle(windowName,
@@ -83,8 +83,8 @@ namespace Ldtpd
                     return 0;
                 }
                 childHandle.SetFocus();
-                type = new ControlType[2] { ControlType.TreeItem,
-                    ControlType.ListItem };
+                type = new ControlType[3] { ControlType.TreeItem,
+                    ControlType.ListItem, ControlType.DataItem };
                 if (partialMatch)
                     text += "*";
                 elementItem = utils.GetObjectHandle(childHandle,
@@ -135,8 +135,8 @@ namespace Ldtpd
                 }
                 if (partialMatch)
                     text += "*";
-                type = new ControlType[2] { ControlType.TreeItem,
-                    ControlType.ListItem };
+                type = new ControlType[3] { ControlType.TreeItem,
+                    ControlType.ListItem, ControlType.DataItem };
                 elementItem = utils.GetObjectHandle(childHandle,
                     text, type, true);
                 if (elementItem != null)
@@ -207,8 +207,8 @@ namespace Ldtpd
             try
             {
                 childHandle.SetFocus();
-                type = new ControlType[2] { ControlType.TreeItem,
-                    ControlType.ListItem };
+                type = new ControlType[3] { ControlType.TreeItem,
+                    ControlType.ListItem, ControlType.DataItem };
                 elementItem = utils.GetObjectHandle(childHandle,
                     text, type, true);
                 if (elementItem != null)
@@ -264,8 +264,8 @@ namespace Ldtpd
                 childHandle.SetFocus();
                 if (partialMatch)
                     text += "*";
-                type = new ControlType[2] { ControlType.TreeItem,
-                    ControlType.ListItem };
+                type = new ControlType[3] { ControlType.TreeItem,
+                    ControlType.ListItem, ControlType.DataItem };
                 elementItem = utils.GetObjectHandle(childHandle,
                     text, type, true);
                 if (elementItem != null)
@@ -321,7 +321,9 @@ namespace Ldtpd
                 AutomationElement.ControlTypeProperty, ControlType.ListItem);
             Condition prop2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.TreeItem);
-            Condition condition = new OrCondition(prop1, prop2);
+            Condition prop3 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.DataItem);
+            Condition condition = new OrCondition(prop1, prop2, prop3);
             try
             {
                 childHandle.SetFocus();
@@ -387,7 +389,7 @@ namespace Ldtpd
             {
                 pattern = null;
                 element = childHandle = null;
-                prop1 = prop2 = condition = null;
+                prop1 = prop2 = prop3 = condition = null;
             }
             throw new XmlRpcFaultException(123, "Unable to select item.");
         }
@@ -408,7 +410,9 @@ namespace Ldtpd
                 AutomationElement.ControlTypeProperty, ControlType.ListItem);
             Condition prop2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.TreeItem);
-            Condition condition = new OrCondition(prop1, prop2);
+            Condition prop3 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.DataItem);
+            Condition condition = new OrCondition(prop1, prop2, prop3);
             try
             {
                 childHandle.SetFocus();
@@ -435,7 +439,7 @@ namespace Ldtpd
                 {
                     c = null;
                     childHandle = null;
-                    prop1 = prop2 = condition = null;
+                    prop1 = prop2 = prop3 = condition = null;
                 }
                 if (element != null)
                 {
@@ -487,7 +491,9 @@ namespace Ldtpd
                 AutomationElement.ControlTypeProperty, ControlType.ListItem);
             Condition prop2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.TreeItem);
-            Condition condition1 = new OrCondition(prop1, prop2);
+            Condition prop3 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.DataItem);
+            Condition condition1 = new OrCondition(prop1, prop2, prop3);
             Condition condition2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.Text);
             try
@@ -502,13 +508,15 @@ namespace Ldtpd
                 if (element != null)
                     return element.Current.Name;
             }
-            catch (IndexOutOfRangeException)
+            catch (IndexOutOfRangeException ex)
             {
+                LogMessage(ex);
                 throw new XmlRpcFaultException(123,
                     "Index out of range: " + "(" + row + ", " + column + ")");
             }
-            catch (ArgumentException)
+            catch (ArgumentException ex)
             {
+                LogMessage(ex);
                 throw new XmlRpcFaultException(123,
                     "Index out of range: " + "(" + row + ", " + column + ")");
             }
@@ -521,7 +529,7 @@ namespace Ldtpd
             finally
             {
                 element = childHandle = null;
-                prop1 = prop2 = condition1 = condition2 = null;
+                prop1 = prop2 = prop3 = condition1 = condition2 = null;
             }
             throw new XmlRpcFaultException(123,
                 "Unable to get item value.");
@@ -542,7 +550,9 @@ namespace Ldtpd
                 AutomationElement.ControlTypeProperty, ControlType.ListItem);
             Condition prop2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.TreeItem);
-            Condition condition1 = new OrCondition(prop1, prop2);
+            Condition prop3 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.DataItem);
+            Condition condition1 = new OrCondition(prop1, prop2, prop3);
             Condition condition2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.Text);
             try
@@ -580,7 +590,7 @@ namespace Ldtpd
             finally
             {
                 element = childHandle = null;
-                prop1 = prop2 = condition1 = condition2 = null;
+                prop1 = prop2 = prop3 = condition1 = condition2 = null;
             }
             throw new XmlRpcFaultException(123,
                 "Unable to get item size.");
@@ -601,7 +611,9 @@ namespace Ldtpd
                 AutomationElement.ControlTypeProperty, ControlType.ListItem);
             Condition prop2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.TreeItem);
-            Condition condition1 = new OrCondition(prop1, prop2);
+            Condition prop3 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.DataItem);
+            Condition condition1 = new OrCondition(prop1, prop2, prop3);
             Condition condition2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.Text);
             try
@@ -628,7 +640,7 @@ namespace Ldtpd
             {
                 c1 = c2 = null;
                 childHandle = null;
-                prop1 = prop2 = condition1 = condition2 = null;
+                prop1 = prop2 = prop3 = condition1 = condition2 = null;
             }
             throw new XmlRpcFaultException(123,
                     "Unable to get row index: " + cellValue);
@@ -648,7 +660,9 @@ namespace Ldtpd
                 AutomationElement.ControlTypeProperty, ControlType.ListItem);
             Condition prop2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.TreeItem);
-            Condition condition = new OrCondition(prop1, prop2);
+            Condition prop3 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.DataItem);
+            Condition condition = new OrCondition(prop1, prop2, prop3);
             try
             {
                 c = childHandle.FindAll(TreeScope.Children, condition);
@@ -670,7 +684,7 @@ namespace Ldtpd
             {
                 c = null;
                 childHandle = null;
-                prop1 = prop2 = condition = null;
+                prop1 = prop2 = prop3 = condition = null;
             }
         }
         public int DoubleClickRow(String windowName, String objName, String text)
@@ -700,8 +714,8 @@ namespace Ldtpd
                 {
                     LogMessage(ex);
                 }
-                type = new ControlType[2] { ControlType.TreeItem,
-                    ControlType.ListItem };
+                type = new ControlType[3] { ControlType.TreeItem,
+                    ControlType.ListItem, ControlType.DataItem };
                 elementItem = utils.GetObjectHandle(childHandle,
                     text, type, true);
                 if (elementItem != null)

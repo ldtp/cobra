@@ -109,6 +109,9 @@ namespace Ldtpd
             else if (type == ControlType.TreeItem)
                 // For Linux compatibility
                 return new CurrentObjInfo("tblc", tblc++);
+            else if (type == ControlType.DataItem)
+                // For Linux compatibility
+                return new CurrentObjInfo("tblc", tblc++);
             else if (type == ControlType.Tab)
                 // For Linux compatibility
                 return new CurrentObjInfo("ptl", tab++);
