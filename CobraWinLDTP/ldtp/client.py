@@ -69,11 +69,11 @@ class Transport(xmlrpclib.Transport):
     def _handle_signal(self, signum, frame):
         if _ldtp_debug:
             if signum == signal.SIGCHLD:
-                print "ldtpd exited!"
+                print("ldtpd exited!")
             elif signum == signal.SIGUSR1:
-                print "SIGUSR1 received. ldtpd ready for requests."
+                print("SIGUSR1 received. ldtpd ready for requests.")
             elif signum == signal.SIGALRM:
-                print "SIGALRM received. Timeout waiting for SIGUSR1."
+                print("SIGALRM received. Timeout waiting for SIGUSR1.")
 
     def _spawn_daemon(self):
         pid = os.getpid()
@@ -139,7 +139,7 @@ class Transport(xmlrpclib.Transport):
 
                 if response.status != 200:
                     raise xmlrpclib.ProtocolError(host + handler, response.status,
-                                        response.reason, response.msg.headers)
+                                                  response.reason, response.msg.headers)
 
                 payload = response.read()
                 parser, unmarshaller = self.getparser()
@@ -147,7 +147,7 @@ class Transport(xmlrpclib.Transport):
                 parser.close()
 
                 return unmarshaller.close()
-            except SocketError, e:
+            except SocketError as e:
                 if ((_ldtp_windows_env and e[0] == 10061) or \
                         (hasattr(e, 'errno') and (e.errno == 111 or \
                                                       e.errno == 61 or \
@@ -178,7 +178,7 @@ class Transport(xmlrpclib.Transport):
                         raise
                 # else raise exception
                 raise
-            except xmlrpclib.Fault, e:
+            except xmlrpclib.Fault as e:
                 if hasattr(self, 'close'):
                     self.close()
                 if e.faultCode == ERROR_CODE:

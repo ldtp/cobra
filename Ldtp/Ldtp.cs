@@ -127,6 +127,8 @@ namespace Ldtp
         int StateEnabled(String windowName, String objName);
         [XmlRpcMethod("objtimeout ")]
         int ObjectTimeOut(int objectTimeOut);
+        [XmlRpcMethod("guitimeout ")]
+        int GuiTimeOut(int guiTimeOut);
         [XmlRpcMethod("selectmenuitem")]
         int SelectMenuItem(String windowName, String objName);
         [XmlRpcMethod("doesmenuitemexist")]
@@ -240,6 +242,9 @@ namespace Ldtp
         [XmlRpcMethod("getcellvalue")]
         String GetCellValue(String windowName, String objName, int row,
             int column = 0);
+        [XmlRpcMethod("setcellvalue")]
+        String SetCellValue(String windowName, String objName, int row,
+            int column = 0, String data = null);
         [XmlRpcMethod("getcellsize")]
         String GetCellSize(String windowName, String objName, int row,
             int column = 0);
@@ -857,6 +862,17 @@ namespace Ldtp
                 throw new LdtpExecutionError(ex.FaultString);
             }
         }
+        public int GuiTimeOut(int guiTimeOut)
+        {
+            try
+            {
+                return proxy.GuiTimeOut(guiTimeOut);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
         public int SelectMenuItem(String objName)
         {
             try
@@ -1439,6 +1455,17 @@ namespace Ldtp
             try
             {
                 return proxy.GetCellValue(windowName, objName, row, column);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public String SetCellValue(String objName, int row, int column = 0, String data = null)
+        {
+            try
+            {
+                return proxy.SetCellValue(windowName, objName, row, column, data);
             }
             catch (XmlRpcFaultException ex)
             {

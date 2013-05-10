@@ -158,6 +158,16 @@ namespace Ldtpd
                 this.objectTimeOut = objectTimeOut;
             return 1;
         }
+        [XmlRpcMethod("guitimeout",
+            Description = "Window retry, default 3 seconds.")]
+        public int GuiTimeOut(int guiTimeOut)
+        {
+            if (guiTimeOut <= 0)
+                this.windowRetry = 3;
+            else
+                this.windowRetry = guiTimeOut;
+            return 1;
+        }
         [XmlRpcMethod("selectmenuitem",
             Description = "Select (click) a menuitem.")]
         public int SelectMenuItem(String windowName, String objName)
@@ -1099,6 +1109,21 @@ namespace Ldtpd
             try
             {
                 return tree.GetCellSize(windowName, objName, row, column);
+            }
+            finally
+            {
+                tree = null;
+            }
+        }
+        [XmlRpcMethod("setcellvalue",
+            Description = "Set tree table cell value on the row index.")]
+        public int SetCellValue(String windowName,
+            String objName, int row, int column = 0, String data = null)
+        {
+            Tree tree = new Tree(this);
+            try
+            {
+                return tree.SetCellValue(windowName, objName, row, column, data);
             }
             finally
             {

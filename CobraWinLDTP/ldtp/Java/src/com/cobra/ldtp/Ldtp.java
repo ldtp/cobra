@@ -472,6 +472,28 @@ public class Ldtp {
 	return doAction("wait", params);
     }
     /**
+     * objectTimeOut Change default object time out
+     *
+     * @param timeout Change default object time out search in seconds
+     * @return Return the 1 on success
+     * @throws LdtpExecutionError exception on failure
+     */
+    public int objectTimeOut(int timeout) {
+	Object[] params = new Object[]{timeout};
+	return doAction("objecttimeout", params);
+    }
+    /**
+     * guiTimeOut Change default window time out search
+     *
+     * @param timeout Change default window time out search in seconds
+     * @return Return the 1 on success
+     * @throws LdtpExecutionError exception on failure
+     */
+    public int guiTimeOut(int timeout) {
+	Object[] params = new Object[]{timeout};
+	return doAction("guitimeout", params);
+    }
+    /**
      * getObjectNameAtCoords Get object name at co-ordinates without any delay
      *
      * @return Return String array of possible window name and object name
