@@ -510,6 +510,15 @@ namespace Ldtpd
                     ((SelectionItemPattern)pattern).Select();
                     return 1;
                 }
+                else if (childHandle.TryGetCurrentPattern(ValuePattern.Pattern,
+                    out pattern) && childHandle.Current.ControlType == ControlType.ListItem)
+                {
+                    // Fixed based on "Windows Security" dialog
+                    // On clicking "Use another account"
+                    // Its ListItem and has only ValuePattern
+                    utils.InternalClick(childHandle);
+                    return 1;
+                }
             }
             catch (Exception ex)
             {
