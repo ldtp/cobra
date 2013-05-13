@@ -124,13 +124,13 @@ namespace Ldtpd
                     case ")":
                         return new KeyInfo(System.Windows.Input.Key.D0, true);
                     case "_":
-                        return new KeyInfo(System.Windows.Input.Key.Subtract, true);
+                        return new KeyInfo(System.Windows.Input.Key.OemMinus, true);
                     case "-":
                         return new KeyInfo(System.Windows.Input.Key.Subtract, false);
                     case "+":
                         return new KeyInfo(System.Windows.Input.Key.Add, true);
                     case "=":
-                        return new KeyInfo(System.Windows.Input.Key.Add, false);
+                        return new KeyInfo(System.Windows.Input.Key.OemPlus, false);
                     case "?":
                         return new KeyInfo(System.Windows.Input.Key.OemQuestion, true);
                     case "/":
