@@ -1648,5 +1648,135 @@ namespace Ldtpd
                 generic = null;
             }
         }
+        [XmlRpcMethod("onedown",
+            Description = "Scroll one down with iterations.")]
+        public int OneDown(String windowName, String objName, int iterations)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.OneDown(windowName, objName, iterations);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("oneup",
+            Description = "Scroll one up with iterations.")]
+        public int OneUp(String windowName, String objName, int iterations)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.OneUp(windowName, objName, iterations);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("oneright",
+            Description = "Scroll one right with iterations.")]
+        public int OneRight(String windowName, String objName, int iterations)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.OneRight(windowName, objName, iterations);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("oneleft",
+            Description = "Scroll one left with iterations.")]
+        public int OneLeft(String windowName, String objName, int iterations)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.OneLeft(windowName, objName, iterations);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("scrolldown",
+            Description = "Scroll down once.")]
+        public int ScrollDown(String windowName, String objName)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.ScrollDown(windowName, objName);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("scrollup",
+            Description = "Scroll up once.")]
+        public int ScrollUp(String windowName, String objName)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.ScrollUp(windowName, objName);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("scrollright",
+            Description = "Scroll right once.")]
+        public int ScrollRight(String windowName, String objName)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.ScrollRight(windowName, objName);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("scrollleft",
+            Description = "Scroll left once.")]
+        public int ScrollLeft(String windowName, String objName)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.ScrollLeft(windowName, objName);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("verifyscrollbarhorizontal",
+            Description = "Verify given object is horizontal scrollbar.")]
+        public int VerifyScrollBarHorizontal(String windowName, String objName)
+        {
+            // Unsupported on Windows, as there is no direct way to determine
+            // whether its a vertical or horizontal scroll bar other than the name
+            // which is not unique across application
+            return 0;
+        }
+        [XmlRpcMethod("verifyscrollbarvertical",
+            Description = "Verify given object is vertical scrollbar.")]
+        public int VerifyScrollBarVertical(String windowName, String objName)
+        {
+            // Unsupported on Windows, as there is no direct way to determine
+            // whether its a vertical or horizontal scroll bar other than the name
+            // which is not unique across application
+            return 0;
+        }
     }
 }
