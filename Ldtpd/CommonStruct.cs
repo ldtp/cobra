@@ -57,12 +57,12 @@ namespace Ldtpd
     {
         public int cbo, txt, btn, rbtn, chk, mnu, pane, hlnk;
         public int lbl, slider, ukn, lst, frm, header, headeritem, dlg;
-        public int tab, tabitem, tbar, tree, tblc, tbl;
+        public int tab, tabitem, tbar, tree, tblc, tbl, scbr;
         public ObjInfo(bool dummyValue)
         {
             cbo = txt = btn = rbtn = chk = mnu = pane = hlnk = 0;
             lbl = slider = ukn = lst = frm = header = headeritem = 0;
-            tab = tabitem = tbar = tree = tblc = tbl = dlg = 0;
+            tab = tabitem = tbar = tree = tblc = tbl = dlg = scbr = 0;
         }
         public CurrentObjInfo GetObjectType(AutomationElement e)
         {
@@ -125,6 +125,8 @@ namespace Ldtpd
                 return new CurrentObjInfo("pane", pane++);
             else if (type == ControlType.Hyperlink)
                 return new CurrentObjInfo("hlnk", hlnk++);
+            else if (type == ControlType.ScrollBar)
+                return new CurrentObjInfo("scbr", scbr++);
             return new CurrentObjInfo("ukn", ukn++);
         }
     }
