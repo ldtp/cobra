@@ -50,11 +50,13 @@ namespace Ldtpd
         protected int windowRetry = 3;
         protected int objectTimeOut = 5;
         protected String appUnderTest = null;
+        internal string writeToFile;
         public Utils(WindowList windowList, Common common, bool debug)
         {
             this.debug = debug;
             this.windowList = windowList;
             this.common = common;
+            writeToFile = common.writeToFile;
             backgroundThread = new Thread(new ThreadStart(BackgroundThread));
             // Clean up window handles in different thread
             backgroundThread.Start();
@@ -71,7 +73,7 @@ namespace Ldtpd
             }
             catch (Exception ex)
             {
-                if (debug)
+                if (debug || writeToFile != null)
                     Console.WriteLine(ex);
             }
         }
@@ -208,7 +210,7 @@ namespace Ldtpd
                             {
                                 foreach (ControlType t in type)
                                 {
-                                    if (debug)
+                                    if (debug || writeToFile != null)
                                         LogMessage((t == e.Current.ControlType) +
                                             " : " + e.Current.ControlType.ProgrammaticName);
                                     if (t == e.Current.ControlType)
@@ -351,7 +353,7 @@ namespace Ldtpd
                             {
                                 foreach (ControlType t in type)
                                 {
-                                    if (debug)
+                                    if (debug || writeToFile != null)
                                         LogMessage((t == e.Current.ControlType) +
                                             " : " + e.Current.ControlType.ProgrammaticName);
                                     if (t == e.Current.ControlType)
@@ -597,7 +599,7 @@ namespace Ldtpd
                     else
                     {
                         s = s.ToString();
-                        if (debug)
+                        if (debug || writeToFile != null)
                             LogMessage("Obj name: " + s + " : " +
                                 element.Current.ControlType.ProgrammaticName);
                         if (element.Current.ControlType == ControlType.MenuItem)
@@ -642,7 +644,7 @@ namespace Ldtpd
                                 index++;
                             }
                         }
-                        if (debug)
+                        if (debug || writeToFile != null)
                         {
                             LogMessage(objName + " : " + actualString + " : " + s + " : " +
                                 tmp);
@@ -665,7 +667,7 @@ namespace Ldtpd
                         {
                             foreach (ControlType t in type)
                             {
-                                if (debug)
+                                if (debug || writeToFile != null)
                                     LogMessage((t == element.Current.ControlType) +
                                         " : " + element.Current.ControlType.ProgrammaticName);
                                 if (t == element.Current.ControlType)
@@ -768,7 +770,7 @@ namespace Ldtpd
                     else
                     {
                         s = s.ToString();
-                        if (debug)
+                        if (debug || writeToFile != null)
                             LogMessage("Obj name: " + s + " : " +
                                 element.Current.ControlType.ProgrammaticName);
                     }
@@ -853,7 +855,7 @@ namespace Ldtpd
                         objectHT.Add(actualString, propertyHT);
                         if (isObjIndex)
                             objIndex = currObjInfo.objType + "#" + currObjInfo.objCount;
-                        if (debug && rx != null)
+                        if ((debug || writeToFile != null) && rx != null)
                         {
                             LogMessage(objName + " : " + actualString + " : " + s
                                 + " : " + tmp);
