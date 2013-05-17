@@ -213,7 +213,7 @@ namespace Ldtpd
             utils.InternalGetObjectList(walker.walker.GetFirstChild(windowHandle),
                 ref objectList, ref objectHT, ref matchedKey,
                 true, null, windowHandle.Current.Name);
-            if (utils.debug)
+            if (utils.debug || utils.writeToFile != null)
             {
                 LogMessage(objectList.Count);
                 foreach (string key in objectHT.Keys)
@@ -706,7 +706,7 @@ namespace Ldtpd
                     ref objectList, ref objectHT, ref matchedKey,
                     flag, objName, windowHandle.Current.Name) || flag)
                 {
-                    if (utils.debug)
+                    if (utils.debug || utils.writeToFile != null)
                     {
                         LogMessage(objectList.Count);
                         foreach (string key in objectHT.Keys)
@@ -995,7 +995,7 @@ namespace Ldtpd
                     {
                         try
                         {
-                            if (utils.debug)
+                            if (utils.debug || utils.writeToFile != null)
                                 LogMessage("Key: " + key);
                             ht = (Hashtable)objectHT[key];
                             String tmp = Regex.Replace(childName, @"\*", @".*");
@@ -1006,7 +1006,7 @@ namespace Ldtpd
                                 RegexOptions.IgnorePatternWhitespace |
                                 RegexOptions.Multiline |
                                 RegexOptions.CultureInvariant);
-                            if (utils.debug)
+                            if (utils.debug || utils.writeToFile != null)
                             {
                                 LogMessage("Role matched: " +
                                     (string)ht["class"] == role);
