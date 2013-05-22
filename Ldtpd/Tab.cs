@@ -187,7 +187,11 @@ namespace Ldtpd
                         out pattern))
                     {
                         LogMessage("SelectionItemPattern");
-                        element.SetFocus();
+                        if (element.Current.ControlType != ControlType.TabItem)
+                            // Don't grab focus if type is tab item
+                            // as the following InternalClick API fails
+                            // on getting the object size with COM exception
+                            element.SetFocus();
                         //((SelectionItemPattern)pattern).Select();
                         // NOTE: Work around, as the above doesn't seem to work
                         // with UIAComWrapper and UIAComWrapper is required
