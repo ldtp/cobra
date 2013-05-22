@@ -91,11 +91,23 @@ namespace Ldtpd
             else if (type == ControlType.Window)
             {
                 if (e.Current.LocalizedControlType == "dialog")
+                {
                     // Might need a fix for other languages: Ex: French / Germany
                     // as the localized control name could be different than dialog
-                    return new CurrentObjInfo("dlg", dlg++);
+                    if (String.IsNullOrEmpty(e.Current.Name))
+                        return new CurrentObjInfo("dlg", dlg++);
+                    else
+                        // Don't increase the index, if window has name
+                        return new CurrentObjInfo("dlg", dlg);
+                }
                 else
-                    return new CurrentObjInfo("frm", frm++);
+                {
+                    if (String.IsNullOrEmpty(e.Current.Name))
+                        return new CurrentObjInfo("frm", frm++);
+                    else
+                        // Don't increase the index, if window has name
+                        return new CurrentObjInfo("frm", frm);
+                }
             }
             else if (type == ControlType.Header)
                 return new CurrentObjInfo("hdr", header++);
@@ -122,7 +134,13 @@ namespace Ldtpd
                 // For Linux compatibility
                 return new CurrentObjInfo("tbl", tbl++);
             else if (type == ControlType.Pane)
-                return new CurrentObjInfo("pane", pane++);
+            {
+                if (String.IsNullOrEmpty(e.Current.Name))
+                    return new CurrentObjInfo("pane", pane++);
+                else
+                    // Don't increase the index, if window has name
+                    return new CurrentObjInfo("pane", pane);
+            }
             else if (type == ControlType.Hyperlink)
                 return new CurrentObjInfo("hlnk", hlnk++);
             else if (type == ControlType.ScrollBar)
