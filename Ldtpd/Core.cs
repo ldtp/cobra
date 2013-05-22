@@ -1221,6 +1221,45 @@ namespace Ldtpd
             // For Linux compatibility
             return 1;
         }
+        [XmlRpcMethod("getcursorposition", Description = "Get cursor position.")]
+        public int GetCursorPosition(String windowName, String objName)
+        {
+            System.Drawing.Point pos = Cursor.Position;
+            // FIXME: If its supported by underlying library
+            // Cursor.Position is in pixel info, is that the only way to go ?
+            // Try something from here
+            // http://stackoverflow.com/questions/10720162/set-text-on-textfield-textbox-with-the-automation-framework-and-get-the-change
+            throw new XmlRpcFaultException(123,
+                "Unsupported on Windows, as unable to get info from underlying accessibility library.");
+        }
+        [XmlRpcMethod("comparetextproperty", Description = "Compare text property.")]
+        public int CompareTextProperty(String windowName, String objName,
+            String textProperty, int start, int end)
+        {
+            throw new XmlRpcFaultException(123,
+                "Not implemented.");
+        }
+        [XmlRpcMethod("containstextproperty", Description = "Contains text property.")]
+        public int ContainsTextProperty(String windowName, String objName,
+            String textProperty, int start, int end)
+        {
+            throw new XmlRpcFaultException(123,
+                "Not implemented.");
+        }
+        [XmlRpcMethod("gettextproperty", Description = "Get text property.")]
+        public int GetTextProperty(String windowName, String objName,
+            int start, int end)
+        {
+            throw new XmlRpcFaultException(123,
+                "Not implemented.");
+        }
+        [XmlRpcMethod("setcursorposition", Description = "Get cursor position.")]
+        public int SetCursorPosition(String windowName, String objName, int position)
+        {
+            // FIXME: If its supported by underlying library
+            throw new XmlRpcFaultException(123,
+                "Unsupported on Windows, as unable to get info from underlying accessibility library.");
+        }
         [XmlRpcMethod("generatemouseevent",
             Description = "Generate mouse event.")]
         public int GenerateMouseEvent(int x, int y, String type = "b1c")
