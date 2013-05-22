@@ -289,21 +289,21 @@ namespace Ldtp
         string ImageCapture(string windowName = "", int x = 0, int y = 0,
             int width = -1, int height = -1);
         [XmlRpcMethod("onedown")]
-        public int OneDown(String windowName, String objName, int iterations);
+        int OneDown(String windowName, String objName, int iterations);
         [XmlRpcMethod("one")]
-        public int OneUp(String windowName, String objName, int iterations);
+        int OneUp(String windowName, String objName, int iterations);
         [XmlRpcMethod("oneright")]
-        public int OneRight(String windowName, String objName, int iterations);
+        int OneRight(String windowName, String objName, int iterations);
         [XmlRpcMethod("oneleft")]
-        public int OneLeft(String windowName, String objName, int iterations);
+        int OneLeft(String windowName, String objName, int iterations);
         [XmlRpcMethod("scrolldown")]
-        public int ScrollDown(String windowName, String objName);
+        int ScrollDown(String windowName, String objName);
         [XmlRpcMethod("scrollup")]
-        public int ScrollUp(String windowName, String objName);
+        int ScrollUp(String windowName, String objName);
         [XmlRpcMethod("scrollleft")]
-        public int ScrollLeft(String windowName, String objName);
+        int ScrollLeft(String windowName, String objName);
         [XmlRpcMethod("scrollright")]
-        public int ScrollRight(String windowName, String objName);
+        int ScrollRight(String windowName, String objName);
     }
     public class Ldtp
     {
