@@ -190,6 +190,7 @@ namespace Ldtpd
             {
                 w = null;
                 windowArrayList = null;
+                condition = null;
             }
             // Unable to find window
             return null;
