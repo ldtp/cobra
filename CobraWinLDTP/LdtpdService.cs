@@ -256,8 +256,29 @@ namespace WinLdtpdService
         }
 
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
+            if (args.Length > 0)
+            {
+                foreach (string arg in args)
+                {
+                    switch (arg)
+                    {
+                        case "-v":
+                        case "--version":
+                            Console.WriteLine("3.5.0");
+                            return;
+                        case "-d":
+                        case "--debug":
+                            Environment.SetEnvironmentVariable("LDTP_DEBUG", "2");
+                            break;
+                        case "-h":
+                        case "--help":
+                            Console.WriteLine("[-v/--version] [-d/--debug] [-h/--help]");
+                            return;
+                    }
+                }
+            }
             string ldtpParallelMemLeak = Environment.GetEnvironmentVariable(
                 "LDTP_PARALLEL_MEM_LEAK");
             if (String.IsNullOrEmpty(ldtpParallelMemLeak))
