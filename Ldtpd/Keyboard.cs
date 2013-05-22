@@ -87,6 +87,22 @@ namespace Ldtpd
                         return new KeyInfo(System.Windows.Input.Key.LWin, false);
                     case "windowskeyr":
                         return new KeyInfo(System.Windows.Input.Key.RWin, false);
+                    case "right":
+                    case "arrowr":
+                    case "arrowright":
+                        return new KeyInfo(System.Windows.Input.Key.Right, false);
+                    case "left":
+                    case "arrowl":
+                    case "arrowleft":
+                        return new KeyInfo(System.Windows.Input.Key.Left, false);
+                    case "up":
+                    case "arrowu":
+                    case "arrowup":
+                        return new KeyInfo(System.Windows.Input.Key.Up, false);
+                    case "down":
+                    case "arrowd":
+                    case "arrowdown":
+                        return new KeyInfo(System.Windows.Input.Key.Down, false);
                     case " ":
                         return new KeyInfo(System.Windows.Input.Key.Space, false);
                     case "<":
