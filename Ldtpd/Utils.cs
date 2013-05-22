@@ -150,9 +150,7 @@ namespace Ldtpd
                 RegexOptions.CultureInvariant);
             List<AutomationElement> windowTmpList = new List<AutomationElement>();
             InternalTreeWalker w;
-            Condition condition = new PropertyCondition(
-                AutomationElement.ControlTypeProperty,
-                ControlType.Window);
+            Condition condition;
             try
             {
                 foreach (AutomationElement e in windowList)
@@ -267,6 +265,9 @@ namespace Ldtpd
                 // If window doesn't exist for waitTillGuiNotExist
                 // return here as we don't need to find the window handle
                 return null;
+            condition = new PropertyCondition(
+                AutomationElement.ControlTypeProperty,
+                ControlType.Window);
             w = new InternalTreeWalker();
             windowTmpList = null;
             objectList.Clear();
@@ -378,6 +379,7 @@ namespace Ldtpd
                 c = null;
                 w = null;
                 rx = null;
+                condition = null;
                 objectList = null;
             }
             // Unable to find window
