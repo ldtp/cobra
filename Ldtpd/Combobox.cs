@@ -165,9 +165,12 @@ namespace Ldtpd
                 {
                     throw new XmlRpcFaultException(123, "Object state is disabled");
                 }
+                elementItem = utils.GetObjectHandle(childHandle, "Open", type, true);
                 if (childHandle.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
                     out pattern) || childHandle.TryGetCurrentPattern(
-                    InvokePattern.Pattern, out invokePattern))
+                    InvokePattern.Pattern, out invokePattern) ||
+                    (elementItem != null && elementItem.TryGetCurrentPattern(
+                    InvokePattern.Pattern, out invokePattern)))
                 {
                     LogMessage("ExpandCollapsePattern");
                     // Retry max 5 times
