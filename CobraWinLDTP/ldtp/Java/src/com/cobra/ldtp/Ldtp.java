@@ -51,7 +51,7 @@ public class Ldtp {
     XmlRpcClient client = null;
     PollEvents pollEvents = null;
     XmlRpcClientConfigImpl config = null;
-    public Log log = LogFactory.getLog();
+    public Log log = LogFactory.getLog("");
     /**
      * connectToServer (private), which connects to the running instance of LDTP server
      */
@@ -1004,7 +1004,7 @@ public class Ldtp {
     /**
      * appUnderTest Application under test
      */
-    public String appUnderTest(String appName) {
+    public int appUnderTest(String appName) {
     	Object[] params = new Object[]{appName};
     	return doAction("appundertest", params);
     }
@@ -1708,7 +1708,7 @@ public class Ldtp {
      */
     public String getComboValue(String objName) throws LdtpExecutionError {
 	Object[] params = new Object[]{windowName, objName};
-	return doAction("getcombovalue", params);
+	return getString("getcombovalue", params);
     }
     /**
      * showList Show combo box entries
@@ -1863,17 +1863,6 @@ public class Ldtp {
     public int mouseRightClick(String objName) {
 	Object[] params = new Object[]{windowName, objName};
 	return doAction("mouserightclick", params);
-    }
-    /**
-     * doubleClick Generate mouse double click on the object
-     *
-     * @param objName Object name inside the current window
-     * @return Return 1 on success
-     * @throws LdtpExecutionError on failure
-     */
-    public int doubleClick(String objName) {
-	Object[] params = new Object[]{windowName, objName};
-	return doAction("doubleclick", params);
     }
     /**
      * simulateMouseMove Simulate mouse move from source to destination
@@ -2091,7 +2080,7 @@ public class Ldtp {
      * @return Return size of cell as Integer array on success
      * @throws LdtpExecutionError on failure
      */
-    public String getCellSize(String objName, int rowIndex, int column) throws LdtpExecutionError {
+    public Integer[] getCellSize(String objName, int rowIndex, int column) throws LdtpExecutionError {
 	Object[] params = new Object[]{windowName, objName, rowIndex, column};
 	return getIntList("getcellsize", params);
     }
@@ -2214,18 +2203,6 @@ public class Ldtp {
     public int singleClickRow(String objName, String rowText) throws LdtpExecutionError {
 	Object[] params = new Object[]{windowName, objName, rowText};
 	return getInt("singleclickrow", params);
-    }
-    /**
-     * doubleClickRow Double click on table cell row based on row text
-     *
-     * @param objName Object name inside the current window
-     * @param rowText Row text to search for
-     * @return Return 1 on success
-     * @throws LdtpExecutionError on failure
-     */
-    public int doubleClickRow(String objName, String rowText) throws LdtpExecutionError {
-	Object[] params = new Object[]{windowName, objName, rowText};
-	return getInt("doubleclickrow", params);
     }
     /**
      * verifyTableCell Verify table cell text
