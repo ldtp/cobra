@@ -48,7 +48,8 @@ namespace Ldtpd
         private AutomationElement GetObjectHandle(string windowName,
             string objName)
         {
-            ControlType[] type = new ControlType[1] { ControlType.Tab };
+            ControlType[] type = new ControlType[2] { ControlType.Tab,
+                ControlType.TabItem };
             try
             {
                 return utils.GetObjectHandle(windowName, objName, type);
