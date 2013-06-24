@@ -538,7 +538,7 @@ namespace Ldtpd
             }
             return childHandle;
         }
-        private AutomationElement InternalGetObjectHandle(
+        internal AutomationElement InternalGetObjectHandle(
             AutomationElement childHandle, String objName,
             ControlType[] type, ref ArrayList objectList,
             ObjInfo objInfo = null)

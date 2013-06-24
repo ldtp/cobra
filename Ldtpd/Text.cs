@@ -74,6 +74,19 @@ namespace Ldtpd
             object valuePattern = null;
             try
             {
+                if (childHandle.Current.ControlType == ControlType.ComboBox)
+                {
+                    AutomationElement o = null;
+                    ArrayList objectList = new ArrayList();
+                    ControlType[] type = new ControlType[1] { ControlType.Edit };
+                    // NOTE: Using "*" for object name, which returns the first
+                    // matching Edit control type
+                    o = utils.InternalGetObjectHandle(childHandle,
+                        "*", type, ref objectList);
+                    if (o != null)
+                        childHandle = o;
+                    objectList = null;
+                }
                 // Reference: http://msdn.microsoft.com/en-us/library/ms750582.aspx
                 if (!childHandle.TryGetCurrentPattern(ValuePattern.Pattern,
                     out valuePattern))
