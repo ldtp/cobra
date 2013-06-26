@@ -42,6 +42,7 @@ namespace WinLdtpdService
     {
         public bool debug = false;
         string ldtpDebugEnv = Environment.GetEnvironmentVariable("LDTP_DEBUG");
+        string ldtpPort = Environment.GetEnvironmentVariable("LDTP_SERVER_PORT");
         string listenAllInterface = Environment.GetEnvironmentVariable(
             "LDTP_LISTEN_ALL_INTERFACE");
         public Common common = null;
@@ -50,19 +51,21 @@ namespace WinLdtpdService
         public XmlRpcListenerService svc = null;
         LdtpdService()
         {
-            if (ldtpDebugEnv != null && ldtpDebugEnv.Length > 0)
+            if (String.IsNullOrEmpty(ldtpDebugEnv))
                 debug = true;
+            if (String.IsNullOrEmpty(ldtpPort))
+                ldtpPort = "4118";
             common = new Common(debug);
             windowList = new WindowList(common);
             listener = new HttpListener();
-            listener.Prefixes.Add("http://localhost:4118/");
-            listener.Prefixes.Add("http://+:4118/");
+            listener.Prefixes.Add("http://localhost:" + ldtpPort + "/");
+            listener.Prefixes.Add("http://+:" + ldtpPort + "/");
             // Listen on all possible IP address
             if (listenAllInterface != null && listenAllInterface.Length > 0)
             {
                 if (debug)
                     Console.WriteLine("Listening on all interface");
-                listener.Prefixes.Add("http://*:4118/");
+                listener.Prefixes.Add("http://*:" + ldtpPort + "/");
             }
             else
             {
@@ -151,10 +154,13 @@ namespace WinLdtpdService
         {
             bool debug = false;
             string ldtpDebugEnv = Environment.GetEnvironmentVariable("LDTP_DEBUG");
+            string ldtpPort = Environment.GetEnvironmentVariable("LDTP_SERVER_PORT");
             string listenAllInterface = Environment.GetEnvironmentVariable(
                 "LDTP_LISTEN_ALL_INTERFACE");
             if (String.IsNullOrEmpty(ldtpDebugEnv))
                 debug = true;
+            if (String.IsNullOrEmpty(ldtpPort))
+                ldtpPort = "4118";
             Common common = new Common(debug);
             /*
             // If planning to use Remoting instead of HTTP
@@ -180,14 +186,14 @@ namespace WinLdtpdService
             /**/
             WindowList windowList = new WindowList(common);
             HttpListener listener = new HttpListener();
-            listener.Prefixes.Add("http://localhost:4118/");
-            listener.Prefixes.Add("http://+:4118/");
+            listener.Prefixes.Add("http://localhost:" + ldtpPort + "/");
+            listener.Prefixes.Add("http://+:" + ldtpPort + "/");
             // Listen on all possible IP address
-            if (listenAllInterface != null && listenAllInterface.Length > 0)
+            if (String.IsNullOrEmpty(listenAllInterface))
             {
                 if (debug)
                     Console.WriteLine("Listening on all interface");
-                listener.Prefixes.Add("http://*:4118/");
+                listener.Prefixes.Add("http://*:" + ldtpPort + "/");
             }
             else
             {
@@ -260,9 +266,9 @@ namespace WinLdtpdService
         {
             if (args.Length > 0)
             {
-                foreach (string arg in args)
+                for (int i = 0; i < args.Length; i++ )
                 {
-                    switch (arg)
+                    switch (args[i])
                     {
                         case "-v":
                         case "--version":
@@ -272,9 +278,14 @@ namespace WinLdtpdService
                         case "--debug":
                             Environment.SetEnvironmentVariable("LDTP_DEBUG", "2");
                             break;
+                        case "-p":
+                        case "--port":
+                            i++;
+                            Environment.SetEnvironmentVariable("LDTP_SERVER_PORT", args[i]);
+                            break;
                         case "-h":
                         case "--help":
-                            Console.WriteLine("[-v/--version] [-d/--debug] [-h/--help]");
+                            Console.WriteLine("[-v/--version] [-d/--debug] [-p/--port <port number>] [-h/--help]");
                             return;
                     }
                 }
