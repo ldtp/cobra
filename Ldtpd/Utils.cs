@@ -27,6 +27,7 @@
  * SOFTWARE.
 */
 using System;
+using System.Text;
 using ATGTestInput;
 using System.Windows;
 using System.Threading;
@@ -721,11 +722,13 @@ namespace Ldtpd
             String s = null;
             if (objInfo == null)
                 objInfo = new ObjInfo(false);
-            String objIndex;
+            string objIndex;
             // Trying to mimic python fnmatch.translate
-            String tmp = null;
+            string tmp = null;
+            string utf8 = null;
             Hashtable propertyHT;
             bool isObjIndex = false;
+            byte[] utf8Bytes = null;
             String actualString = null;
             String automationId = null;
             CurrentObjInfo currObjInfo;
@@ -801,15 +804,21 @@ namespace Ldtpd
                             index++;
                         }
                     }
+                    // Convert utf16 to utf8
+                    // VMW bug#1054336
+                    utf8Bytes = Encoding.UTF8.GetBytes(actualString);
+                    utf8 = Encoding.UTF8.GetString(utf8Bytes);
                     if (type == null || type == element.Current.ControlType)
+                    {
                         // Add if ControlType is null
                         // or only matching type, if available
-                        objectList.Add(actualString);
+                        objectList.Add(utf8);
+                    }
                     if (objName != null || needAll)
                     {
                         //needAll - Required for GetChild
                         propertyHT = new Hashtable();
-                        propertyHT.Add("key", actualString);
+                        propertyHT.Add("key", utf8);
                         try
                         {
                             LogMessage(element.Current.LocalizedControlType);
@@ -836,14 +845,20 @@ namespace Ldtpd
                         {
                             LogMessage("parentName NOT NULL");
                             // Add current child to the parent
-                            ((ArrayList)((Hashtable)objectHT[parentName])["children"]).Add(actualString);
+                            ((ArrayList)((Hashtable)objectHT[parentName])["children"]).Add(utf8);
                         }
                         else
                             LogMessage("parentName NULL");
                         propertyHT.Add("obj_index",
                             currObjInfo.objType + "#" + currObjInfo.objCount);
                         if (s != null)
-                            propertyHT.Add("label", element.Current.Name);
+                        {
+                            // Convert utf16 to utf8
+                            // VMW bug#1054336
+                            byte[] labelUtf8Bytes = Encoding.UTF8.GetBytes(element.Current.Name);
+                            string label = Encoding.UTF8.GetString(labelUtf8Bytes);
+                            propertyHT.Add("label", label);
+                        }
                         // Following 2 properties exist in Linux
                         //propertyHT.Add("label_by", s == null ? "" : s);
                         //propertyHT.Add("description", element.Current.DescribedBy);
@@ -854,24 +869,24 @@ namespace Ldtpd
                             propertyHT.Add("window_id",
                                 element.Current.AutomationId);
                         // Add individual property to object property
-                        objectHT.Add(actualString, propertyHT);
+                        objectHT.Add(Encoding.UTF8.GetString(utf8Bytes), propertyHT);
                         if (isObjIndex)
                             objIndex = currObjInfo.objType + "#" + currObjInfo.objCount;
                         if ((debug || writeToFile != null) && rx != null)
                         {
-                            LogMessage(objName + " : " + actualString + " : " + s
+                            LogMessage(objName + " : " + utf8 + " : " + s
                                 + " : " + tmp);
                             LogMessage((s != null && rx.Match(s).Success) + " : " +
-                                (actualString != null && rx.Match(actualString).Success));
+                                (utf8 != null && rx.Match(utf8).Success));
                         }
                         if ((isAutomationId && !String.IsNullOrEmpty(automationId) &&
                             automationId == element.Current.AutomationId) ||
                             (isObjIndex && !String.IsNullOrEmpty(objIndex) && rx.Match(objIndex).Success) ||
                             (!isAutomationId && !isObjIndex &&
                             (s != null && rx != null && rx.Match(s).Success) ||
-                            (actualString != null && rx != null && rx.Match(actualString).Success)))
+                            (utf8 != null && rx != null && rx.Match(utf8).Success)))
                         {
-                            matchedKey = actualString;
+                            matchedKey = utf8;
                             LogMessage("String matched: " + needAll);
                             if (!needAll)
                                 return true;
@@ -881,7 +896,7 @@ namespace Ldtpd
                     // If any subchild exist for the current element navigate to it
                     if (InternalGetObjectList(w.walker.GetFirstChild(element),
                         ref objectList, ref objectHT, ref matchedKey,
-                        needAll, objName, actualString, type, objInfo))
+                        needAll, objName, utf8, type, objInfo))
                         return true;
                     element = w.walker.GetNextSibling(element);
                 }
