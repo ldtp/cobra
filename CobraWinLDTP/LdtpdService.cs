@@ -51,7 +51,7 @@ namespace WinLdtpdService
         public XmlRpcListenerService svc = null;
         LdtpdService()
         {
-            if (String.IsNullOrEmpty(ldtpDebugEnv))
+            if (!String.IsNullOrEmpty(ldtpDebugEnv))
                 debug = true;
             if (String.IsNullOrEmpty(ldtpPort))
                 ldtpPort = "4118";
@@ -157,7 +157,7 @@ namespace WinLdtpdService
             string ldtpPort = Environment.GetEnvironmentVariable("LDTP_SERVER_PORT");
             string listenAllInterface = Environment.GetEnvironmentVariable(
                 "LDTP_LISTEN_ALL_INTERFACE");
-            if (String.IsNullOrEmpty(ldtpDebugEnv))
+            if (!String.IsNullOrEmpty(ldtpDebugEnv))
                 debug = true;
             if (String.IsNullOrEmpty(ldtpPort))
                 ldtpPort = "4118";
@@ -280,8 +280,25 @@ namespace WinLdtpdService
                             break;
                         case "-p":
                         case "--port":
+                            // To fetch next port argument increment
                             i++;
-                            Environment.SetEnvironmentVariable("LDTP_SERVER_PORT", args[i]);
+                            try
+                            {
+                                // To check int type as argument
+                                Convert.ToInt32(args[i]);
+                                Environment.SetEnvironmentVariable("LDTP_SERVER_PORT",
+                                    args[i]);
+                            }
+                            catch (FormatException)
+                            {
+                                Console.WriteLine("Invalid port: " + args[i]);
+                                return;
+                            }
+                            catch (IndexOutOfRangeException)
+                            {
+                                Console.WriteLine("Port number expected");
+                                return;
+                            }
                             break;
                         case "-h":
                         case "--help":
