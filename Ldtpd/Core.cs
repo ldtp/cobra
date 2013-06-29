@@ -1260,6 +1260,21 @@ namespace Ldtpd
             throw new XmlRpcFaultException(123,
                 "Unsupported on Windows, as unable to get info from underlying accessibility library.");
         }
+        [XmlRpcMethod("selecttextbyname", Description = "Select text by name.")]
+        public int SelectTextByName(String windowName, String objName)
+        {
+            // FIXME: If its supported by underlying library
+            throw new XmlRpcFaultException(123,
+                "Unsupported on Windows, as unable to get info from underlying accessibility library.");
+        }
+        [XmlRpcMethod("selecttextbyindexandregion", Description = "Select text by by index and region.")]
+        public int SelectTextByIndexAndRegion(String windowName, String objName,
+            int start, int end, int selectionNumber)
+        {
+            // FIXME: If its supported by underlying library
+            throw new XmlRpcFaultException(123,
+                "Unsupported on Windows, as unable to get info from underlying accessibility library.");
+        }
         [XmlRpcMethod("generatemouseevent",
             Description = "Generate mouse event.")]
         public int GenerateMouseEvent(int x, int y, String type = "b1c")
