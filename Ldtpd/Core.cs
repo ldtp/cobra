@@ -1823,6 +1823,20 @@ namespace Ldtpd
             // which is not unique across application
             return 0;
         }
+        [XmlRpcMethod("verifyscrollbar",
+            Description = "Verify given object is horizontal scrollbar.")]
+        public int VerifyScrollBar(String windowName, String objName)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.VerifyScrollBar(windowName, objName);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
         [XmlRpcMethod("verifyscrollbarvertical",
             Description = "Verify given object is vertical scrollbar.")]
         public int VerifyScrollBarVertical(String windowName, String objName)

@@ -2373,6 +2373,16 @@ public class Ldtp {
 	return verifyAction("verifysliderhorizontal", params);
     }
     /**
+     * verifyScrollbar Verify scrollbar exist or not
+     *
+     * @param objName Object name inside the current window
+     * @return Return 1 on success, 0 on failure
+     */
+    public int verifyScrollbar(String objName) {
+	Object[] params = new Object[]{windowName, objName};
+	return verifyAction("verifyscrollbar", params);
+    }
+    /**
      * verifyScrollbarVertical Verify scrollbar is vertical
      *
      * @param objName Object name inside the current window

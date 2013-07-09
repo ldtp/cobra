@@ -304,6 +304,12 @@ namespace Ldtp
         int ScrollLeft(String windowName, String objName);
         [XmlRpcMethod("scrollright")]
         int ScrollRight(String windowName, String objName);
+        [XmlRpcMethod("verifyscrollbar")]
+        public int VerifyScrollBar(String windowName, String objName);
+        [XmlRpcMethod("verifyscrollbarhorizontal")]
+        public int VerifyScrollBarHorizontal(String windowName, String objName);
+        [XmlRpcMethod("verifyscrollbarvertical")]
+        public int VerifyScrollBarVertical(String windowName, String objName);
     }
     public class Ldtp
     {
@@ -1804,6 +1810,39 @@ namespace Ldtp
             try
             {
                 return proxy.ScrollRight(windowName, objName);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public int VerifyScrollBar(String objName)
+        {
+            try
+            {
+                return proxy.VerifyScrollBar(windowName, objName);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public int VerifyScrollBarVertical(String objName)
+        {
+            try
+            {
+                return proxy.VerifyScrollBarVertical(windowName, objName);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public int VerifyScrollBarHorizontal(String objName)
+        {
+            try
+            {
+                return proxy.VerifyScrollBarHorizontal(windowName, objName);
             }
             catch (XmlRpcFaultException ex)
             {
