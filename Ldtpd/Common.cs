@@ -38,18 +38,18 @@ namespace Ldtpd
         System.IO.StreamWriter sw;
         System.IO.FileStream fs = null;
         internal string writeToFile = null;
-        
+
         public bool Debug
         {
             get { return debug; }
         }
-        
+
         public Stack LogStack
         {
             get { return logStack; }
         }
         Stack logStack = new Stack(100);
-        
+
         public Common(bool debug)
         {
             this.debug = debug;
@@ -61,7 +61,7 @@ namespace Ldtpd
                 sw = new System.IO.StreamWriter(fs);
             }
         }
-        
+
         ~Common()
         {
             if (fs != null)
@@ -78,12 +78,12 @@ namespace Ldtpd
             // Collect all generations of memory.
             GC.Collect();
         }
-        
+
         public void LogProcessStat(Object o)
         {
             logStack.Push(o);
         }
-        
+
         public void LogMessage(Object o)
         {
             if (debug)

@@ -49,8 +49,9 @@ namespace Ldtpd
         }
         private int processId;
         private string instanceName, processName;
-        PerformanceCounter cpuCounter; 
-        public string InstanceName {
+        PerformanceCounter cpuCounter;
+        public string InstanceName
+        {
             get { return instanceName; }
             set { instanceName = value; }
         }

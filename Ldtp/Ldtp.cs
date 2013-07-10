@@ -305,11 +305,11 @@ namespace Ldtp
         [XmlRpcMethod("scrollright")]
         int ScrollRight(String windowName, String objName);
         [XmlRpcMethod("verifyscrollbar")]
-        public int VerifyScrollBar(String windowName, String objName);
+        int VerifyScrollBar(String windowName, String objName);
         [XmlRpcMethod("verifyscrollbarhorizontal")]
-        public int VerifyScrollBarHorizontal(String windowName, String objName);
+        int VerifyScrollBarHorizontal(String windowName, String objName);
         [XmlRpcMethod("verifyscrollbarvertical")]
-        public int VerifyScrollBarVertical(String windowName, String objName);
+        int VerifyScrollBarVertical(String windowName, String objName);
     }
     public class Ldtp
     {

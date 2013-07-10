@@ -35,7 +35,8 @@ namespace Ldtp
     [Serializable]
     class LdtpExecutionError : Exception
     {
-        public LdtpExecutionError(string message) : base(message)
+        public LdtpExecutionError(string message)
+            : base(message)
         {
         }
     }

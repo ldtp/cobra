@@ -379,7 +379,7 @@ namespace Ldtpd
                     }
                 }
                 if (delay != 0.0)
-					utils.InternalWait(delay);
+                    utils.InternalWait(delay);
                 // Start mouse move from source_x, source_y to dest_x, dest_y
                 GenerateMouseEvent(source_x, source_y, "abs");
                 if (source_x == dest_x && source_y == dest_y)

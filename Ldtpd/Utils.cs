@@ -633,7 +633,7 @@ namespace Ldtpd
                         {
                             // txtName, txtPassword
                             actualString = currObjInfo.objType + s;
-							LogMessage("###" + actualString + "###");
+                            LogMessage("###" + actualString + "###");
                             index = 1;
                             while (true)
                             {
@@ -1173,7 +1173,7 @@ namespace Ldtpd
             return true;
         }
         internal int InternalCheckObject(string windowName, string objName,
-					 string actionType)
+                     string actionType)
         {
             if (String.IsNullOrEmpty(windowName) ||
                 String.IsNullOrEmpty(objName) ||

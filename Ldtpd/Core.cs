@@ -858,7 +858,7 @@ namespace Ldtpd
         }
         [XmlRpcMethod("verifysliderhorizontal",
             Description = "Verify slider is horizontal.")]
-        public int VerifySliderHorizontal(String windowName,String objName)
+        public int VerifySliderHorizontal(String windowName, String objName)
         {
             Value v = new Value(this);
             try
@@ -887,12 +887,12 @@ namespace Ldtpd
         [XmlRpcMethod("check", Description = "Check radio button / checkbox")]
         public int Check(String windowName, String objName)
         {
-	    return InternalCheckObject(windowName, objName, "Check");
+            return InternalCheckObject(windowName, objName, "Check");
         }
         [XmlRpcMethod("uncheck", Description = "UnCheck radio button / checkbox")]
         public int UnCheck(String windowName, String objName)
         {
-	    return InternalCheckObject(windowName, objName, "UnCheck");
+            return InternalCheckObject(windowName, objName, "UnCheck");
         }
         [XmlRpcMethod("verifycheck",
             Description = "Verify radio button / checkbox is checked")]

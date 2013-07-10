@@ -197,14 +197,14 @@ namespace Ldtpd
                     try
                     {
                         if (actionType == "Window")
-						{
+                        {
                             utils.InternalClick(childHandle);
-						}
+                        }
                         else
-						{
+                        {
                             // SetFocus() fails on Windows Explorer
                             childHandle.SetFocus();
-						}
+                        }
                     }
                     catch (Exception ex)
                     {
