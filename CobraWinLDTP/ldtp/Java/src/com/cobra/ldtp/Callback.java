@@ -16,7 +16,7 @@ merchantability or fitness for a particular purpose.
 See 'COPYING' in the source distribution for more information.
 
 Headers in this file shall remain intact.
-*/
+ */
 
 public class Callback {
 	public String eventType;
