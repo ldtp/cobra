@@ -82,8 +82,7 @@ class Transport(xmlrpclib.Transport):
                 cmd = 'start cmd /K CobraWinLDTP.exe'
             else:
                 cmd = 'CobraWinLDTP.exe'
-            subprocess.Popen(cmd, shell = True)
-            self._daemon = True
+            self._daemon = subprocess.Popen(cmd, shell = True)
         elif platform.mac_ver()[0] != '':
             pycmd = 'import atomac.ldtpd; atomac.ldtpd.main(parentpid=%s)' % pid
             self._daemon = os.spawnlp(os.P_NOWAIT, 'python',
@@ -156,7 +155,7 @@ class Transport(xmlrpclib.Transport):
                     if hasattr(self, 'close'):
                         # On Windows XP SP3 / Python 2.5, close doesn't exist
                         self.close()
-                    if retry_count == 1:
+                    if retry_count <= 6:
                         retry_count += 1
                         if not _ldtp_windows_env:
                             sigusr1 = signal.signal(signal.SIGUSR1, self._handle_signal)
@@ -196,12 +195,19 @@ class Transport(xmlrpclib.Transport):
 
     def kill_daemon(self):
         try:
-            if _ldtp_windows_env and self._daemon:
-                # If started by the current current, then terminate
+            if _ldtp_windows_env:
+                # If started by the current client, then terminate
                 # else, silently quit
-                subprocess.Popen('taskkill /F /IM CobraWinLDTP.exe',
-                                 shell = True, stdout = subprocess.PIPE,
-                                 stderr = subprocess.PIPE).communicate()
+                if _ldtp_debug:
+                    # Killing by pid does not work for debug mode,
+                    # so kill by process name
+                    subprocess.Popen('taskkill /F /IM CobraWinLDTP.exe',
+                                     shell = True, stdout = subprocess.PIPE,
+                                     stderr = subprocess.PIPE).communicate()
+                else:
+                    subprocess.Popen('taskkill /F /T /PID ' + str(self._daemon.pid),
+                                     shell = True, stdout = subprocess.PIPE,
+                                     stderr = subprocess.PIPE).communicate()
             else:
                 os.kill(self._daemon, signal.SIGKILL)
         except AttributeError:
