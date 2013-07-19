@@ -104,8 +104,14 @@ namespace Ldtp
         int MaximizeWindow(String windowName);
         [XmlRpcMethod("minimizewindow")]
         int MinimizeWindow(String windowName);
+        [XmlRpcMethod("unmaximizewindow")]
+        int UnMaximizeWindow(String windowName);
+        [XmlRpcMethod("unminimizewindow")]
+        int UnMinimizeWindow(String windowName);
         [XmlRpcMethod("closewindow")]
         int CloseWindow(String windowName);
+        [XmlRpcMethod("activatewindow")]
+        int ActivateWindow(String windowName);
         [XmlRpcMethod("getallstates")]
         string[] GetAllStates(String windowName, String objName);
         [XmlRpcMethod("hasstate")]
@@ -315,10 +321,10 @@ namespace Ldtp
     {
         ILdtp proxy;
         Process ps = null;
-        String windowName = null;
         String serverAddr = null;
         String serverPort = null;
         Boolean windowsEnv = false;
+        public String windowName = null;
         private void connectToServer()
         {
             if (serverAddr == null)
@@ -763,11 +769,44 @@ namespace Ldtp
                 throw new LdtpExecutionError(ex.FaultString);
             }
         }
+        public int UnMaximizeWindow()
+        {
+            try
+            {
+                return proxy.UnMaximizeWindow(windowName);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public int UnMinimizeWindow()
+        {
+            try
+            {
+                return proxy.UnMinimizeWindow(windowName);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
         public int CloseWindow()
         {
             try
             {
                 return proxy.CloseWindow(windowName);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public int ActivateWindow()
+        {
+            try
+            {
+                return proxy.ActivateWindow(windowName);
             }
             catch (XmlRpcFaultException ex)
             {
