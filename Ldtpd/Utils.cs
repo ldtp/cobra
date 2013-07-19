@@ -1172,6 +1172,18 @@ namespace Ldtpd
             Input.MoveToAndClick(pt);
             return true;
         }
+        internal bool InternalXYClick(AutomationElement element)
+        {
+            // Click just on X and Y co-ordinates,
+            // required for Google Chrome (mnuSystem;mnuMinimize)
+            // or minimizewindow('*Chrome*')
+            if (element == null)
+                return false;
+            Rect rect = element.Current.BoundingRectangle;
+            Point pt = new Point(rect.X, rect.Y);
+            Input.MoveToAndClick(pt);
+            return true;
+        }
         internal int InternalCheckObject(string windowName, string objName,
                      string actionType)
         {
