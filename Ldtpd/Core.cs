@@ -1188,6 +1188,26 @@ namespace Ldtpd
                 generic = null;
             }
         }
+        [XmlRpcMethod("activatewindow",
+            Description = "Activate a window.")]
+        public int ActivateWindow(String windowName)
+        {
+            return GrabFocus(windowName);
+        }
+        [XmlRpcMethod("unminimizewindow",
+            Description = "Unminimize a window.")]
+        public int UnMinimizeWindow(String windowName)
+        {
+            // For Linux compatibility
+            return 1;
+        }
+        [XmlRpcMethod("unmaximizewindow",
+            Description = "Unmaximize a window.")]
+        public int UnMaximizeWindow(String windowName)
+        {
+            // For Linux compatibility
+            return 1;
+        }
         [XmlRpcMethod("handletablecell", Description = "Handle table cell.")]
         public int HandleTableCell()
         {
@@ -1687,20 +1707,6 @@ namespace Ldtpd
         {
             ps.StopProcessMonitor(processName);
             return 1;
-        }
-        [XmlRpcMethod("activatewindow",
-            Description = "Activate window.")]
-        public int ActivateWindow(String windowName)
-        {
-            Generic generic = new Generic(this);
-            try
-            {
-                return generic.GrabFocus(windowName);
-            }
-            finally
-            {
-                generic = null;
-            }
         }
         [XmlRpcMethod("onedown",
             Description = "Scroll one down with iterations.")]
