@@ -1040,6 +1040,36 @@ namespace Ldtpd
                 tree = null;
             }
         }
+        [XmlRpcMethod("multiselect",
+            Description = "Select the given rows in tree or list item.")]
+        public int MultiSelect(String windowName, String objName,
+            String[] texts, bool partialMatch = false)
+        {
+            Tree tree = new Tree(this);
+            try
+            {
+                return tree.MultiSelect(windowName, objName, texts, partialMatch);
+            }
+            finally
+            {
+                tree = null;
+            }
+        }
+        [XmlRpcMethod("multiremove",
+            Description = "Unselect the given rows in tree or list item.")]
+        public int MultiRemove(String windowName, String objName,
+            String[] texts, bool partialMatch = false)
+        {
+            Tree tree = new Tree(this);
+            try
+            {
+                return tree.MultiRemove(windowName, objName, texts, partialMatch);
+            }
+            finally
+            {
+                tree = null;
+            }
+        }
         [XmlRpcMethod("verifyselectrow",
             Description = "Verify the given row in tree or list item is selected.")]
         public int VerifySelectRow(String windowName, String objName,

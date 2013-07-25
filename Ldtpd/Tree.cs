@@ -31,6 +31,7 @@ using System.Collections;
 using CookComputing.XmlRpc;
 using System.Windows.Forms;
 using System.Windows.Automation;
+using System.Collections.Generic;
 
 namespace Ldtpd
 {
@@ -135,7 +136,7 @@ namespace Ldtpd
                     LogMessage(ex);
                 }
                 if (partialMatch)
-                    text += "*";
+                    text = "*" + text + "*";
                 type = new ControlType[4] { ControlType.TreeItem,
                     ControlType.ListItem, ControlType.DataItem,
                     ControlType.Custom };
@@ -188,6 +189,178 @@ namespace Ldtpd
             }
             throw new XmlRpcFaultException(123,
                 "Unable to find the item in list: " + text);
+        }
+        public int MultiSelect(String windowName, String objName,
+            String[] texts, bool partialMatch = false)
+        {
+            if (texts == null)
+            {
+                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+            }
+            Object pattern;
+            ControlType[] type;
+            string[] searchTexts = texts;
+            AutomationElement elementItem;
+            List<string> myCollection = new List<string>();
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
+            if (!utils.IsEnabled(childHandle))
+            {
+                childHandle = null;
+                throw new XmlRpcFaultException(123,
+                    "Object state is disabled");
+            }
+            try
+            {
+                try
+                {
+                    childHandle.SetFocus();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    LogMessage(ex);
+                }
+                if (partialMatch)
+                {
+                    foreach(string text in texts)
+                        myCollection.Add("*" + text + "*");
+                    // Search for the partial text, rather than the given text
+                    searchTexts = myCollection.ToArray();
+                }
+                type = new ControlType[4] { ControlType.TreeItem,
+                    ControlType.ListItem, ControlType.DataItem,
+                    ControlType.Custom };
+                foreach (string text in searchTexts)
+                {
+                    elementItem = utils.GetObjectHandle(childHandle,
+                        text, type, true);
+                    if (elementItem != null)
+                    {
+                        elementItem.SetFocus();
+                        LogMessage(elementItem.Current.Name + " : " +
+                            elementItem.Current.ControlType.ProgrammaticName);
+                        if (elementItem.TryGetCurrentPattern(
+                            SelectionItemPattern.Pattern, out pattern))
+                        {
+                            LogMessage("SelectionItemPattern");
+                            ((SelectionItemPattern)pattern).AddToSelection();
+                        }
+                        else
+                        {
+                            throw new XmlRpcFaultException(123,
+                                "Unsupported pattern.");
+                        }
+                    }
+                    else
+                    {
+                        throw new XmlRpcFaultException(123,
+                            "Unable to find the item in list: " + text);
+                    }
+                }
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                if (ex is XmlRpcFaultException)
+                    throw;
+                else
+                    throw new XmlRpcFaultException(123,
+                        "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                type = null;
+                pattern = null;
+                searchTexts = null;
+                elementItem = childHandle = null;
+            }
+        }
+        public int MultiRemove(String windowName, String objName,
+            String[] texts, bool partialMatch = false)
+        {
+            if (texts == null)
+            {
+                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+            }
+            Object pattern;
+            ControlType[] type;
+            string[] searchTexts = texts;
+            AutomationElement elementItem;
+            List<string> myCollection = new List<string>();
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
+            if (!utils.IsEnabled(childHandle))
+            {
+                childHandle = null;
+                throw new XmlRpcFaultException(123,
+                    "Object state is disabled");
+            }
+            try
+            {
+                try
+                {
+                    childHandle.SetFocus();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    LogMessage(ex);
+                }
+                if (partialMatch)
+                {
+                    foreach (string text in texts)
+                        myCollection.Add("*" + text + "*");
+                    // Search for the partial text, rather than the given text
+                    searchTexts = myCollection.ToArray();
+                }
+                type = new ControlType[4] { ControlType.TreeItem,
+                    ControlType.ListItem, ControlType.DataItem,
+                    ControlType.Custom };
+                foreach (string text in searchTexts)
+                {
+                    elementItem = utils.GetObjectHandle(childHandle,
+                        text, type, true);
+                    if (elementItem != null)
+                    {
+                        elementItem.SetFocus();
+                        LogMessage(elementItem.Current.Name + " : " +
+                            elementItem.Current.ControlType.ProgrammaticName);
+                        if (elementItem.TryGetCurrentPattern(
+                            SelectionItemPattern.Pattern, out pattern))
+                        {
+                            LogMessage("SelectionItemPattern");
+                            ((SelectionItemPattern)pattern).RemoveFromSelection();
+                        }
+                        else
+                        {
+                            throw new XmlRpcFaultException(123,
+                                "Unsupported pattern.");
+                        }
+                    }
+                    else
+                    {
+                        throw new XmlRpcFaultException(123,
+                            "Unable to find the item in list: " + text);
+                    }
+                }
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                if (ex is XmlRpcFaultException)
+                    throw;
+                else
+                    throw new XmlRpcFaultException(123,
+                        "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                type = null;
+                pattern = null;
+                searchTexts = null;
+                elementItem = childHandle = null;
+            }
         }
         public int RightClick(String windowName, String objName, String text)
         {

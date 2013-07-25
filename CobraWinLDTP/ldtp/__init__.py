@@ -387,6 +387,10 @@ def hasstate(window_name, object_name, state, guiTimeOut = 0):
     return _remote_hasstate(window_name, object_name, state, guiTimeOut)
 def selectrow(window_name, object_name, row_text):
     return _remote_selectrow(window_name, object_name, row_text, False)
+def multiselect(window_name, object_name, row_text_array):
+    return _remote_multiselect(window_name, object_name, row_text_array, False)
+def multiremove(window_name, object_name, row_text_array):
+    return _remote_multiremove(window_name, object_name, row_text_array, False)
 def verifyselectrow(window_name, object_name, row_text):
     return _remote_verifyselectrow(window_name, object_name, row_text, False)
 def doesrowexist(window_name, object_name, row_text, partial_match = False):
