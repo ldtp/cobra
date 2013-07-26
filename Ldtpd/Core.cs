@@ -184,7 +184,7 @@ namespace Ldtpd
         }
         [XmlRpcMethod("maximizewindow",
             Description = "Maximize window.")]
-        public int MaximizeWindow(String windowName)
+        public int MaximizeWindow(String windowName = null)
         {
             Menu menu = new Menu(this);
             try
@@ -198,7 +198,7 @@ namespace Ldtpd
         }
         [XmlRpcMethod("minimizewindow",
             Description = "Minimize window.")]
-        public int MinimizeWindow(String windowName)
+        public int MinimizeWindow(String windowName = null)
         {
             Menu menu = new Menu(this);
             try
@@ -1226,14 +1226,14 @@ namespace Ldtpd
         }
         [XmlRpcMethod("unminimizewindow",
             Description = "Unminimize a window.")]
-        public int UnMinimizeWindow(String windowName)
+        public int UnMinimizeWindow(String windowName = null)
         {
             // For Linux compatibility
             return 1;
         }
         [XmlRpcMethod("unmaximizewindow",
             Description = "Unmaximize a window.")]
-        public int UnMaximizeWindow(String windowName)
+        public int UnMaximizeWindow(String windowName = null)
         {
             // For Linux compatibility
             return 1;
