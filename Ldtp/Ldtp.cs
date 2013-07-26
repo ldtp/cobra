@@ -238,6 +238,12 @@ namespace Ldtp
         [XmlRpcMethod("selectrow")]
         int SelectRow(String windowName, String objName, String text,
             bool partialMatch = false);
+        [XmlRpcMethod("multiselect")]
+        int MultiSelect(String windowName, String objName, String []texts,
+            bool partialMatch = false);
+        [XmlRpcMethod("multiremove")]
+        int MultiRemove(String windowName, String objName, String []texts,
+            bool partialMatch = false);
         [XmlRpcMethod("verifyselectrow")]
         int VerifySelectRow(String windowName, String objName, String text,
             bool partialMatch = false);
@@ -1472,6 +1478,28 @@ namespace Ldtp
             try
             {
                 return proxy.SelectRow(windowName, objName, text, partialMatch);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public int MultiSelect(String objName, String[] texts, bool partialMatch = false)
+        {
+            try
+            {
+                return proxy.MultiSelect(windowName, objName, texts, partialMatch);
+            }
+            catch (XmlRpcFaultException ex)
+            {
+                throw new LdtpExecutionError(ex.FaultString);
+            }
+        }
+        public int MultiRemove(String objName, String[] texts, bool partialMatch = false)
+        {
+            try
+            {
+                return proxy.MultiRemove(windowName, objName, texts, partialMatch);
             }
             catch (XmlRpcFaultException ex)
             {
