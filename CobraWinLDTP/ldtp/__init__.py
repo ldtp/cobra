@@ -427,7 +427,7 @@ def minimizewindow(window_name = ''):
     return _remote_minimizewindow(window_name)
 def maximizewindow(window_name = ''):
     return _remote_maximizewindow(window_name)
-def activatewindow(window_name = ''):
+def activatewindow(window_name):
     return _remote_activatewindow(window_name)
 def closewindow(window_name = ''):
     return _remote_closewindow(window_name)

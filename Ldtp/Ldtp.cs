@@ -109,7 +109,7 @@ namespace Ldtp
         [XmlRpcMethod("unminimizewindow")]
         int UnMinimizeWindow(String windowName);
         [XmlRpcMethod("closewindow")]
-        int CloseWindow(String windowName);
+        int CloseWindow(String windowName = null);
         [XmlRpcMethod("activatewindow")]
         int ActivateWindow(String windowName);
         [XmlRpcMethod("getallstates")]
@@ -753,7 +753,7 @@ namespace Ldtp
                 throw new LdtpExecutionError(ex.FaultString);
             }
         }
-        public int MaximizeWindow()
+        public int MaximizeWindow(string windowName = null)
         {
             try
             {
@@ -764,7 +764,7 @@ namespace Ldtp
                 throw new LdtpExecutionError(ex.FaultString);
             }
         }
-        public int MinimizeWindow()
+        public int MinimizeWindow(string windowName = null)
         {
             try
             {
@@ -775,7 +775,7 @@ namespace Ldtp
                 throw new LdtpExecutionError(ex.FaultString);
             }
         }
-        public int UnMaximizeWindow()
+        public int UnMaximizeWindow(string windowName = null)
         {
             try
             {
@@ -786,7 +786,7 @@ namespace Ldtp
                 throw new LdtpExecutionError(ex.FaultString);
             }
         }
-        public int UnMinimizeWindow()
+        public int UnMinimizeWindow(string windowName = null)
         {
             try
             {
@@ -797,7 +797,7 @@ namespace Ldtp
                 throw new LdtpExecutionError(ex.FaultString);
             }
         }
-        public int CloseWindow()
+        public int CloseWindow(string windowName = null)
         {
             try
             {

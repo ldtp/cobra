@@ -212,7 +212,7 @@ namespace Ldtpd
         }
         [XmlRpcMethod("closewindow",
             Description = "Close window.")]
-        public int CloseWindow(String windowName)
+        public int CloseWindow(String windowName = null)
         {
             Menu menu = new Menu(this);
             try
