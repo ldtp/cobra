@@ -1975,6 +1975,30 @@ public class Ldtp {
 		return doAction("selectrow", params);
 	}
 	/**
+	 * multiSelect Select multiple table cell with row text matching
+	 *
+	 * @param objName Object name inside the current window
+	 * @param rowTexts Row texts to be matched
+	 * @return Return 1 on success
+	 * @throws LdtpExecutionError on failure
+	 */
+	public int multiSelect(String objName, String []rowTexts) throws LdtpExecutionError {
+		Object[] params = new Object[]{windowName, objName, rowTexts, false};
+		return doAction("multiselect", params);
+	}
+	/**
+	 * multiRemove Remove multiple table cell with row text matching
+	 *
+	 * @param objName Object name inside the current window
+	 * @param rowTexts Row texts to be matched
+	 * @return Return 1 on success
+	 * @throws LdtpExecutionError on failure
+	 */
+	public int multiRemove(String objName, String []rowTexts) throws LdtpExecutionError {
+		Object[] params = new Object[]{windowName, objName, rowTexts, false};
+		return doAction("multiremove", params);
+	}
+	/**
 	 * selectRowPartialMatch Select table cell with partial row text matching
 	 *
 	 * @param objName Object name inside the current window
@@ -2571,7 +2595,7 @@ public class Ldtp {
 	 * @throws LdtpExecutionError on failure
 	 */
 	public String imageCapture(int height) throws LdtpExecutionError {
-		return imageCapture("", 0, 0, 0, height);
+		return imageCapture("", 0, 0, -1, height);
 	}
 	/**
 	 * imageCapture Capture screenshot
@@ -2580,7 +2604,7 @@ public class Ldtp {
 	 * @throws LdtpExecutionError on failure
 	 */
 	public String imageCapture() throws LdtpExecutionError {
-		return imageCapture("", 0, 0, 0, 0);
+		return imageCapture("", 0, 0, -1, -1);
 	}
 	/**
 	 * imageCapture Capture screenshot
@@ -2603,7 +2627,7 @@ public class Ldtp {
 	 * @throws LdtpExecutionError on failure
 	 */
 	public String imageCapture(String windowName) throws LdtpExecutionError {
-		return imageCapture(windowName, 0, 0, 0, 0);
+		return imageCapture(windowName, 0, 0, -1, -1);
 	}
 	/**
 	 * imageCapture Capture screenshot
