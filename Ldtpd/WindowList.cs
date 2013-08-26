@@ -67,7 +67,8 @@ namespace Ldtpd
         }
         public void WatchWindow(string windowName)
         {
-            watchWindowList.Add(windowName);
+            if (!watchWindowList.Contains(windowName))
+                watchWindowList.Add(windowName);
         }
         public void UnwatchWindow(string windowName)
         {
