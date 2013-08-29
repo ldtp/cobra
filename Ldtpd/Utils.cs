@@ -278,10 +278,23 @@ namespace Ldtpd
             {
                 while (null != element)
                 {
-                    if (windowList.IndexOf(element) == -1)
-                        // Add parent window handle,
-                        // if it doesn't exist
-                        windowList.Add(element);
+                    try
+                    {
+                        if (windowList.IndexOf(element) == -1)
+                            // Add parent window handle,
+                            // if it doesn't exist
+                            windowList.Add(element);
+                    }
+                    catch (System.UnauthorizedAccessException ex)
+                    {
+                        // https://bugzilla.gnome.org/show_bug.cgi?id=706992
+                        // Cobra looses all objects after steps specified inside
+                        LogMessage(ex);
+                        InternalWait(2);
+                        element = w.walker.GetFirstChild(AutomationElement.RootElement);
+                        windowList.Clear();
+                        continue;
+                    }
                     if (!String.IsNullOrEmpty(appUnderTest))
                     {
                         // If app under test doesn't match
