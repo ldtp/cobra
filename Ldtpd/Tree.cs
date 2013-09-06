@@ -50,8 +50,10 @@ namespace Ldtpd
             string objName, ControlType[] type = null, bool waitForObj = true)
         {
             if (type == null)
-                type = new ControlType[3] { ControlType.Tree,
-                    ControlType.List, ControlType.Table };
+                type = new ControlType[6] { ControlType.Tree,
+                    ControlType.List, ControlType.Table,
+                    ControlType.DataItem, ControlType.ListItem,
+                    ControlType.TreeItem };
             try
             {
                 return utils.GetObjectHandle(windowName,
