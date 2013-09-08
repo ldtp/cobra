@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
@@ -73,7 +73,7 @@ namespace Ldtpd
                     y = (y != 0) ? y : (int)rect.Y;
                     width = (width != -1) ? width : (int)rect.Width;
                     height = (height != -1) ? height : (int)rect.Height;
-                    System.Drawing.Rectangle rectangle = new 
+                    System.Drawing.Rectangle rectangle = new
                         System.Drawing.Rectangle(x, y, width, height);
                     b = ss.CaptureSize(path, rectangle);
                 }

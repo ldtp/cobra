@@ -66,6 +66,7 @@
     <Compile Include="ProcessStats.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Screenshot.cs" />
+    <Compile Include="Scrollbar.cs" />
     <Compile Include="Tab.cs" />
     <Compile Include="Tree.cs" />
     <Compile Include="Text.cs" />

@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
@@ -57,12 +57,12 @@ namespace Ldtpd
     {
         public int cbo, txt, btn, rbtn, chk, mnu, pane, hlnk;
         public int lbl, slider, ukn, lst, frm, header, headeritem, dlg;
-        public int tab, tabitem, tbar, tree, tblc, tbl;
+        public int tab, tabitem, tbar, tree, tblc, tbl, scbr;
         public ObjInfo(bool dummyValue)
         {
             cbo = txt = btn = rbtn = chk = mnu = pane = hlnk = 0;
             lbl = slider = ukn = lst = frm = header = headeritem = 0;
-            tab = tabitem = tbar = tree = tblc = tbl = dlg = 0;
+            tab = tabitem = tbar = tree = tblc = tbl = dlg = scbr = 0;
         }
         public CurrentObjInfo GetObjectType(AutomationElement e)
         {
@@ -91,11 +91,23 @@ namespace Ldtpd
             else if (type == ControlType.Window)
             {
                 if (e.Current.LocalizedControlType == "dialog")
+                {
                     // Might need a fix for other languages: Ex: French / Germany
                     // as the localized control name could be different than dialog
-                    return new CurrentObjInfo("dlg", dlg++);
+                    if (String.IsNullOrEmpty(e.Current.Name))
+                        return new CurrentObjInfo("dlg", dlg++);
+                    else
+                        // Don't increase the index, if window has name
+                        return new CurrentObjInfo("dlg", dlg);
+                }
                 else
-                    return new CurrentObjInfo("frm", frm++);
+                {
+                    if (String.IsNullOrEmpty(e.Current.Name))
+                        return new CurrentObjInfo("frm", frm++);
+                    else
+                        // Don't increase the index, if window has name
+                        return new CurrentObjInfo("frm", frm);
+                }
             }
             else if (type == ControlType.Header)
                 return new CurrentObjInfo("hdr", header++);
@@ -109,6 +121,9 @@ namespace Ldtpd
             else if (type == ControlType.TreeItem)
                 // For Linux compatibility
                 return new CurrentObjInfo("tblc", tblc++);
+            else if (type == ControlType.DataItem)
+                // For Linux compatibility
+                return new CurrentObjInfo("tblc", tblc++);
             else if (type == ControlType.Tab)
                 // For Linux compatibility
                 return new CurrentObjInfo("ptl", tab++);
@@ -119,9 +134,17 @@ namespace Ldtpd
                 // For Linux compatibility
                 return new CurrentObjInfo("tbl", tbl++);
             else if (type == ControlType.Pane)
-                return new CurrentObjInfo("pane", pane++);
+            {
+                if (String.IsNullOrEmpty(e.Current.Name))
+                    return new CurrentObjInfo("pane", pane++);
+                else
+                    // Don't increase the index, if window has name
+                    return new CurrentObjInfo("pane", pane);
+            }
             else if (type == ControlType.Hyperlink)
                 return new CurrentObjInfo("hlnk", hlnk++);
+            else if (type == ControlType.ScrollBar)
+                return new CurrentObjInfo("scbr", scbr++);
             return new CurrentObjInfo("ukn", ukn++);
         }
     }

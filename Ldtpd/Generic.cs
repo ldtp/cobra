@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Author: John Yingjun Li <yjli@vmware.com>
@@ -190,6 +190,7 @@ namespace Ldtpd
             {
                 w = null;
                 windowArrayList = null;
+                condition = null;
             }
             // Unable to find window
             return null;
@@ -213,7 +214,7 @@ namespace Ldtpd
             utils.InternalGetObjectList(walker.walker.GetFirstChild(windowHandle),
                 ref objectList, ref objectHT, ref matchedKey,
                 true, null, windowHandle.Current.Name);
-            if (utils.debug)
+            if (utils.debug || utils.writeToFile != null)
             {
                 LogMessage(objectList.Count);
                 foreach (string key in objectHT.Keys)
@@ -441,11 +442,11 @@ namespace Ldtpd
         }
         public int Click(String windowName, String objName)
         {
-            ControlType[] type = new ControlType[10] { ControlType.Button,
+            ControlType[] type = new ControlType[11] { ControlType.Button,
                 ControlType.CheckBox, ControlType.RadioButton,
                 ControlType.SplitButton, ControlType.Menu, ControlType.ListItem,
                 ControlType.MenuItem, ControlType.MenuBar, ControlType.Pane,
-                ControlType.Hyperlink };
+                ControlType.Hyperlink, ControlType.ToolBar };
             Object pattern = null;
             AutomationElement childHandle;
             try
@@ -508,6 +509,15 @@ namespace Ldtpd
                     out pattern))
                 {
                     ((SelectionItemPattern)pattern).Select();
+                    return 1;
+                }
+                else if (childHandle.TryGetCurrentPattern(ValuePattern.Pattern,
+                    out pattern) && childHandle.Current.ControlType == ControlType.ListItem)
+                {
+                    // Fixed based on "Windows Security" dialog
+                    // On clicking "Use another account"
+                    // Its ListItem and has only ValuePattern
+                    utils.InternalClick(childHandle);
                     return 1;
                 }
             }
@@ -697,7 +707,7 @@ namespace Ldtpd
                     ref objectList, ref objectHT, ref matchedKey,
                     flag, objName, windowHandle.Current.Name) || flag)
                 {
-                    if (utils.debug)
+                    if (utils.debug || utils.writeToFile != null)
                     {
                         LogMessage(objectList.Count);
                         foreach (string key in objectHT.Keys)
@@ -986,7 +996,7 @@ namespace Ldtpd
                     {
                         try
                         {
-                            if (utils.debug)
+                            if (utils.debug || utils.writeToFile != null)
                                 LogMessage("Key: " + key);
                             ht = (Hashtable)objectHT[key];
                             String tmp = Regex.Replace(childName, @"\*", @".*");
@@ -997,7 +1007,7 @@ namespace Ldtpd
                                 RegexOptions.IgnorePatternWhitespace |
                                 RegexOptions.Multiline |
                                 RegexOptions.CultureInvariant);
-                            if (utils.debug)
+                            if (utils.debug || utils.writeToFile != null)
                             {
                                 LogMessage("Role matched: " +
                                     (string)ht["class"] == role);

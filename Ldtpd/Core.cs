@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Author: John Yingjun Li <yjli@vmware.com>
@@ -158,6 +158,16 @@ namespace Ldtpd
                 this.objectTimeOut = objectTimeOut;
             return 1;
         }
+        [XmlRpcMethod("guitimeout",
+            Description = "Window retry, default 3 seconds.")]
+        public int GuiTimeOut(int guiTimeOut)
+        {
+            if (guiTimeOut <= 0)
+                this.windowRetry = 3;
+            else
+                this.windowRetry = guiTimeOut;
+            return 1;
+        }
         [XmlRpcMethod("selectmenuitem",
             Description = "Select (click) a menuitem.")]
         public int SelectMenuItem(String windowName, String objName)
@@ -174,7 +184,7 @@ namespace Ldtpd
         }
         [XmlRpcMethod("maximizewindow",
             Description = "Maximize window.")]
-        public int MaximizeWindow(String windowName)
+        public int MaximizeWindow(String windowName = null)
         {
             Menu menu = new Menu(this);
             try
@@ -188,7 +198,7 @@ namespace Ldtpd
         }
         [XmlRpcMethod("minimizewindow",
             Description = "Minimize window.")]
-        public int MinimizeWindow(String windowName)
+        public int MinimizeWindow(String windowName = null)
         {
             Menu menu = new Menu(this);
             try
@@ -202,7 +212,7 @@ namespace Ldtpd
         }
         [XmlRpcMethod("closewindow",
             Description = "Close window.")]
-        public int CloseWindow(String windowName)
+        public int CloseWindow(String windowName = null)
         {
             Menu menu = new Menu(this);
             try
@@ -848,7 +858,7 @@ namespace Ldtpd
         }
         [XmlRpcMethod("verifysliderhorizontal",
             Description = "Verify slider is horizontal.")]
-        public int VerifySliderHorizontal(String windowName,String objName)
+        public int VerifySliderHorizontal(String windowName, String objName)
         {
             Value v = new Value(this);
             try
@@ -877,12 +887,12 @@ namespace Ldtpd
         [XmlRpcMethod("check", Description = "Check radio button / checkbox")]
         public int Check(String windowName, String objName)
         {
-	    return InternalCheckObject(windowName, objName, "Check");
+            return InternalCheckObject(windowName, objName, "Check");
         }
         [XmlRpcMethod("uncheck", Description = "UnCheck radio button / checkbox")]
         public int UnCheck(String windowName, String objName)
         {
-	    return InternalCheckObject(windowName, objName, "UnCheck");
+            return InternalCheckObject(windowName, objName, "UnCheck");
         }
         [XmlRpcMethod("verifycheck",
             Description = "Verify radio button / checkbox is checked")]
@@ -1030,6 +1040,36 @@ namespace Ldtpd
                 tree = null;
             }
         }
+        [XmlRpcMethod("multiselect",
+            Description = "Select the given rows in tree or list item.")]
+        public int MultiSelect(String windowName, String objName,
+            String[] texts, bool partialMatch = false)
+        {
+            Tree tree = new Tree(this);
+            try
+            {
+                return tree.MultiSelect(windowName, objName, texts, partialMatch);
+            }
+            finally
+            {
+                tree = null;
+            }
+        }
+        [XmlRpcMethod("multiremove",
+            Description = "Unselect the given rows in tree or list item.")]
+        public int MultiRemove(String windowName, String objName,
+            String[] texts, bool partialMatch = false)
+        {
+            Tree tree = new Tree(this);
+            try
+            {
+                return tree.MultiRemove(windowName, objName, texts, partialMatch);
+            }
+            finally
+            {
+                tree = null;
+            }
+        }
         [XmlRpcMethod("verifyselectrow",
             Description = "Verify the given row in tree or list item is selected.")]
         public int VerifySelectRow(String windowName, String objName,
@@ -1105,6 +1145,21 @@ namespace Ldtpd
                 tree = null;
             }
         }
+        [XmlRpcMethod("setcellvalue",
+            Description = "Set tree table cell value on the row index.")]
+        public int SetCellValue(String windowName,
+            String objName, int row, int column = 0, String data = null)
+        {
+            Tree tree = new Tree(this);
+            try
+            {
+                return tree.SetCellValue(windowName, objName, row, column, data);
+            }
+            finally
+            {
+                tree = null;
+            }
+        }
         [XmlRpcMethod("getcellvalue",
             Description = "Get tree table cell value on the row index.")]
         public String GetCellValue(String windowName,
@@ -1163,6 +1218,26 @@ namespace Ldtpd
                 generic = null;
             }
         }
+        [XmlRpcMethod("activatewindow",
+            Description = "Activate a window.")]
+        public int ActivateWindow(String windowName)
+        {
+            return GrabFocus(windowName);
+        }
+        [XmlRpcMethod("unminimizewindow",
+            Description = "Unminimize a window.")]
+        public int UnMinimizeWindow(String windowName = null)
+        {
+            // For Linux compatibility
+            return 1;
+        }
+        [XmlRpcMethod("unmaximizewindow",
+            Description = "Unmaximize a window.")]
+        public int UnMaximizeWindow(String windowName = null)
+        {
+            // For Linux compatibility
+            return 1;
+        }
         [XmlRpcMethod("handletablecell", Description = "Handle table cell.")]
         public int HandleTableCell()
         {
@@ -1195,6 +1270,60 @@ namespace Ldtpd
             }
             // For Linux compatibility
             return 1;
+        }
+        [XmlRpcMethod("getcursorposition", Description = "Get cursor position.")]
+        public int GetCursorPosition(String windowName, String objName)
+        {
+            System.Drawing.Point pos = Cursor.Position;
+            // FIXME: If its supported by underlying library
+            // Cursor.Position is in pixel info, is that the only way to go ?
+            // Try something from here
+            // http://stackoverflow.com/questions/10720162/set-text-on-textfield-textbox-with-the-automation-framework-and-get-the-change
+            throw new XmlRpcFaultException(123,
+                "Unsupported on Windows, as unable to get info from underlying accessibility library.");
+        }
+        [XmlRpcMethod("comparetextproperty", Description = "Compare text property.")]
+        public int CompareTextProperty(String windowName, String objName,
+            String textProperty, int start, int end)
+        {
+            throw new XmlRpcFaultException(123,
+                "Not implemented.");
+        }
+        [XmlRpcMethod("containstextproperty", Description = "Contains text property.")]
+        public int ContainsTextProperty(String windowName, String objName,
+            String textProperty, int start, int end)
+        {
+            throw new XmlRpcFaultException(123,
+                "Not implemented.");
+        }
+        [XmlRpcMethod("gettextproperty", Description = "Get text property.")]
+        public int GetTextProperty(String windowName, String objName,
+            int start, int end)
+        {
+            throw new XmlRpcFaultException(123,
+                "Not implemented.");
+        }
+        [XmlRpcMethod("setcursorposition", Description = "Get cursor position.")]
+        public int SetCursorPosition(String windowName, String objName, int position)
+        {
+            // FIXME: If its supported by underlying library
+            throw new XmlRpcFaultException(123,
+                "Unsupported on Windows, as unable to get info from underlying accessibility library.");
+        }
+        [XmlRpcMethod("selecttextbyname", Description = "Select text by name.")]
+        public int SelectTextByName(String windowName, String objName)
+        {
+            // FIXME: If its supported by underlying library
+            throw new XmlRpcFaultException(123,
+                "Unsupported on Windows, as unable to get info from underlying accessibility library.");
+        }
+        [XmlRpcMethod("selecttextbyindexandregion", Description = "Select text by by index and region.")]
+        public int SelectTextByIndexAndRegion(String windowName, String objName,
+            int start, int end, int selectionNumber)
+        {
+            // FIXME: If its supported by underlying library
+            throw new XmlRpcFaultException(123,
+                "Unsupported on Windows, as unable to get info from underlying accessibility library.");
         }
         [XmlRpcMethod("generatemouseevent",
             Description = "Generate mouse event.")]
@@ -1454,6 +1583,20 @@ namespace Ldtpd
                 keyboard = null;
             }
         }
+        [XmlRpcMethod("mousemove",
+            Description = "Move mouse on an object.")]
+        public int MouseMove(String windowName, String objName)
+        {
+            Mouse mouse = new Mouse(this);
+            try
+            {
+                return mouse.MouseMove(windowName, objName);
+            }
+            finally
+            {
+                mouse = null;
+            }
+        }
         [XmlRpcMethod("mouseleftclick",
             Description = "Mouse left click on an object.")]
         public int MouseLeftClick(String windowName, String objName)
@@ -1595,19 +1738,149 @@ namespace Ldtpd
             ps.StopProcessMonitor(processName);
             return 1;
         }
-        [XmlRpcMethod("activatewindow",
-            Description = "Activate window.")]
-        public int ActivateWindow(String windowName)
+        [XmlRpcMethod("onedown",
+            Description = "Scroll one down with iterations.")]
+        public int OneDown(String windowName, String objName, int iterations)
         {
-            Generic generic = new Generic(this);
+            Scrollbar scrollbar = new Scrollbar(this);
             try
             {
-                return generic.GrabFocus(windowName);
+                return scrollbar.OneDown(windowName, objName, iterations);
             }
             finally
             {
-                generic = null;
+                scrollbar = null;
             }
+        }
+        [XmlRpcMethod("oneup",
+            Description = "Scroll one up with iterations.")]
+        public int OneUp(String windowName, String objName, int iterations)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.OneUp(windowName, objName, iterations);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("oneright",
+            Description = "Scroll one right with iterations.")]
+        public int OneRight(String windowName, String objName, int iterations)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.OneRight(windowName, objName, iterations);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("oneleft",
+            Description = "Scroll one left with iterations.")]
+        public int OneLeft(String windowName, String objName, int iterations)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.OneLeft(windowName, objName, iterations);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("scrolldown",
+            Description = "Scroll down once.")]
+        public int ScrollDown(String windowName, String objName)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.ScrollDown(windowName, objName);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("scrollup",
+            Description = "Scroll up once.")]
+        public int ScrollUp(String windowName, String objName)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.ScrollUp(windowName, objName);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("scrollright",
+            Description = "Scroll right once.")]
+        public int ScrollRight(String windowName, String objName)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.ScrollRight(windowName, objName);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("scrollleft",
+            Description = "Scroll left once.")]
+        public int ScrollLeft(String windowName, String objName)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.ScrollLeft(windowName, objName);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("verifyscrollbarhorizontal",
+            Description = "Verify given object is horizontal scrollbar.")]
+        public int VerifyScrollBarHorizontal(String windowName, String objName)
+        {
+            // Unsupported on Windows, as there is no direct way to determine
+            // whether its a vertical or horizontal scroll bar other than the name
+            // which is not unique across application
+            return 0;
+        }
+        [XmlRpcMethod("verifyscrollbar",
+            Description = "Verify given object is horizontal scrollbar.")]
+        public int VerifyScrollBar(String windowName, String objName)
+        {
+            Scrollbar scrollbar = new Scrollbar(this);
+            try
+            {
+                return scrollbar.VerifyScrollBar(windowName, objName);
+            }
+            finally
+            {
+                scrollbar = null;
+            }
+        }
+        [XmlRpcMethod("verifyscrollbarvertical",
+            Description = "Verify given object is vertical scrollbar.")]
+        public int VerifyScrollBarVertical(String windowName, String objName)
+        {
+            // Unsupported on Windows, as there is no direct way to determine
+            // whether its a vertical or horizontal scroll bar other than the name
+            // which is not unique across application
+            return 0;
         }
     }
 }

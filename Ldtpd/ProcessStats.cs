@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
@@ -49,8 +49,9 @@ namespace Ldtpd
         }
         private int processId;
         private string instanceName, processName;
-        PerformanceCounter cpuCounter; 
-        public string InstanceName {
+        PerformanceCounter cpuCounter;
+        public string InstanceName
+        {
             get { return instanceName; }
             set { instanceName = value; }
         }

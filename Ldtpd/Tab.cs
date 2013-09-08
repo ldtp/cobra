@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
@@ -48,7 +48,8 @@ namespace Ldtpd
         private AutomationElement GetObjectHandle(string windowName,
             string objName)
         {
-            ControlType[] type = new ControlType[1] { ControlType.Tab };
+            ControlType[] type = new ControlType[2] { ControlType.Tab,
+                ControlType.TabItem };
             try
             {
                 return utils.GetObjectHandle(windowName, objName, type);
@@ -187,7 +188,11 @@ namespace Ldtpd
                         out pattern))
                     {
                         LogMessage("SelectionItemPattern");
-                        element.SetFocus();
+                        if (element.Current.ControlType != ControlType.TabItem)
+                            // Don't grab focus if type is tab item
+                            // as the following InternalClick API fails
+                            // on getting the object size with COM exception
+                            element.SetFocus();
                         //((SelectionItemPattern)pattern).Select();
                         // NOTE: Work around, as the above doesn't seem to work
                         // with UIAComWrapper and UIAComWrapper is required

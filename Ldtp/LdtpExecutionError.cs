@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
@@ -35,7 +35,8 @@ namespace Ldtp
     [Serializable]
     class LdtpExecutionError : Exception
     {
-        public LdtpExecutionError(string message) : base(message)
+        public LdtpExecutionError(string message)
+            : base(message)
         {
         }
     }

@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
@@ -35,29 +35,55 @@ namespace Ldtpd
     public class Common
     {
         bool debug = false;
+        System.IO.StreamWriter sw;
+        System.IO.FileStream fs = null;
+        internal string writeToFile = null;
+
         public bool Debug
         {
             get { return debug; }
         }
+
         public Stack LogStack
         {
             get { return logStack; }
         }
         Stack logStack = new Stack(100);
+
         public Common(bool debug)
         {
             this.debug = debug;
+            this.writeToFile = Environment.GetEnvironmentVariable("LDTP_DEBUG_FILE");
+            if (writeToFile != null)
+            {
+                fs = new System.IO.FileStream(writeToFile,
+                    System.IO.FileMode.OpenOrCreate, System.IO.FileAccess.ReadWrite);
+                sw = new System.IO.StreamWriter(fs);
+            }
         }
+
+        ~Common()
+        {
+            if (fs != null)
+            {
+                sw.Flush();
+                fs.Close();
+                fs = null;
+            }
+        }
+
         public void Wait(double waitTime)
         {
             Thread.Sleep((int)(waitTime * 1000));
             // Collect all generations of memory.
             GC.Collect();
         }
+
         public void LogProcessStat(Object o)
         {
             logStack.Push(o);
         }
+
         public void LogMessage(Object o)
         {
             if (debug)
@@ -79,6 +105,9 @@ namespace Ldtpd
                         Console.WriteLine(ex);
                 }
             }
+            if (fs != null)
+                // Write content to log file
+                sw.WriteLine(o);
         }
         public bool WildcardMatch(string stringToSearch, string searchPhrase)
         {

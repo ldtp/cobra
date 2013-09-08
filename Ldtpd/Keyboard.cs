@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
@@ -71,10 +71,8 @@ namespace Ldtpd
                         return new KeyInfo(System.Windows.Input.Key.RightAlt, false, true);
                     case "shift":
                     case "shiftl":
-                        shiftKeyPressed = true;
                         return new KeyInfo(System.Windows.Input.Key.LeftShift, true, true);
                     case "shiftr":
-                        shiftKeyPressed = true;
                         return new KeyInfo(System.Windows.Input.Key.RightShift, true, true);
                     case "esc":
                     case "escape":
@@ -89,6 +87,22 @@ namespace Ldtpd
                         return new KeyInfo(System.Windows.Input.Key.LWin, false);
                     case "windowskeyr":
                         return new KeyInfo(System.Windows.Input.Key.RWin, false);
+                    case "right":
+                    case "arrowr":
+                    case "arrowright":
+                        return new KeyInfo(System.Windows.Input.Key.Right, false);
+                    case "left":
+                    case "arrowl":
+                    case "arrowleft":
+                        return new KeyInfo(System.Windows.Input.Key.Left, false);
+                    case "up":
+                    case "arrowu":
+                    case "arrowup":
+                        return new KeyInfo(System.Windows.Input.Key.Up, false);
+                    case "down":
+                    case "arrowd":
+                    case "arrowdown":
+                        return new KeyInfo(System.Windows.Input.Key.Down, false);
                     case " ":
                         return new KeyInfo(System.Windows.Input.Key.Space, false);
                     case "<":
@@ -124,13 +138,13 @@ namespace Ldtpd
                     case ")":
                         return new KeyInfo(System.Windows.Input.Key.D0, true);
                     case "_":
-                        return new KeyInfo(System.Windows.Input.Key.Subtract, true);
+                        return new KeyInfo(System.Windows.Input.Key.OemMinus, true);
                     case "-":
                         return new KeyInfo(System.Windows.Input.Key.Subtract, false);
                     case "+":
                         return new KeyInfo(System.Windows.Input.Key.Add, true);
                     case "=":
-                        return new KeyInfo(System.Windows.Input.Key.Add, false);
+                        return new KeyInfo(System.Windows.Input.Key.OemPlus, false);
                     case "?":
                         return new KeyInfo(System.Windows.Input.Key.OemQuestion, true);
                     case "/":
@@ -147,6 +161,14 @@ namespace Ldtpd
                         return new KeyInfo(System.Windows.Input.Key.OemCloseBrackets, true);
                     case "]":
                         return new KeyInfo(System.Windows.Input.Key.OemCloseBrackets, false);
+                    case ":":
+                        return new KeyInfo(System.Windows.Input.Key.OemSemicolon, true);
+                    case ";":
+                        return new KeyInfo(System.Windows.Input.Key.OemSemicolon, false);
+                    case "~":
+                        return new KeyInfo(System.Windows.Input.Key.OemTilde, true);
+                    case "`":
+                        return new KeyInfo(System.Windows.Input.Key.OemTilde, false);
                     default:
                         bool shift = key.Length == 1 ?
                             Regex.Match(key, @"[A-Z]", RegexOptions.None).Success : false;
@@ -273,6 +295,11 @@ namespace Ldtpd
                         capsLock = true;
                         continue;
                     }
+                    if (key.key == System.Windows.Input.Key.LeftShift ||
+                        key.key == System.Windows.Input.Key.RightShift)
+                    {
+                        shiftKeyPressed = true;
+                    }
                     if (capsLock && key.shift)
                     {
                         ATGTestInput.Input.SendKeyboardInput(System.Windows.Input.Key.LeftShift,
@@ -302,11 +329,12 @@ namespace Ldtpd
                         for (int i = lastIndex; i < index; i++)
                         {
                             KeyInfo tmpKey = keys[i];
-                            if (!tmpKey.nonPrintKey ||
-                                tmpKey.key == System.Windows.Input.Key.CapsLock)
+                            if (tmpKey.key == System.Windows.Input.Key.CapsLock)
+                            {
                                 // Release only nonPrintKey
                                 // Caps lock will be released later
                                 break;
+                            }
                             if (tmpKey.key == System.Windows.Input.Key.LeftShift ||
                                 tmpKey.key == System.Windows.Input.Key.RightShift)
                             {
@@ -348,9 +376,11 @@ namespace Ldtpd
                 KeyInfo tmpKey = keys[i];
                 if (!tmpKey.nonPrintKey ||
                     tmpKey.key == System.Windows.Input.Key.CapsLock)
+                {
                     // Release only nonPrintKey
                     // Caps lock will be released later
                     break;
+                }
                 if (shiftKeyPressed)
                 {
                     if (tmpKey.key == System.Windows.Input.Key.LeftShift ||

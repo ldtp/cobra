@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='windows-1252'?>
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
 <!--
-CobraWinLDTP 3.0
+CobraWinLDTP 3.5
 
 @author: Nagappan Alagappan <nalagappan@vmware.com>
 @copyright: Copyright (c) 2011-13 VMware Inc.,
@@ -29,7 +29,7 @@ SOFTWARE.
 -->
 
 <?define UpgradeCode=F0C8AC98-8C96-40F3-8D51-0EF5B40343EC?>
-<?define Version=3.0.0?>
+<?define Version=3.5.0?>
 <?if $(sys.BUILDARCH)=x64?>
    <?define Is64bit="yes"?>
    <?define CommonFilesFolder="CommonFiles64Folder"?>
@@ -53,7 +53,7 @@ SOFTWARE.
 	    Manufacturer='VMware, Inc. (http://ldtp.freedesktop.org)'>
 
       <Package Id='*'
-               Description='Cobra Windows LDTP 3.0 Installer'
+               Description='Cobra Windows LDTP 3.5 Installer'
                Comments='Cobra Windows LDTP is Free Software project.'
                Manufacturer='VMware, Inc.'
                InstallerVersion='200'
@@ -73,6 +73,7 @@ SOFTWARE.
                      </Directory>
                   </Directory>
 		  <Directory Id='PYLDTPUTILSDIR' Name='ldtputils' />
+		  <Directory Id='PYOOLDTPDIR' Name='ooldtp' />
                </Directory>
             </Directory>
          </Directory>
@@ -205,6 +206,37 @@ SOFTWARE.
          </Component>
       </DirectoryRef>
 
+      <DirectoryRef Id='PYOOLDTPDIR'>
+         <Component Id="ooldtpinit" Guid="60D7F37A-B7F7-4845-8018-AFE64BBE6C49">
+            <File Id="ooldtpinitpy"
+                  Name="__init__.py"
+                  KeyPath="yes"
+                  Source="ooldtp\__init__.py" />
+            <RemoveFile Id="ooldtpinit" Name="__init__.pyc" On="uninstall" />
+         </Component>
+         <Component Id="ooldtpclientexception" Guid="48DA5D2E-807E-4CB9-AAE2-02866F368B85">
+            <File Id="ooldtpclientexceptionpy"
+                  Name="client_exception.py"
+                  KeyPath="yes"
+                  Source="ooldtp\client_exception.py" />
+            <RemoveFile Id="ooldtpclientexception" Name="client_exception.pyc" On="uninstall" />
+         </Component>
+         <Component Id="ooldtplog" Guid="6265E13F-3A20-46A0-A1DA-53CEA5F339FD">
+            <File Id="ooldtplogpy"
+                  Name="log.py"
+                  KeyPath="yes"
+                  Source="ooldtp\log.py" />
+            <RemoveFile Id="ooldtplog" Name="log.pyc" On="uninstall" />
+         </Component>
+         <Component Id="ooldtpstate" Guid="4D4A986D-C485-4EC9-BDA8-D22938D250A1">
+            <File Id="ooldtpstatepy"
+                  Name="state.py"
+                  KeyPath="yes"
+                  Source="ooldtp\state.py" />
+            <RemoveFile Id="ooldtpstate" Name="state.pyc" On="uninstall" />
+         </Component>
+      </DirectoryRef>
+
       <DirectoryRef Id='PYLDTPDIR'>
          <Component Id="ldtprbclient" Guid="FDDD943B-DA40-43B7-8A76-BE0D63D3ED17">
             <File Id="ldtpclientrb"
@@ -331,6 +363,10 @@ SOFTWARE.
          <ComponentRef Id="windowpm" />
          <ComponentRef Id="rpchandlerpm" />
          <ComponentRef Id="ldtputilsinit" />
+         <ComponentRef Id="ooldtpinit" />
+         <ComponentRef Id="ooldtplog" />
+         <ComponentRef Id="ooldtpstate" />
+         <ComponentRef Id="ooldtpclientexception" />
          <ComponentRef Id='ProgramMenuDir' />
       </Feature>
 

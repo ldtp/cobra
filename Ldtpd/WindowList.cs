@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
@@ -26,10 +26,10 @@
  * SOFTWARE.
 */
 using System;
+using System.Windows;
 using System.Threading;
 using System.Collections;
 using System.Globalization;
-using System.Windows;
 using System.Windows.Automation;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -67,7 +67,8 @@ namespace Ldtpd
         }
         public void WatchWindow(string windowName)
         {
-            watchWindowList.Add(windowName);
+            if (!watchWindowList.Contains(windowName))
+                watchWindowList.Add(windowName);
         }
         public void UnwatchWindow(string windowName)
         {
@@ -90,11 +91,24 @@ namespace Ldtpd
             {
                 while (null != element)
                 {
-                    if (this.IndexOf(element) == -1)
+                    try
                     {
-                        // New parent window is available, add it to the list
-                        this.Add(element);
-                        common.LogMessage(element.Current.Name);
+                        if (this.IndexOf(element) == -1)
+                        {
+                            // New parent window is available, add it to the list
+                            this.Add(element);
+                            common.LogMessage(element.Current.Name);
+                        }
+                    }
+                    catch (System.UnauthorizedAccessException ex)
+                    {
+                        // https://bugzilla.gnome.org/show_bug.cgi?id=706992
+                        // Cobra looses all objects after steps specified inside
+                        common.LogMessage(ex);
+                        common.Wait(1);
+                        element = w.walker.GetFirstChild(AutomationElement.RootElement);
+                        this.Clear();
+                        continue;
                     }
                     c = element.FindAll(TreeScope.Subtree, condition);
                     foreach (AutomationElement e in c)
@@ -119,7 +133,6 @@ namespace Ldtpd
                 c = null;
                 w = null;
             }
-
         }
         private void CleanUpWindowElements()
         {

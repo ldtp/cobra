@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Author: John Yingjun Li <yjli@vmware.com>
@@ -27,6 +27,7 @@
  * SOFTWARE.
 */
 using System;
+using System.Text;
 using ATGTestInput;
 using System.Windows;
 using System.Threading;
@@ -50,11 +51,13 @@ namespace Ldtpd
         protected int windowRetry = 3;
         protected int objectTimeOut = 5;
         protected String appUnderTest = null;
+        internal string writeToFile;
         public Utils(WindowList windowList, Common common, bool debug)
         {
             this.debug = debug;
             this.windowList = windowList;
             this.common = common;
+            writeToFile = common.writeToFile;
             backgroundThread = new Thread(new ThreadStart(BackgroundThread));
             // Clean up window handles in different thread
             backgroundThread.Start();
@@ -71,7 +74,7 @@ namespace Ldtpd
             }
             catch (Exception ex)
             {
-                if (debug)
+                if (debug || writeToFile != null)
                     Console.WriteLine(ex);
             }
         }
@@ -148,9 +151,7 @@ namespace Ldtpd
                 RegexOptions.CultureInvariant);
             List<AutomationElement> windowTmpList = new List<AutomationElement>();
             InternalTreeWalker w;
-            Condition condition = new PropertyCondition(
-                AutomationElement.ControlTypeProperty,
-                ControlType.Window);
+            Condition condition;
             try
             {
                 foreach (AutomationElement e in windowList)
@@ -208,7 +209,7 @@ namespace Ldtpd
                             {
                                 foreach (ControlType t in type)
                                 {
-                                    if (debug)
+                                    if (debug || writeToFile != null)
                                         LogMessage((t == e.Current.ControlType) +
                                             " : " + e.Current.ControlType.ProgrammaticName);
                                     if (t == e.Current.ControlType)
@@ -265,6 +266,9 @@ namespace Ldtpd
                 // If window doesn't exist for waitTillGuiNotExist
                 // return here as we don't need to find the window handle
                 return null;
+            condition = new PropertyCondition(
+                AutomationElement.ControlTypeProperty,
+                ControlType.Window);
             w = new InternalTreeWalker();
             windowTmpList = null;
             objectList.Clear();
@@ -274,10 +278,23 @@ namespace Ldtpd
             {
                 while (null != element)
                 {
-                    if (windowList.IndexOf(element) == -1)
-                        // Add parent window handle,
-                        // if it doesn't exist
-                        windowList.Add(element);
+                    try
+                    {
+                        if (windowList.IndexOf(element) == -1)
+                            // Add parent window handle,
+                            // if it doesn't exist
+                            windowList.Add(element);
+                    }
+                    catch (System.UnauthorizedAccessException ex)
+                    {
+                        // https://bugzilla.gnome.org/show_bug.cgi?id=706992
+                        // Cobra looses all objects after steps specified inside
+                        LogMessage(ex);
+                        InternalWait(2);
+                        element = w.walker.GetFirstChild(AutomationElement.RootElement);
+                        windowList.Clear();
+                        continue;
+                    }
                     if (!String.IsNullOrEmpty(appUnderTest))
                     {
                         // If app under test doesn't match
@@ -351,7 +368,7 @@ namespace Ldtpd
                             {
                                 foreach (ControlType t in type)
                                 {
-                                    if (debug)
+                                    if (debug || writeToFile != null)
                                         LogMessage((t == e.Current.ControlType) +
                                             " : " + e.Current.ControlType.ProgrammaticName);
                                     if (t == e.Current.ControlType)
@@ -376,6 +393,7 @@ namespace Ldtpd
                 c = null;
                 w = null;
                 rx = null;
+                condition = null;
                 objectList = null;
             }
             // Unable to find window
@@ -534,7 +552,7 @@ namespace Ldtpd
             }
             return childHandle;
         }
-        private AutomationElement InternalGetObjectHandle(
+        internal AutomationElement InternalGetObjectHandle(
             AutomationElement childHandle, String objName,
             ControlType[] type, ref ArrayList objectList,
             ObjInfo objInfo = null)
@@ -597,7 +615,7 @@ namespace Ldtpd
                     else
                     {
                         s = s.ToString();
-                        if (debug)
+                        if (debug || writeToFile != null)
                             LogMessage("Obj name: " + s + " : " +
                                 element.Current.ControlType.ProgrammaticName);
                         if (element.Current.ControlType == ControlType.MenuItem)
@@ -628,7 +646,7 @@ namespace Ldtpd
                         {
                             // txtName, txtPassword
                             actualString = currObjInfo.objType + s;
-							LogMessage("###" + actualString + "###");
+                            LogMessage("###" + actualString + "###");
                             index = 1;
                             while (true)
                             {
@@ -642,7 +660,7 @@ namespace Ldtpd
                                 index++;
                             }
                         }
-                        if (debug)
+                        if (debug || writeToFile != null)
                         {
                             LogMessage(objName + " : " + actualString + " : " + s + " : " +
                                 tmp);
@@ -665,7 +683,7 @@ namespace Ldtpd
                         {
                             foreach (ControlType t in type)
                             {
-                                if (debug)
+                                if (debug || writeToFile != null)
                                     LogMessage((t == element.Current.ControlType) +
                                         " : " + element.Current.ControlType.ProgrammaticName);
                                 if (t == element.Current.ControlType)
@@ -717,11 +735,13 @@ namespace Ldtpd
             String s = null;
             if (objInfo == null)
                 objInfo = new ObjInfo(false);
-            String objIndex;
+            string objIndex;
             // Trying to mimic python fnmatch.translate
-            String tmp = null;
+            string tmp = null;
+            string utf8 = null;
             Hashtable propertyHT;
             bool isObjIndex = false;
+            byte[] utf8Bytes = null;
             String actualString = null;
             String automationId = null;
             CurrentObjInfo currObjInfo;
@@ -768,7 +788,7 @@ namespace Ldtpd
                     else
                     {
                         s = s.ToString();
-                        if (debug)
+                        if (debug || writeToFile != null)
                             LogMessage("Obj name: " + s + " : " +
                                 element.Current.ControlType.ProgrammaticName);
                     }
@@ -797,15 +817,21 @@ namespace Ldtpd
                             index++;
                         }
                     }
+                    // Convert utf16 to utf8
+                    // VMW bug#1054336
+                    utf8Bytes = Encoding.UTF8.GetBytes(actualString);
+                    utf8 = Encoding.UTF8.GetString(utf8Bytes);
                     if (type == null || type == element.Current.ControlType)
+                    {
                         // Add if ControlType is null
                         // or only matching type, if available
-                        objectList.Add(actualString);
+                        objectList.Add(utf8);
+                    }
                     if (objName != null || needAll)
                     {
                         //needAll - Required for GetChild
                         propertyHT = new Hashtable();
-                        propertyHT.Add("key", actualString);
+                        propertyHT.Add("key", utf8);
                         try
                         {
                             LogMessage(element.Current.LocalizedControlType);
@@ -832,14 +858,20 @@ namespace Ldtpd
                         {
                             LogMessage("parentName NOT NULL");
                             // Add current child to the parent
-                            ((ArrayList)((Hashtable)objectHT[parentName])["children"]).Add(actualString);
+                            ((ArrayList)((Hashtable)objectHT[parentName])["children"]).Add(utf8);
                         }
                         else
                             LogMessage("parentName NULL");
                         propertyHT.Add("obj_index",
                             currObjInfo.objType + "#" + currObjInfo.objCount);
                         if (s != null)
-                            propertyHT.Add("label", element.Current.Name);
+                        {
+                            // Convert utf16 to utf8
+                            // VMW bug#1054336
+                            byte[] labelUtf8Bytes = Encoding.UTF8.GetBytes(element.Current.Name);
+                            string label = Encoding.UTF8.GetString(labelUtf8Bytes);
+                            propertyHT.Add("label", label);
+                        }
                         // Following 2 properties exist in Linux
                         //propertyHT.Add("label_by", s == null ? "" : s);
                         //propertyHT.Add("description", element.Current.DescribedBy);
@@ -850,24 +882,24 @@ namespace Ldtpd
                             propertyHT.Add("window_id",
                                 element.Current.AutomationId);
                         // Add individual property to object property
-                        objectHT.Add(actualString, propertyHT);
+                        objectHT.Add(Encoding.UTF8.GetString(utf8Bytes), propertyHT);
                         if (isObjIndex)
                             objIndex = currObjInfo.objType + "#" + currObjInfo.objCount;
-                        if (debug && rx != null)
+                        if ((debug || writeToFile != null) && rx != null)
                         {
-                            LogMessage(objName + " : " + actualString + " : " + s
+                            LogMessage(objName + " : " + utf8 + " : " + s
                                 + " : " + tmp);
                             LogMessage((s != null && rx.Match(s).Success) + " : " +
-                                (actualString != null && rx.Match(actualString).Success));
+                                (utf8 != null && rx.Match(utf8).Success));
                         }
                         if ((isAutomationId && !String.IsNullOrEmpty(automationId) &&
                             automationId == element.Current.AutomationId) ||
                             (isObjIndex && !String.IsNullOrEmpty(objIndex) && rx.Match(objIndex).Success) ||
                             (!isAutomationId && !isObjIndex &&
                             (s != null && rx != null && rx.Match(s).Success) ||
-                            (actualString != null && rx != null && rx.Match(actualString).Success)))
+                            (utf8 != null && rx != null && rx.Match(utf8).Success)))
                         {
-                            matchedKey = actualString;
+                            matchedKey = utf8;
                             LogMessage("String matched: " + needAll);
                             if (!needAll)
                                 return true;
@@ -877,7 +909,7 @@ namespace Ldtpd
                     // If any subchild exist for the current element navigate to it
                     if (InternalGetObjectList(w.walker.GetFirstChild(element),
                         ref objectList, ref objectHT, ref matchedKey,
-                        needAll, objName, actualString, type, objInfo))
+                        needAll, objName, utf8, type, objInfo))
                         return true;
                     element = w.walker.GetNextSibling(element);
                 }
@@ -1153,8 +1185,20 @@ namespace Ldtpd
             Input.MoveToAndClick(pt);
             return true;
         }
+        internal bool InternalXYClick(AutomationElement element)
+        {
+            // Click just on X and Y co-ordinates,
+            // required for Google Chrome (mnuSystem;mnuMinimize)
+            // or minimizewindow('*Chrome*')
+            if (element == null)
+                return false;
+            Rect rect = element.Current.BoundingRectangle;
+            Point pt = new Point(rect.X, rect.Y);
+            Input.MoveToAndClick(pt);
+            return true;
+        }
         internal int InternalCheckObject(string windowName, string objName,
-					 string actionType)
+                     string actionType)
         {
             if (String.IsNullOrEmpty(windowName) ||
                 String.IsNullOrEmpty(objName) ||

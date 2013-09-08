@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
@@ -216,6 +216,47 @@ namespace Ldtpd
             }
             throw new XmlRpcFaultException(123, "Unable to perform action");
         }
+        public int MouseMove(String windowName, String objName)
+        {
+            AutomationElement childHandle;
+            try
+            {
+                childHandle = utils.GetObjectHandle(windowName, objName);
+                if (!utils.IsEnabled(childHandle))
+                {
+                    throw new XmlRpcFaultException(123,
+                        "Object state is disabled");
+                }
+                try
+                {
+                    childHandle.SetFocus();
+                }
+                catch (Exception ex)
+                {
+                    // Have noticed exception with
+                    // maximize / minimize button
+                    LogMessage(ex);
+                }
+                Rect rect = childHandle.Current.BoundingRectangle;
+                GenerateMouseEvent((int)(rect.X + rect.Width / 2),
+                    (int)(rect.Y + rect.Height / 2), "abs");
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                if (ex is XmlRpcFaultException)
+                    throw;
+                else
+                    throw new XmlRpcFaultException(123,
+                        "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                childHandle = null;
+            }
+            throw new XmlRpcFaultException(123, "Unable to perform action");
+        }
         public int GenerateMouseEvent(int x, int y, String type = "b1c")
         {
             Point pt = new Point(x, y);
@@ -338,7 +379,7 @@ namespace Ldtpd
                     }
                 }
                 if (delay != 0.0)
-					utils.InternalWait(delay);
+                    utils.InternalWait(delay);
                 // Start mouse move from source_x, source_y to dest_x, dest_y
                 GenerateMouseEvent(source_x, source_y, "abs");
                 if (source_x == dest_x && source_y == dest_y)

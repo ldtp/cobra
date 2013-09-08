@@ -19,14 +19,14 @@ On Windows 7: Default .NET with the system should work fine
 
 # Supported languages to write test script
 
-Python >= 2.5
-Java >= 1.5
-C# >= 3.5
-VB.NET
-Power Shell
-Ruby >= 1.8.x
-Perl
-Clojure
+* Python >= 2.5
+* Java >= 1.5
+* C# >= 3.5
+* VB.NET
+* Power Shell
+* Ruby >= 1.8.x
+* Perl
+* Clojure
 
 # Build and Package Cobra
 Compile SetEnvironmentVariable and CobraWinLdtp solutions, place the binary where you have all the dll's, README.txt, License.rtf, before running Wix installer commands. LDTP packages are created with WiX installer - http://wix.tramontana.co.hu
@@ -99,5 +99,5 @@ How do I contact LDTP team incase of any help ?
 
   - Join the LDTP team on IRC for technical help, online
     Server  : irc.freenode.net
-    Channel : #ldtp
-  - Join the LDTP Mailing List - http://ldtp.freedesktop.org/wiki/Mailing_20list
+    Channel : #ldtp or Web Chat - http://webchat.freenode.net/?randomnick=1&channels=ldtp&uio=d4
+  - Join the LDTP Mailing List - http://ldtp.freedesktop.org/wiki/Mailing%20list%20/%20IRC

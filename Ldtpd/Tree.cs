@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
@@ -31,6 +31,7 @@ using System.Collections;
 using CookComputing.XmlRpc;
 using System.Windows.Forms;
 using System.Windows.Automation;
+using System.Collections.Generic;
 
 namespace Ldtpd
 {
@@ -49,8 +50,10 @@ namespace Ldtpd
             string objName, ControlType[] type = null, bool waitForObj = true)
         {
             if (type == null)
-                type = new ControlType[2] { ControlType.Tree,
-                    ControlType.List };
+                type = new ControlType[6] { ControlType.Tree,
+                    ControlType.List, ControlType.Table,
+                    ControlType.DataItem, ControlType.ListItem,
+                    ControlType.TreeItem };
             try
             {
                 return utils.GetObjectHandle(windowName,
@@ -83,8 +86,9 @@ namespace Ldtpd
                     return 0;
                 }
                 childHandle.SetFocus();
-                type = new ControlType[2] { ControlType.TreeItem,
-                    ControlType.ListItem };
+                type = new ControlType[4] { ControlType.TreeItem,
+                    ControlType.ListItem, ControlType.DataItem,
+                    ControlType.Custom };
                 if (partialMatch)
                     text += "*";
                 elementItem = utils.GetObjectHandle(childHandle,
@@ -134,9 +138,10 @@ namespace Ldtpd
                     LogMessage(ex);
                 }
                 if (partialMatch)
-                    text += "*";
-                type = new ControlType[2] { ControlType.TreeItem,
-                    ControlType.ListItem };
+                    text = "*" + text + "*";
+                type = new ControlType[4] { ControlType.TreeItem,
+                    ControlType.ListItem, ControlType.DataItem,
+                    ControlType.Custom };
                 elementItem = utils.GetObjectHandle(childHandle,
                     text, type, true);
                 if (elementItem != null)
@@ -187,6 +192,178 @@ namespace Ldtpd
             throw new XmlRpcFaultException(123,
                 "Unable to find the item in list: " + text);
         }
+        public int MultiSelect(String windowName, String objName,
+            String[] texts, bool partialMatch = false)
+        {
+            if (texts == null)
+            {
+                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+            }
+            Object pattern;
+            ControlType[] type;
+            string[] searchTexts = texts;
+            AutomationElement elementItem;
+            List<string> myCollection = new List<string>();
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
+            if (!utils.IsEnabled(childHandle))
+            {
+                childHandle = null;
+                throw new XmlRpcFaultException(123,
+                    "Object state is disabled");
+            }
+            try
+            {
+                try
+                {
+                    childHandle.SetFocus();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    LogMessage(ex);
+                }
+                if (partialMatch)
+                {
+                    foreach(string text in texts)
+                        myCollection.Add("*" + text + "*");
+                    // Search for the partial text, rather than the given text
+                    searchTexts = myCollection.ToArray();
+                }
+                type = new ControlType[4] { ControlType.TreeItem,
+                    ControlType.ListItem, ControlType.DataItem,
+                    ControlType.Custom };
+                foreach (string text in searchTexts)
+                {
+                    elementItem = utils.GetObjectHandle(childHandle,
+                        text, type, true);
+                    if (elementItem != null)
+                    {
+                        elementItem.SetFocus();
+                        LogMessage(elementItem.Current.Name + " : " +
+                            elementItem.Current.ControlType.ProgrammaticName);
+                        if (elementItem.TryGetCurrentPattern(
+                            SelectionItemPattern.Pattern, out pattern))
+                        {
+                            LogMessage("SelectionItemPattern");
+                            ((SelectionItemPattern)pattern).AddToSelection();
+                        }
+                        else
+                        {
+                            throw new XmlRpcFaultException(123,
+                                "Unsupported pattern.");
+                        }
+                    }
+                    else
+                    {
+                        throw new XmlRpcFaultException(123,
+                            "Unable to find the item in list: " + text);
+                    }
+                }
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                if (ex is XmlRpcFaultException)
+                    throw;
+                else
+                    throw new XmlRpcFaultException(123,
+                        "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                type = null;
+                pattern = null;
+                searchTexts = null;
+                elementItem = childHandle = null;
+            }
+        }
+        public int MultiRemove(String windowName, String objName,
+            String[] texts, bool partialMatch = false)
+        {
+            if (texts == null)
+            {
+                throw new XmlRpcFaultException(123, "Argument cannot be empty.");
+            }
+            Object pattern;
+            ControlType[] type;
+            string[] searchTexts = texts;
+            AutomationElement elementItem;
+            List<string> myCollection = new List<string>();
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
+            if (!utils.IsEnabled(childHandle))
+            {
+                childHandle = null;
+                throw new XmlRpcFaultException(123,
+                    "Object state is disabled");
+            }
+            try
+            {
+                try
+                {
+                    childHandle.SetFocus();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    LogMessage(ex);
+                }
+                if (partialMatch)
+                {
+                    foreach (string text in texts)
+                        myCollection.Add("*" + text + "*");
+                    // Search for the partial text, rather than the given text
+                    searchTexts = myCollection.ToArray();
+                }
+                type = new ControlType[4] { ControlType.TreeItem,
+                    ControlType.ListItem, ControlType.DataItem,
+                    ControlType.Custom };
+                foreach (string text in searchTexts)
+                {
+                    elementItem = utils.GetObjectHandle(childHandle,
+                        text, type, true);
+                    if (elementItem != null)
+                    {
+                        elementItem.SetFocus();
+                        LogMessage(elementItem.Current.Name + " : " +
+                            elementItem.Current.ControlType.ProgrammaticName);
+                        if (elementItem.TryGetCurrentPattern(
+                            SelectionItemPattern.Pattern, out pattern))
+                        {
+                            LogMessage("SelectionItemPattern");
+                            ((SelectionItemPattern)pattern).RemoveFromSelection();
+                        }
+                        else
+                        {
+                            throw new XmlRpcFaultException(123,
+                                "Unsupported pattern.");
+                        }
+                    }
+                    else
+                    {
+                        throw new XmlRpcFaultException(123,
+                            "Unable to find the item in list: " + text);
+                    }
+                }
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                if (ex is XmlRpcFaultException)
+                    throw;
+                else
+                    throw new XmlRpcFaultException(123,
+                        "Unhandled exception: " + ex.Message);
+            }
+            finally
+            {
+                type = null;
+                pattern = null;
+                searchTexts = null;
+                elementItem = childHandle = null;
+            }
+        }
         public int RightClick(String windowName, String objName, String text)
         {
             if (String.IsNullOrEmpty(text))
@@ -207,8 +384,9 @@ namespace Ldtpd
             try
             {
                 childHandle.SetFocus();
-                type = new ControlType[2] { ControlType.TreeItem,
-                    ControlType.ListItem };
+                type = new ControlType[4] { ControlType.TreeItem,
+                    ControlType.ListItem, ControlType.DataItem,
+                    ControlType.Custom };
                 elementItem = utils.GetObjectHandle(childHandle,
                     text, type, true);
                 if (elementItem != null)
@@ -264,8 +442,9 @@ namespace Ldtpd
                 childHandle.SetFocus();
                 if (partialMatch)
                     text += "*";
-                type = new ControlType[2] { ControlType.TreeItem,
-                    ControlType.ListItem };
+                type = new ControlType[4] { ControlType.TreeItem,
+                    ControlType.ListItem, ControlType.DataItem,
+                    ControlType.Custom };
                 elementItem = utils.GetObjectHandle(childHandle,
                     text, type, true);
                 if (elementItem != null)
@@ -321,7 +500,12 @@ namespace Ldtpd
                 AutomationElement.ControlTypeProperty, ControlType.ListItem);
             Condition prop2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.TreeItem);
-            Condition condition = new OrCondition(prop1, prop2);
+            Condition prop3 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.DataItem);
+            Condition prop4 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.Custom);
+            Condition condition = new OrCondition(prop1, prop2, prop3,
+                prop4);
             try
             {
                 childHandle.SetFocus();
@@ -387,7 +571,7 @@ namespace Ldtpd
             {
                 pattern = null;
                 element = childHandle = null;
-                prop1 = prop2 = condition = null;
+                prop1 = prop2 = prop3 = prop4 = condition = null;
             }
             throw new XmlRpcFaultException(123, "Unable to select item.");
         }
@@ -408,7 +592,12 @@ namespace Ldtpd
                 AutomationElement.ControlTypeProperty, ControlType.ListItem);
             Condition prop2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.TreeItem);
-            Condition condition = new OrCondition(prop1, prop2);
+            Condition prop3 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.DataItem);
+            Condition prop4 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.Custom);
+            Condition condition = new OrCondition(prop1, prop2, prop3,
+                prop4);
             try
             {
                 childHandle.SetFocus();
@@ -435,7 +624,8 @@ namespace Ldtpd
                 {
                     c = null;
                     childHandle = null;
-                    prop1 = prop2 = condition = null;
+                    prop1 = prop2 = prop3 = prop4 = null;
+                    condition = null;
                 }
                 if (element != null)
                 {
@@ -471,6 +661,95 @@ namespace Ldtpd
             }
             throw new XmlRpcFaultException(123, "Unable to expand item.");
         }
+        public int SetCellValue(String windowName,
+            String objName, int row, int column = 0, String data = null)
+        {
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
+            if (!utils.IsEnabled(childHandle))
+            {
+                childHandle = null;
+                throw new XmlRpcFaultException(123,
+                    "Object state is disabled");
+            }
+            AutomationElement element = null;
+            Condition prop1 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.ListItem);
+            Condition prop2 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.TreeItem);
+            Condition prop3 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.DataItem);
+            Condition prop4 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.Text);
+            Condition prop5 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.Custom);
+            Condition condition1 = new OrCondition(prop1, prop2, prop3, prop5);
+            Condition condition2 = new OrCondition(prop4, prop5);
+            try
+            {
+                childHandle.SetFocus();
+                AutomationElementCollection c = childHandle.FindAll(
+                    TreeScope.Children, condition1);
+                element = c[row];
+                c = element.FindAll(TreeScope.Children, condition2);
+                element = c[column];
+                c = null;
+                if (element != null)
+                {
+                    if (element.Current.ControlType == ControlType.Text)
+                    {
+                        throw new XmlRpcFaultException(123,
+                            "Not implemented");
+                    }
+                    else
+                    {
+                        // Specific to DataGrid of Windows Forms
+                        element.SetFocus();
+                        Mouse mouse = new Mouse(utils);
+                        Rect rect = element.Current.BoundingRectangle;
+                        utils.InternalWait(1);
+                        mouse.GenerateMouseEvent((int)(rect.X + rect.Width / 2),
+                            (int)(rect.Y + rect.Height / 2), "b1c");
+                        utils.InternalWait(1);
+                        // Only on second b1c, it becomes edit control
+                        // though the edit control is not under current widget
+                        // its created in different hierarchy altogether
+                        // So, its required to do (from python)
+                        // settextvalue("Window Name", "txtEditingControl", "Some text")
+                        mouse.GenerateMouseEvent((int)(rect.X + rect.Width / 2),
+                            (int)(rect.Y + rect.Height / 2), "b1c");
+
+                        return 1;
+                    }
+                }
+            }
+            catch (IndexOutOfRangeException ex)
+            {
+                LogMessage(ex);
+                throw new XmlRpcFaultException(123,
+                    "Index out of range: " + "(" + row + ", " + column + ")");
+            }
+            catch (ArgumentException ex)
+            {
+                LogMessage(ex);
+                throw new XmlRpcFaultException(123,
+                    "Index out of range: " + "(" + row + ", " + column + ")");
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                throw new XmlRpcFaultException(123,
+                    "Index out of range: " + "(" + row + ", " + column + ")");
+            }
+            finally
+            {
+                element = childHandle = null;
+                prop1 = prop2 = prop3 = prop4 = prop5 = null;
+                condition1 = condition2 = null;
+            }
+            throw new XmlRpcFaultException(123,
+                "Unable to set item value.");
+        }
         public String GetCellValue(String windowName,
             String objName, int row, int column = 0)
         {
@@ -487,9 +766,14 @@ namespace Ldtpd
                 AutomationElement.ControlTypeProperty, ControlType.ListItem);
             Condition prop2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.TreeItem);
-            Condition condition1 = new OrCondition(prop1, prop2);
-            Condition condition2 = new PropertyCondition(
+            Condition prop3 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.DataItem);
+            Condition prop4 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.Text);
+            Condition prop5 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.Custom);
+            Condition condition1 = new OrCondition(prop1, prop2, prop3, prop5);
+            Condition condition2 = new OrCondition(prop4, prop5);
             try
             {
                 childHandle.SetFocus();
@@ -500,15 +784,40 @@ namespace Ldtpd
                 element = c[column];
                 c = null;
                 if (element != null)
-                    return element.Current.Name;
+                {
+                    if (element.Current.ControlType == ControlType.Text)
+                        return element.Current.Name;
+                    else
+                    {
+                        // Specific to DataGrid of Windows Forms
+                        element.SetFocus();
+                        Mouse mouse = new Mouse(utils);
+                        Rect rect = element.Current.BoundingRectangle;
+                        utils.InternalWait(1);
+                        mouse.GenerateMouseEvent((int)(rect.X + rect.Width / 2),
+                            (int)(rect.Y + rect.Height / 2), "b1c");
+                        utils.InternalWait(1);
+                        // Only on second b1c, it becomes edit control
+                        // though the edit control is not under current widget
+                        // its created in different hierarchy altogether
+                        // So, its required to do (from python)
+                        // gettextvalue("Window Name", "txtEditingControl")
+                        mouse.GenerateMouseEvent((int)(rect.X + rect.Width / 2),
+                            (int)(rect.Y + rect.Height / 2), "b1c");
+
+                        return "";
+                    }
+                }
             }
-            catch (IndexOutOfRangeException)
+            catch (IndexOutOfRangeException ex)
             {
+                LogMessage(ex);
                 throw new XmlRpcFaultException(123,
                     "Index out of range: " + "(" + row + ", " + column + ")");
             }
-            catch (ArgumentException)
+            catch (ArgumentException ex)
             {
+                LogMessage(ex);
                 throw new XmlRpcFaultException(123,
                     "Index out of range: " + "(" + row + ", " + column + ")");
             }
@@ -521,7 +830,8 @@ namespace Ldtpd
             finally
             {
                 element = childHandle = null;
-                prop1 = prop2 = condition1 = condition2 = null;
+                prop1 = prop2 = prop3 = prop4 = prop5 = null;
+                condition1 = condition2 = null;
             }
             throw new XmlRpcFaultException(123,
                 "Unable to get item value.");
@@ -542,9 +852,14 @@ namespace Ldtpd
                 AutomationElement.ControlTypeProperty, ControlType.ListItem);
             Condition prop2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.TreeItem);
-            Condition condition1 = new OrCondition(prop1, prop2);
-            Condition condition2 = new PropertyCondition(
+            Condition prop3 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.DataItem);
+            Condition prop4 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.Text);
+            Condition prop5 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.Custom);
+            Condition condition1 = new OrCondition(prop1, prop2, prop3, prop5);
+            Condition condition2 = new OrCondition(prop4, prop5);
             try
             {
                 childHandle.SetFocus();
@@ -580,7 +895,8 @@ namespace Ldtpd
             finally
             {
                 element = childHandle = null;
-                prop1 = prop2 = condition1 = condition2 = null;
+                prop1 = prop2 = prop3 = prop4 = prop5 = null;
+                condition1 = condition2 = null;
             }
             throw new XmlRpcFaultException(123,
                 "Unable to get item size.");
@@ -601,9 +917,14 @@ namespace Ldtpd
                 AutomationElement.ControlTypeProperty, ControlType.ListItem);
             Condition prop2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.TreeItem);
-            Condition condition1 = new OrCondition(prop1, prop2);
-            Condition condition2 = new PropertyCondition(
+            Condition prop3 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.DataItem);
+            Condition prop4 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.Text);
+            Condition prop5 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.Custom);
+            Condition condition1 = new OrCondition(prop1, prop2, prop3, prop5);
+            Condition condition2 = new OrCondition(prop4, prop5);
             try
             {
                 int count = GetRowCount(windowName, objName);
@@ -628,7 +949,8 @@ namespace Ldtpd
             {
                 c1 = c2 = null;
                 childHandle = null;
-                prop1 = prop2 = condition1 = condition2 = null;
+                prop1 = prop2 = prop3 = prop4 = prop5 = null;
+                condition1 = condition2 = null;
             }
             throw new XmlRpcFaultException(123,
                     "Unable to get row index: " + cellValue);
@@ -648,7 +970,11 @@ namespace Ldtpd
                 AutomationElement.ControlTypeProperty, ControlType.ListItem);
             Condition prop2 = new PropertyCondition(
                 AutomationElement.ControlTypeProperty, ControlType.TreeItem);
-            Condition condition = new OrCondition(prop1, prop2);
+            Condition prop3 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.DataItem);
+            Condition prop4 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.Custom);
+            Condition condition = new OrCondition(prop1, prop2, prop3, prop4);
             try
             {
                 c = childHandle.FindAll(TreeScope.Children, condition);
@@ -670,7 +996,7 @@ namespace Ldtpd
             {
                 c = null;
                 childHandle = null;
-                prop1 = prop2 = condition = null;
+                prop1 = prop2 = prop3 = prop4 = condition = null;
             }
         }
         public int DoubleClickRow(String windowName, String objName, String text)
@@ -700,8 +1026,9 @@ namespace Ldtpd
                 {
                     LogMessage(ex);
                 }
-                type = new ControlType[2] { ControlType.TreeItem,
-                    ControlType.ListItem };
+                type = new ControlType[4] { ControlType.TreeItem,
+                    ControlType.ListItem, ControlType.DataItem,
+                    ControlType.Custom };
                 elementItem = utils.GetObjectHandle(childHandle,
                     text, type, true);
                 if (elementItem != null)

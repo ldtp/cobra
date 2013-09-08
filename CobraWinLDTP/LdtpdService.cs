@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
@@ -42,6 +42,7 @@ namespace WinLdtpdService
     {
         public bool debug = false;
         string ldtpDebugEnv = Environment.GetEnvironmentVariable("LDTP_DEBUG");
+        string ldtpPort = Environment.GetEnvironmentVariable("LDTP_SERVER_PORT");
         string listenAllInterface = Environment.GetEnvironmentVariable(
             "LDTP_LISTEN_ALL_INTERFACE");
         public Common common = null;
@@ -50,19 +51,21 @@ namespace WinLdtpdService
         public XmlRpcListenerService svc = null;
         LdtpdService()
         {
-            if (ldtpDebugEnv != null && ldtpDebugEnv.Length > 0)
+            if (!String.IsNullOrEmpty(ldtpDebugEnv))
                 debug = true;
+            if (String.IsNullOrEmpty(ldtpPort))
+                ldtpPort = "4118";
             common = new Common(debug);
             windowList = new WindowList(common);
             listener = new HttpListener();
-            listener.Prefixes.Add("http://localhost:4118/");
-            listener.Prefixes.Add("http://+:4118/");
+            listener.Prefixes.Add("http://localhost:" + ldtpPort + "/");
+            listener.Prefixes.Add("http://+:" + ldtpPort + "/");
             // Listen on all possible IP address
             if (listenAllInterface != null && listenAllInterface.Length > 0)
             {
                 if (debug)
                     Console.WriteLine("Listening on all interface");
-                listener.Prefixes.Add("http://*:4118/");
+                listener.Prefixes.Add("http://*:" + ldtpPort + "/");
             }
             else
             {
@@ -151,10 +154,13 @@ namespace WinLdtpdService
         {
             bool debug = false;
             string ldtpDebugEnv = Environment.GetEnvironmentVariable("LDTP_DEBUG");
+            string ldtpPort = Environment.GetEnvironmentVariable("LDTP_SERVER_PORT");
             string listenAllInterface = Environment.GetEnvironmentVariable(
                 "LDTP_LISTEN_ALL_INTERFACE");
-            if (String.IsNullOrEmpty(ldtpDebugEnv))
+            if (!String.IsNullOrEmpty(ldtpDebugEnv))
                 debug = true;
+            if (String.IsNullOrEmpty(ldtpPort))
+                ldtpPort = "4118";
             Common common = new Common(debug);
             /*
             // If planning to use Remoting instead of HTTP
@@ -180,14 +186,14 @@ namespace WinLdtpdService
             /**/
             WindowList windowList = new WindowList(common);
             HttpListener listener = new HttpListener();
-            listener.Prefixes.Add("http://localhost:4118/");
-            listener.Prefixes.Add("http://+:4118/");
+            listener.Prefixes.Add("http://localhost:" + ldtpPort + "/");
+            listener.Prefixes.Add("http://+:" + ldtpPort + "/");
             // Listen on all possible IP address
-            if (listenAllInterface != null && listenAllInterface.Length > 0)
+            if (String.IsNullOrEmpty(listenAllInterface))
             {
                 if (debug)
                     Console.WriteLine("Listening on all interface");
-                listener.Prefixes.Add("http://*:4118/");
+                listener.Prefixes.Add("http://*:" + ldtpPort + "/");
             }
             else
             {
@@ -256,8 +262,51 @@ namespace WinLdtpdService
         }
 
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
+            if (args.Length > 0)
+            {
+                for (int i = 0; i < args.Length; i++)
+                {
+                    switch (args[i])
+                    {
+                        case "-v":
+                        case "--version":
+                            Console.WriteLine("3.5.0");
+                            return;
+                        case "-d":
+                        case "--debug":
+                            Environment.SetEnvironmentVariable("LDTP_DEBUG", "2");
+                            break;
+                        case "-p":
+                        case "--port":
+                            // To fetch next port argument increment
+                            i++;
+                            try
+                            {
+                                // To check int type as argument
+                                Convert.ToInt32(args[i]);
+                                Environment.SetEnvironmentVariable("LDTP_SERVER_PORT",
+                                    args[i]);
+                            }
+                            catch (FormatException)
+                            {
+                                Console.WriteLine("Invalid port: " + args[i]);
+                                return;
+                            }
+                            catch (IndexOutOfRangeException)
+                            {
+                                Console.WriteLine("Port number expected");
+                                return;
+                            }
+                            break;
+                        case "-h":
+                        case "--help":
+                            Console.WriteLine("[-v/--version] [-d/--debug] [-p/--port <port number>] [-h/--help]");
+                            return;
+                    }
+                }
+            }
             string ldtpParallelMemLeak = Environment.GetEnvironmentVariable(
                 "LDTP_PARALLEL_MEM_LEAK");
             if (String.IsNullOrEmpty(ldtpParallelMemLeak))

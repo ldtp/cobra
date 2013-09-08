@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
@@ -26,6 +26,7 @@
  * SOFTWARE.
 */
 using System;
+using System.Threading;
 using System.Collections;
 using CookComputing.XmlRpc;
 using System.Globalization;
@@ -49,8 +50,10 @@ namespace Ldtpd
         private AutomationElement GetObjectHandle(string windowName,
             string objName)
         {
-            ControlType[] type = new ControlType[3] { ControlType.Edit,
-                ControlType.Document, ControlType.ComboBox };
+            // Pane added for a bug in QT
+            // Ref: https://cobra.codeplex.com/discussions/450296
+            ControlType[] type = new ControlType[4] { ControlType.Edit,
+                ControlType.Document, ControlType.ComboBox, ControlType.Pane };
             try
             {
                 return utils.GetObjectHandle(windowName, objName, type);
@@ -73,6 +76,19 @@ namespace Ldtpd
             object valuePattern = null;
             try
             {
+                if (childHandle.Current.ControlType == ControlType.ComboBox)
+                {
+                    AutomationElement o = null;
+                    ArrayList objectList = new ArrayList();
+                    ControlType[] type = new ControlType[1] { ControlType.Edit };
+                    // NOTE: Using "*" for object name, which returns the first
+                    // matching Edit control type
+                    o = utils.InternalGetObjectHandle(childHandle,
+                        "*", type, ref objectList);
+                    if (o != null)
+                        childHandle = o;
+                    objectList = null;
+                }
                 // Reference: http://msdn.microsoft.com/en-us/library/ms750582.aspx
                 if (!childHandle.TryGetCurrentPattern(ValuePattern.Pattern,
                     out valuePattern))
@@ -165,6 +181,13 @@ namespace Ldtpd
             return SetTextValue(windowName, objName,
                 existingText + value);
         }
+        protected Thread clipboardThread = null;
+        private void CopyToClipboard(object textData)
+        {
+            Clipboard.Clear();
+            LogMessage(textData);
+            Clipboard.SetText((string)textData);
+        }
         public int CopyText(String windowName,
             String objName, int start, int end = -1)
         {
@@ -183,8 +206,22 @@ namespace Ldtpd
                 end = existingText.Length - start;
             else
                 end = existingText.Length - end;
-            LogMessage(existingText.Substring(start, end));
-            Clipboard.SetText(existingText.Substring(start, end));
+            string textData = existingText.Substring(start, end);
+            // To workaround the exception
+            // Current thread must be set to single thread apartment (STA)
+            // mode before OLE calls can be made. Ensure that your Main
+            // function has STAThreadAttribute marked on it.
+            if (clipboardThread == null)
+            {
+                clipboardThread = new Thread(CopyToClipboard);
+                clipboardThread.SetApartmentState(ApartmentState.STA);
+                clipboardThread.IsBackground = false;
+            }
+            if (!clipboardThread.IsAlive)
+            {
+                clipboardThread.Start(textData);
+            }
+            clipboardThread.Join();
             return 1;
         }
         public int CutText(String windowName,

@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
@@ -165,8 +165,12 @@ namespace Ldtpd
                 {
                     throw new XmlRpcFaultException(123, "Object state is disabled");
                 }
+                elementItem = utils.GetObjectHandle(childHandle, "Open", type, true);
                 if (childHandle.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
-                    out pattern))
+                    out pattern) || childHandle.TryGetCurrentPattern(
+                    InvokePattern.Pattern, out invokePattern) ||
+                    (elementItem != null && elementItem.TryGetCurrentPattern(
+                    InvokePattern.Pattern, out invokePattern)))
                 {
                     LogMessage("ExpandCollapsePattern");
                     // Retry max 5 times
@@ -175,17 +179,25 @@ namespace Ldtpd
                         switch (actionType)
                         {
                             case "Hide":
-                                ((ExpandCollapsePattern)pattern).Collapse();
-                                // Required to wait 1 second,
-                                // before checking the state and retry collapsing
-                                utils.InternalWait(1);
-                                if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
-                                    ExpandCollapseState.Collapsed)
+                                if (invokePattern != null)
                                 {
-                                    // Hiding same combobox multiple time consecutively
-                                    // fails. Check for the state and retry to collapse
-                                    LogMessage("Collapsed");
+                                    ((InvokePattern)invokePattern).Invoke();
                                     return 1;
+                                }
+                                else if (pattern != null)
+                                {
+                                    ((ExpandCollapsePattern)pattern).Collapse();
+                                    // Required to wait 1 second,
+                                    // before checking the state and retry collapsing
+                                    utils.InternalWait(1);
+                                    if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
+                                        ExpandCollapseState.Collapsed)
+                                    {
+                                        // Hiding same combobox multiple time consecutively
+                                        // fails. Check for the state and retry to collapse
+                                        LogMessage("Collapsed");
+                                        return 1;
+                                    }
                                 }
                                 break;
                             case "Show":
@@ -193,19 +205,20 @@ namespace Ldtpd
                             case "Verify":
                                 elementItem = utils.GetObjectHandle(childHandle, "Open",
                                     type, !verify);
-                                if (elementItem != null &&
+                                if (invokePattern != null || (elementItem != null &&
                                     elementItem.TryGetCurrentPattern(InvokePattern.Pattern,
-                                    out invokePattern))
+                                    out invokePattern)))
                                 {
                                     ((InvokePattern)invokePattern).Invoke();
                                 }
-                                else
+                                else if (pattern != null)
                                     ((ExpandCollapsePattern)pattern).Expand();
                                 // Required to wait 1 second,
                                 // before checking the state and retry expanding
                                 utils.InternalWait(1);
-                                if (((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
-                                    ExpandCollapseState.Expanded)
+                                if (invokePattern != null || (pattern != null &&
+                                    ((ExpandCollapsePattern)pattern).Current.ExpandCollapseState ==
+                                    ExpandCollapseState.Expanded))
                                 {
                                     // Selecting same combobox multiple time consecutively
                                     // fails. Check for the state and retry to expand
@@ -223,13 +236,13 @@ namespace Ldtpd
                                 LogMessage("GetComboValue");
                                 elementItem = utils.GetObjectHandle(childHandle, "Open",
                                     type, true);
-                                if (elementItem != null &&
+                                if (invokePattern != null || (elementItem != null &&
                                     elementItem.TryGetCurrentPattern(InvokePattern.Pattern,
-                                    out invokePattern))
+                                    out invokePattern)))
                                 {
                                     ((InvokePattern)invokePattern).Invoke();
                                 }
-                                else
+                                else if (pattern != null)
                                     ((ExpandCollapsePattern)pattern).Expand();
                                 // Required to wait 1 second,
                                 // before checking the state and retry expanding
@@ -255,7 +268,12 @@ namespace Ldtpd
                                 }
                                 c = null;
                                 selectionPattern = null;
-                                ((ExpandCollapsePattern)pattern).Collapse();
+                                if (invokePattern != null)
+                                {
+                                    ((InvokePattern)invokePattern).Invoke();
+                                }
+                                else if (pattern != null)
+                                    ((ExpandCollapsePattern)pattern).Collapse();
                                 return 0;
                             case "GetAllItem":
                                 string matchedKey = null;
@@ -264,13 +282,14 @@ namespace Ldtpd
                                 InternalTreeWalker w = new InternalTreeWalker();
                                 elementItem = utils.GetObjectHandle(childHandle, "Open",
                                     type, true);
-                                if (elementItem != null &&
+                                // Changes based on QT 5.0.2
+                                if (invokePattern != null || (elementItem != null &&
                                     elementItem.TryGetCurrentPattern(InvokePattern.Pattern,
-                                    out invokePattern))
+                                    out invokePattern)))
                                 {
                                     ((InvokePattern)invokePattern).Invoke();
                                 }
-                                else
+                                else if (pattern != null)
                                     ((ExpandCollapsePattern)pattern).Expand();
                                 // Required to wait 1 second,
                                 // before checking the state and retry expanding
@@ -279,7 +298,12 @@ namespace Ldtpd
                                     w.walker.GetFirstChild(childHandle),
                                     ref tmpChildList, ref objectHT, ref matchedKey,
                                     true, null, null, ControlType.ListItem);
-                                ((ExpandCollapsePattern)pattern).Collapse();
+                                if (invokePattern != null)
+                                {
+                                    ((InvokePattern)invokePattern).Invoke();
+                                }
+                                else if (pattern != null)
+                                    ((ExpandCollapsePattern)pattern).Collapse();
                                 // For Linux compatibility
                                 Hashtable propertyHT;
                                 foreach (String key in objectHT.Keys)

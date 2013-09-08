@@ -1,5 +1,5 @@
 /*
- * Cobra WinLDTP 3.0
+ * Cobra WinLDTP 3.5
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Author: John Yingjun Li <yjli@vmware.com>
@@ -197,14 +197,14 @@ namespace Ldtpd
                     try
                     {
                         if (actionType == "Window")
-						{
-                            utils.InternalClick(childHandle);
-						}
+                        {
+                            utils.InternalXYClick(childHandle);
+                        }
                         else
-						{
+                        {
                             // SetFocus() fails on Windows Explorer
                             childHandle.SetFocus();
-						}
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -431,7 +431,7 @@ namespace Ldtpd
                 if (firstObjHandle != null && actionType != "Window")
                 {
                     // Set it back to old state, else the menu selection left there
-                    utils.InternalClick(firstObjHandle);
+                    utils.InternalXYClick(firstObjHandle);
                 }
                 if (((ex is ElementNotAvailableException) ||
                     (ex is UnauthorizedAccessException)) &&
@@ -481,42 +481,159 @@ namespace Ldtpd
         }
         public int MaximizeWindow(String windowName)
         {
-            ArrayList menuList = new ArrayList();
-            try
+            if (String.IsNullOrEmpty(windowName))
             {
-                // FIXME: Verify this for i18n / l10n
-                return InternalMenuHandler(windowName, "mnuSystem;mnuMaximize",
-                    ref menuList, "Window");
+                String[] windowList = null;
+                Generic generic = new Generic(this.utils);
+                try
+                {
+                    windowList = generic.GetWindowList();
+                    foreach (String window in windowList)
+                    {
+                        ArrayList menuList = new ArrayList();
+                        try
+                        {
+                            if (utils.InternalGuiExist(window, "mnuSystem") == 1)
+                            {
+                                generic.GrabFocus(window);
+                                InternalMenuHandler(window, "mnuSystem;mnuMaximize",
+                                    ref menuList, "Window");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            LogMessage(ex);
+                        }
+                        finally
+                        {
+                            menuList = null;
+                        }
+                    }
+                    return 1;
+                }
+                finally
+                {
+                    generic = null;
+                    windowList = null;
+                }
             }
-            finally
+            else
             {
-                menuList = null;
+                ArrayList menuList = new ArrayList();
+                try
+                {
+                    // FIXME: Verify this for i18n / l10n
+                    return InternalMenuHandler(windowName, "mnuSystem;mnuMaximize",
+                        ref menuList, "Window");
+                }
+                finally
+                {
+                    menuList = null;
+                }
             }
         }
         public int MinimizeWindow(String windowName)
         {
-            ArrayList menuList = new ArrayList();
-            try
+            if (String.IsNullOrEmpty(windowName))
             {
-                return InternalMenuHandler(windowName, "mnuSystem;mnuMinimize",
-                    ref menuList, "Window");
+                String[] windowList = null;
+                Generic generic = new Generic(this.utils);
+                try
+                {
+                    windowList = generic.GetWindowList();
+                    foreach (String window in windowList)
+                    {
+                        ArrayList menuList = new ArrayList();
+                        try
+                        {
+                            if (utils.InternalGuiExist(window, "mnuSystem") == 1)
+                            {
+                                generic.GrabFocus(window);
+                                InternalMenuHandler(window, "mnuSystem;mnuMinimize",
+                                    ref menuList, "Window");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            LogMessage(ex);
+                        }
+                        finally
+                        {
+                            menuList = null;
+                        }
+                    }
+                    return 1;
+                }
+                finally
+                {
+                    generic = null;
+                    windowList = null;
+                }
             }
-            finally
+            else
             {
-                menuList = null;
+                ArrayList menuList = new ArrayList();
+                try
+                {
+                    return InternalMenuHandler(windowName, "mnuSystem;mnuMinimize",
+                        ref menuList, "Window");
+                }
+                finally
+                {
+                    menuList = null;
+                }
             }
         }
         public int CloseWindow(String windowName)
         {
-            ArrayList menuList = new ArrayList();
-            try
+            if (String.IsNullOrEmpty(windowName))
             {
-                return InternalMenuHandler(windowName, "mnuSystem;mnuClose",
-                    ref menuList, "Window");
+                String[] windowList = null;
+                Generic generic = new Generic(this.utils);
+                try
+                {
+                    windowList = generic.GetWindowList();
+                    foreach (String window in windowList)
+                    {
+                        ArrayList menuList = new ArrayList();
+                        try
+                        {
+                            if (utils.InternalGuiExist(window, "mnuSystem") == 1)
+                            {
+                                generic.GrabFocus(window);
+                                InternalMenuHandler(window, "mnuSystem;mnuClose",
+                                    ref menuList, "Window");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            LogMessage(ex);
+                        }
+                        finally
+                        {
+                            menuList = null;
+                        }
+                    }
+                    return 1;
+                }
+                finally
+                {
+                    generic = null;
+                    windowList = null;
+                }
             }
-            finally
+            else
             {
-                menuList = null;
+                ArrayList menuList = new ArrayList();
+                try
+                {
+                    return InternalMenuHandler(windowName, "mnuSystem;mnuClose",
+                        ref menuList, "Window");
+                }
+                finally
+                {
+                    menuList = null;
+                }
             }
         }
         public int MenuCheck(String windowName, String objName)
