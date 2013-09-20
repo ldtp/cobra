@@ -363,6 +363,12 @@ namespace Ldtpd
                 comboBox = null;
             }
         }
+        [XmlRpcMethod("comboselectindex",
+            Description = "Select combo box / layered pane item based on index.")]
+        public int ComboSelectIndex(String windowName, String objName, int index)
+        {
+            return SelectIndex(windowName, objName, index);
+        }
         [XmlRpcMethod("getallitem",
             Description = "Get all combo box item based on name.")]
         public string[] GetAllItem(String windowName, String objName)
