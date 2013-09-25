@@ -1082,5 +1082,72 @@ namespace Ldtpd
             throw new XmlRpcFaultException(123,
                 "Unable to find the item in list: " + text);
         }
+        public int DoubleClickRowIndex(String windowName, String objName,
+            int row, int column = 0)
+        {
+            AutomationElement childHandle = GetObjectHandle(windowName,
+                objName);
+            if (!utils.IsEnabled(childHandle))
+            {
+                childHandle = null;
+                throw new XmlRpcFaultException(123,
+                    "Object state is disabled");
+            }
+            AutomationElement element = null;
+            Condition prop1 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.ListItem);
+            Condition prop2 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.TreeItem);
+            Condition prop3 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.DataItem);
+            Condition prop4 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.Text);
+            Condition prop5 = new PropertyCondition(
+                AutomationElement.ControlTypeProperty, ControlType.Custom);
+            Condition condition1 = new OrCondition(prop1, prop2, prop3, prop5);
+            Condition condition2 = new OrCondition(prop4, prop5);
+            try
+            {
+                childHandle.SetFocus();
+                AutomationElementCollection c = childHandle.FindAll(
+                    TreeScope.Children, condition1);
+                element = c[row];
+                c = element.FindAll(TreeScope.Children, condition2);
+                element = c[column];
+                c = null;
+                if (element != null)
+                {
+                    Mouse mouse = new Mouse(utils);
+                    Rect rect = element.Current.BoundingRectangle;
+                    mouse.GenerateMouseEvent((int)(rect.X + rect.Width / 2),
+                        (int)(rect.Y + rect.Height / 2), "b1d");
+                    return 1;
+                }
+            }
+            catch (IndexOutOfRangeException)
+            {
+                throw new XmlRpcFaultException(123,
+                    "Index out of range: " + "(" + row + ", " + column + ")");
+            }
+            catch (ArgumentException)
+            {
+                throw new XmlRpcFaultException(123,
+                    "Index out of range: " + "(" + row + ", " + column + ")");
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+                throw new XmlRpcFaultException(123,
+                    "Index out of range: " + "(" + row + ", " + column + ")");
+            }
+            finally
+            {
+                element = childHandle = null;
+                prop1 = prop2 = prop3 = prop4 = prop5 = null;
+                condition1 = condition2 = null;
+            }
+            throw new XmlRpcFaultException(123,
+                "Unable to find the item in list: " + row);
+        }
     }
 }
