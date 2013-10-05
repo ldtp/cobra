@@ -2132,6 +2132,19 @@ public class Ldtp {
 		return doAction("doubleclickrow", params);
 	}
 	/**
+	 * doubleClickRowIndex Double click on table cell with matching row text
+	 *
+	 * @param objName Object name inside the current window
+	 * @param rowIndex Row index to be clicked
+	 * @param column Column index to be clicked
+	 * @return Return 1 on success
+	 * @throws LdtpExecutionError on failure
+	 */
+	public int doubleClickRow(String objName, int rowIndex, int column) throws LdtpExecutionError {
+		Object[] params = new Object[]{windowName, objName, rowIndex, column};
+		return doAction("doubleclickrowindex", params);
+	}
+	/**
 	 * checkRow Checkbox the table cell based on row index and column 0
 	 *
 	 * @param objName Object name inside the current window

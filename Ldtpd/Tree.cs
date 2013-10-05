@@ -999,7 +999,11 @@ namespace Ldtpd
                 prop1 = prop2 = prop3 = prop4 = condition = null;
             }
         }
-        public int DoubleClickRow(String windowName, String objName, String text)
+        public int SingleClickRow(String windowName, String objName, String text)
+        {
+            return ClickRow(windowName, objName, text, "b1c");
+        }
+        int ClickRow(String windowName, String objName, String text, string clickType)
         {
             if (String.IsNullOrEmpty(text))
             {
@@ -1047,7 +1051,7 @@ namespace Ldtpd
                         Mouse mouse = new Mouse(utils);
                         Rect rect = elementItem.Current.BoundingRectangle;
                         mouse.GenerateMouseEvent((int)(rect.X + rect.Width / 2),
-                            (int)(rect.Y + rect.Height / 2), "b1d");
+                            (int)(rect.Y + rect.Height / 2), clickType);
                         return 1;
                     }
                     else if (elementItem.TryGetCurrentPattern(
@@ -1082,6 +1086,11 @@ namespace Ldtpd
             throw new XmlRpcFaultException(123,
                 "Unable to find the item in list: " + text);
         }
+        public int DoubleClickRow(String windowName, String objName, String text)
+        {
+            return ClickRow(windowName, objName, text, "b1d");
+        }
+
         public int DoubleClickRowIndex(String windowName, String objName,
             int row, int column = 0)
         {

@@ -1031,6 +1031,21 @@ namespace Ldtpd
                 tree = null;
             }
         }
+        [XmlRpcMethod("singleclickrow",
+            Description = "Single click on row text.")]
+        public int SingleClickRow(String windowName, String objName,
+            String text)
+        {
+            Tree tree = new Tree(this);
+            try
+            {
+                return tree.SingleClickRow(windowName, objName, text);
+            }
+            finally
+            {
+                tree = null;
+            }
+        }
         [XmlRpcMethod("doubleclickrowindex",
             Description = "Double click on row index.")]
         public int DoubleClickRow(String windowName, String objName,
