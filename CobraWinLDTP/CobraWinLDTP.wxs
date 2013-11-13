@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='windows-1252'?>
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
 <!--
-CobraWinLDTP 3.5
+CobraWinLDTP 4.0
 
 @author: Nagappan Alagappan <nalagappan@vmware.com>
 @copyright: Copyright (c) 2011-13 VMware Inc.,
@@ -29,7 +29,7 @@ SOFTWARE.
 -->
 
 <?define UpgradeCode=F0C8AC98-8C96-40F3-8D51-0EF5B40343EC?>
-<?define Version=3.5.0?>
+<?define Version=4.0.0?>
 <?if $(sys.BUILDARCH)=x64?>
    <?define Is64bit="yes"?>
    <?define CommonFilesFolder="CommonFiles64Folder"?>
@@ -53,7 +53,7 @@ SOFTWARE.
 	    Manufacturer='VMware, Inc. (http://ldtp.freedesktop.org)'>
 
       <Package Id='*'
-               Description='Cobra Windows LDTP 3.5 Installer'
+               Description='Cobra Windows LDTP 4.0 Installer'
                Comments='Cobra Windows LDTP is Free Software project.'
                Manufacturer='VMware, Inc.'
                InstallerVersion='200'
