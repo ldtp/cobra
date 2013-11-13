@@ -1,5 +1,5 @@
 /*
- * Cobra WinLDTP 3.5
+ * Cobra WinLDTP 4.0
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Author: John Yingjun Li <yjli@vmware.com>

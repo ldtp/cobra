@@ -3,7 +3,7 @@ LDTP v2 client exception
 
 @author: Eitan Isaacson <eitan@ascender.com>
 @author: Nagappan Alagappan <nagappan@gmail.com>
-@copyright: Copyright (c) 2009-12 Nagappan Alagappan
+@copyright: Copyright (c) 2009-13 Nagappan Alagappan
 @copyright: Copyright (c) 2009 Eitan Isaacson
 @license: LGPL
 

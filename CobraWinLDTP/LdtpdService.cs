@@ -1,5 +1,5 @@
 ﻿/*
- * Cobra WinLDTP 3.5
+ * Cobra WinLDTP 4.0
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
  * Copyright: Copyright (c) 2011-13 VMware, Inc. All Rights Reserved.
@@ -272,7 +272,7 @@ namespace WinLdtpdService
                     {
                         case "-v":
                         case "--version":
-                            Console.WriteLine("3.5.0");
+                            Console.WriteLine("4.0.0");
                             return;
                         case "-d":
                         case "--debug":
