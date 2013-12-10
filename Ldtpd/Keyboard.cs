@@ -74,6 +74,8 @@ namespace Ldtpd
                         return new KeyInfo(System.Windows.Input.Key.LeftShift, true, true);
                     case "shiftr":
                         return new KeyInfo(System.Windows.Input.Key.RightShift, true, true);
+                    case "menu":
+                        return new KeyInfo(System.Windows.Input.Key.Apps, false, true);
                     case "esc":
                     case "escape":
                         return new KeyInfo(System.Windows.Input.Key.Escape, false);
