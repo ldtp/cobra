@@ -141,7 +141,7 @@ namespace Ldtpd
             ArrayList objectList = new ArrayList();
             // Trying to mimic python fnmatch.translate
             String tmp = Regex.Replace(windowName, @"\*", @".*");
-            tmp = Regex.Replace(tmp, @"\?", @".");
+            tmp = Regex.Replace(tmp, @"[\+\[\]\(\)\?]+", @".+");
             tmp = Regex.Replace(tmp, @"\\", @"\\");
             tmp = Regex.Replace(tmp, "( |\r|\n)", "");
             tmp = @"\A(?ms)" + tmp + @"\Z(?ms)";
