@@ -405,11 +405,11 @@ class ooldtp:
     def waittillguiexist(self, window_name, object_name = '',
                          guiTimeOut = 30, state = ''):
         return self._remote_waittillguiexist(window_name, object_name,
-                                             guiTimeOut)
+                                             guiTimeOut, state)
     def waittillguinotexist(self, window_name, object_name = '',
                             guiTimeOut = 30, state = ''):
         return self._remote_waittillguinotexist(window_name, object_name,
-                                                guiTimeOut)
+                                                guiTimeOut, state)
     def guiexist(self, window_name, object_name = ''):
         return self._remote_guiexist(window_name, object_name)
     def launchapp(self, cmd, args = [], delay = 0, env = 1, lang = "C"):
