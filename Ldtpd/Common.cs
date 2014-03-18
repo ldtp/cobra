@@ -28,6 +28,7 @@
 using System;
 using System.Threading;
 using System.Collections;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace Ldtpd
@@ -36,6 +37,7 @@ namespace Ldtpd
     {
         bool debug = false;
         System.IO.StreamWriter sw;
+        StackTrace stackTrace = null;
         System.IO.FileStream fs = null;
         internal string writeToFile = null;
 
@@ -59,6 +61,12 @@ namespace Ldtpd
                 fs = new System.IO.FileStream(writeToFile,
                     System.IO.FileMode.OpenOrCreate, System.IO.FileAccess.ReadWrite);
                 sw = new System.IO.StreamWriter(fs);
+            }
+            if (debug || writeToFile != null)
+            {
+                string tmpDebug = Environment.GetEnvironmentVariable("LDTP_DEBUG_LEVEL");
+                if (tmpDebug != null && tmpDebug == "3")
+                    stackTrace = new StackTrace(1, true);
             }
         }
 
@@ -88,7 +96,8 @@ namespace Ldtpd
         {
             if (debug)
             {
-                Console.WriteLine(o);
+                string callerName = stackTrace == null ? "" : stackTrace.ToString();
+                Console.WriteLine("{0}:{1}", callerName, o);
                 try
                 {
                     if (logStack.Count == 1000)
@@ -106,8 +115,11 @@ namespace Ldtpd
                 }
             }
             if (fs != null)
+            {
+                string callerName = stackTrace == null ? "" : stackTrace.ToString();
                 // Write content to log file
-                sw.WriteLine(o);
+                sw.WriteLine("{0}:{1}", callerName, o);
+            }
         }
         public bool WildcardMatch(string stringToSearch, string searchPhrase)
         {
