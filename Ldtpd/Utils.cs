@@ -1023,6 +1023,36 @@ namespace Ldtpd
             }
             return null;
         }
+        internal bool InternalWaitTillChildControlTypeExist(AutomationElement element,
+            ControlType[] types, int guiTimeOut = 30)
+        {
+            AutomationElementCollection collection = element.FindAll(TreeScope.Subtree,
+                Condition.TrueCondition);
+            try
+            {
+                int waitTime = 0;
+                while (waitTime < guiTimeOut)
+                {
+                    foreach (AutomationElement c in collection)
+                    {
+                        foreach (ControlType type in types)
+                        {
+                            if (c.Current.ControlType == type)
+                                return true;
+                        }
+                    }
+                    waitTime++;
+                    InternalWait(1);
+                    collection = element.FindAll(TreeScope.Subtree,
+                        Condition.TrueCondition);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+            }
+            return false;
+        }
         internal int InternalWaitTillGuiExist(String windowName,
             String objName = null, int guiTimeOut = 30, String state = null)
         {
