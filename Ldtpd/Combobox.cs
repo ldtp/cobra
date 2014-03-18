@@ -149,14 +149,14 @@ namespace Ldtpd
             ArrayList childList = null)
         {
             bool verify = actionType == "Verify" ? true : false;
-            ControlType[] type = new ControlType[3] { ControlType.ComboBox,
+            ControlType[] comboTtype = new ControlType[3] { ControlType.ComboBox,
                 ControlType.ListItem, ControlType.List/*, ControlType.Text */ };
             AutomationElement childHandle = utils.GetObjectHandle(windowName,
-                objName, type, !verify);
+                objName, comboTtype, !verify);
             Object pattern = null;
             Object invokePattern = null;
             AutomationElement elementItem = null;
-            type = new ControlType[1] { ControlType.Button };
+            ControlType[]  type = new ControlType[1] { ControlType.Button };
             try
             {
                 LogMessage("Handle name: " + childHandle.Current.Name +
@@ -166,6 +166,8 @@ namespace Ldtpd
                     throw new XmlRpcFaultException(123, "Object state is disabled");
                 }
                 elementItem = utils.GetObjectHandle(childHandle, "Open", type, true);
+                LogMessage("elementItem: " + elementItem.Current.Name +
+                                    " - " + elementItem.Current.ControlType.ProgrammaticName);
                 if (childHandle.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,
                     out pattern) || childHandle.TryGetCurrentPattern(
                     InvokePattern.Pattern, out invokePattern) ||
@@ -240,15 +242,28 @@ namespace Ldtpd
                                     elementItem.TryGetCurrentPattern(InvokePattern.Pattern,
                                     out invokePattern)))
                                 {
-                                    ((InvokePattern)invokePattern).Invoke();
+                                    LogMessage("InvokePattern");
+                                    childHandle.SetFocus();
+                                    utils.InternalClick(elementItem);
+                                    // InvokePattern doesn't work with Virtual Network
+                                    // Editor of VMware Workstation, so used the above InternalClick
+                                    //((InvokePattern)invokePattern).Invoke();
                                 }
                                 else if (pattern != null)
+                                {
+                                    LogMessage("ExpandCollapsePattern");
                                     ((ExpandCollapsePattern)pattern).Expand();
+                                }
                                 // Required to wait 1 second,
                                 // before checking the state and retry expanding
                                 utils.InternalWait(1);
+                                LogMessage("Handle name: " + childHandle.Current.Name +
+                                    " - " + childHandle.Current.ControlType.ProgrammaticName);
+                                bool typeExist = utils.InternalWaitTillChildControlTypeExist(childHandle, comboTtype);
+                                LogMessage("Control type exist: " + typeExist);
                                 AutomationElementCollection c = childHandle.FindAll(TreeScope.Subtree,
                                     Condition.TrueCondition);
+                                LogMessage("AutomationElementCollection " + c.Count);
                                 foreach (AutomationElement e in c)
                                 {
                                     LogMessage(e.Current.Name + " : " + e.Current.ControlType.ProgrammaticName);
@@ -266,6 +281,7 @@ namespace Ldtpd
                                         }
                                     }
                                 }
+                                LogMessage("Unable to find selected combo box value");
                                 c = null;
                                 selectionPattern = null;
                                 if (invokePattern != null)
@@ -337,6 +353,7 @@ namespace Ldtpd
                 // verified correctly on Player with this fix
                 else
                 {
+                    LogMessage("SelectListItem");
                     childHandle.SetFocus();
                     return SelectListItem(childHandle, item, verify) ? 1 : 0;
                 }
@@ -352,7 +369,7 @@ namespace Ldtpd
             }
             finally
             {
-                type = null;
+                comboTtype = type = null;
                 pattern = invokePattern = null;
                 elementItem = childHandle = null;
             }
