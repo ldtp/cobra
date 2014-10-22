@@ -113,12 +113,34 @@ namespace Ldtpd
                     c = element.FindAll(TreeScope.Subtree, condition);
                     foreach (AutomationElement e in c)
                     {
-                        if (this.IndexOf(e) == -1)
+/*
+                        if (this.IndexOf(e) == -1) // oriniganl code
                         {
                             // New subwindow is available, add it to the list
                             this.Add(e);
                             common.LogMessage(e.Current.Name);
                         }
+*/
+
+                        try // TEST: ".IndexOf" sometimes throws an exception on my system
+                        {
+                            if (this.IndexOf(e) == -1)
+                            {
+                                // New subwindow is available, add it to the list
+                                this.Add(e);
+                                common.LogMessage(e.Current.Name);
+                            }
+                        }
+                        catch (System.UnauthorizedAccessException ex)
+                        {
+                            // https://bugzilla.gnome.org/show_bug.cgi?id=706992
+                            // Cobra looses all objects after steps specified inside
+                            common.LogMessage(ex);
+                            common.Wait(1);
+                            element = w.walker.GetFirstChild(AutomationElement.RootElement);
+                            this.Clear();
+                            continue;
+                        } 
                     }
                     // Get next application in the list
                     element = w.walker.GetNextSibling(element);
@@ -270,6 +292,7 @@ namespace Ldtpd
                         common.LogMessage("Added: " +
                             element.Current.ControlType.ProgrammaticName +
                             " : " + element.Current.Name + " : " + rid);
+
                         if (this.IndexOf(element) == -1)
                             this.Add(element);
                         common.LogMessage("Window list count: " +

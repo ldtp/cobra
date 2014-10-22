@@ -130,10 +130,29 @@ namespace Ldtpd
                 objInfo = new ObjInfo(false);
                 while (null != element)
                 {
-                    if (utils.windowList.IndexOf(element) == -1)
+                    int Index = -1;
+
+                    // In case of an exception, the program adds the element as
+                    // new element to the windowList. Now I see my missing Qt window.
+                    try
+                    {
+                        Index = utils.windowList.IndexOf(element);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogMessage(ex);
+                    }
+
+                    if (Index == -1)
                         utils.windowList.Add(element);
+
+//                    if (utils.windowList.IndexOf(element) == -1) // orignal code
+//                        utils.windowList.Add(element);
                     s = element.Current.Name;
-                    LogMessage("Window name: " + s);
+                    if (!String.IsNullOrEmpty(s))
+                    {
+                        LogMessage("Window name: " + s);
+                    }
                     currObjInfo = objInfo.GetObjectType(element);
                     if (String.IsNullOrEmpty(s))
                         actualString = currObjInfo.objType + currObjInfo.objCount;
@@ -144,7 +163,11 @@ namespace Ldtpd
                     {
                         if (windowArrayList.IndexOf(actualString) < 0)
                             break;
-                        actualString = currObjInfo.objType + s + index;
+                        if (String.IsNullOrEmpty(s)) // handling of an empty string like above
+                            actualString = currObjInfo.objType + currObjInfo.objCount + index;
+                        else
+                            actualString = currObjInfo.objType + s + index;
+//                        actualString = currObjInfo.objType + s + index; // original code
                         index++;
                     }
                     windowArrayList.Add(actualString);
@@ -153,8 +176,24 @@ namespace Ldtpd
                         c = element.FindAll(TreeScope.Subtree, condition);
                         foreach (AutomationElement e in c)
                         {
-                            if (utils.windowList.IndexOf(e) == -1)
-                                utils.windowList.Add(e);
+                            Index = -1;
+
+                            // In case of an exception, the program adds the element as
+                            // new element to the windowList. Now I see my missing Qt window.
+                            try
+                            {
+                                Index = utils.windowList.IndexOf(element);
+                            }
+                            catch (Exception ex)
+                            {
+                                LogMessage(ex);
+                            }
+
+                            if (Index == -1)
+                                utils.windowList.Add(element);
+
+//                            if (utils.windowList.IndexOf(e) == -1) // orignal code
+//                                utils.windowList.Add(e);
                             s = e.Current.Name;
                             currObjInfo = objInfo.GetObjectType(e);
                             if (String.IsNullOrEmpty(s))
@@ -186,6 +225,21 @@ namespace Ldtpd
             {
                 LogMessage(ex);
             }
+
+            try
+            {
+                if(windowArrayList.Count > 0)
+                {
+                   // Sometimes the command "getwindowlist" delivered an empty string, but 
+                   // within the array "windowArrayList" were data. Now the included window names are returned.
+                   return windowArrayList.ToArray(typeof(string)) as string[];
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage(ex);
+            }
+
             finally
             {
                 w = null;

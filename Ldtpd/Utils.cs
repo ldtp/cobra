@@ -280,10 +280,28 @@ namespace Ldtpd
                 {
                     try
                     {
-                        if (windowList.IndexOf(element) == -1)
+                        int Index = -1;
+
+                        // In case of an exception, the program adds the element as
+                        // new element to the windowList. Now I see my missing Qt window.
+                        try
+                        {
+                            Index = windowList.IndexOf(element);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogMessage(ex);
+                        }
+
+                        if (Index == -1)
+                            windowList.Add(element);
+
+/*
+                        if (windowList.IndexOf(element) == -1) // original code
                             // Add parent window handle,
                             // if it doesn't exist
                             windowList.Add(element);
+ */ 
                     }
                     catch (System.UnauthorizedAccessException ex)
                     {
@@ -322,10 +340,35 @@ namespace Ldtpd
                     c = element.FindAll(TreeScope.Subtree, condition);
                     foreach (AutomationElement e in c)
                     {
-                        if (windowList.IndexOf(e) == -1)
-                            // Add sub window handle, if it doesn't
-                            // exist
-                            windowList.Add(e);
+                        try
+                        {
+                            int Index = -1;
+
+                            // In case of an exception, the program adds the element as
+                            // new element to the windowList. Now I see my missing Qt window.
+                            try
+                            {
+                                Index = windowList.IndexOf(element);
+                            }
+                            catch (Exception ex)
+                            {
+                                LogMessage(ex);
+                            }
+
+                            if (Index == -1)
+                                windowList.Add(element);
+/*
+                            if (windowList.IndexOf(e) == -1) // original code
+                                // Add sub window handle, if it doesn't
+                                // exist
+                                windowList.Add(e);
+ */ 
+                        }
+                        catch (Exception ex)
+                        {
+                            LogMessage(ex); // only a try, perhaps the try around IndexOf is enough
+                        }
+
                         currObjInfo = objInfo.GetObjectType(e);
                         s = e.Current.Name;
                         if (s != null)
@@ -973,10 +1016,34 @@ namespace Ldtpd
                     AutomationElement element = w.walker.GetFirstChild(AutomationElement.RootElement);
                     while (null != element)
                     {
-                        if (windowList.IndexOf(element) == -1)
-                            // Add parent window handle,
-                            // if it doesn't exist
-                            windowList.Add(element);
+                        try
+                        {
+                            int Index = -1;
+
+                            // In case of an exception, the program adds the element as
+                            // new element to the windowList. Now I see my missing Qt window.
+                            try
+                            {
+                                Index = windowList.IndexOf(element);
+                            }
+                            catch (Exception ex)
+                            {
+                                LogMessage(ex);
+                            }
+
+                            if (Index == -1)
+                                windowList.Add(element);
+/*
+                            if (windowList.IndexOf(element) == -1) // original code
+                                // Add parent window handle,
+                                // if it doesn't exist
+                                windowList.Add(element);
+ */ 
+                        }
+                        catch (Exception ex)
+                        {
+                            LogMessage(ex); // only a try, perhaps the try around IndexOf is enough
+                        }
                         try
                         {
                             if (element.Current.ProcessId != processId)
