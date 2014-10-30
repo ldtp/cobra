@@ -130,24 +130,22 @@ namespace Ldtpd
                 objInfo = new ObjInfo(false);
                 while (null != element)
                 {
-                    int Index = -1;
+                    index = -1;
 
                     // In case of an exception, the program adds the element as
                     // new element to the windowList. Now I see my missing Qt window.
                     try
                     {
-                        Index = utils.windowList.IndexOf(element);
+                        index = utils.windowList.IndexOf(element);
                     }
                     catch (Exception ex)
                     {
                         LogMessage(ex);
                     }
 
-                    if (Index == -1)
+                    if (index == -1)
                         utils.windowList.Add(element);
 
-//                    if (utils.windowList.IndexOf(element) == -1) // orignal code
-//                        utils.windowList.Add(element);
                     s = element.Current.Name;
                     if (!String.IsNullOrEmpty(s))
                     {
@@ -167,7 +165,6 @@ namespace Ldtpd
                             actualString = currObjInfo.objType + currObjInfo.objCount + index;
                         else
                             actualString = currObjInfo.objType + s + index;
-//                        actualString = currObjInfo.objType + s + index; // original code
                         index++;
                     }
                     windowArrayList.Add(actualString);
@@ -176,24 +173,22 @@ namespace Ldtpd
                         c = element.FindAll(TreeScope.Subtree, condition);
                         foreach (AutomationElement e in c)
                         {
-                            Index = -1;
+                            index = -1;
 
                             // In case of an exception, the program adds the element as
                             // new element to the windowList. Now I see my missing Qt window.
                             try
                             {
-                                Index = utils.windowList.IndexOf(element);
+                                index = utils.windowList.IndexOf(element);
                             }
                             catch (Exception ex)
                             {
                                 LogMessage(ex);
                             }
 
-                            if (Index == -1)
+                            if (index == -1)
                                 utils.windowList.Add(element);
 
-//                            if (utils.windowList.IndexOf(e) == -1) // orignal code
-//                                utils.windowList.Add(e);
                             s = e.Current.Name;
                             currObjInfo = objInfo.GetObjectType(e);
                             if (String.IsNullOrEmpty(s))
@@ -228,7 +223,7 @@ namespace Ldtpd
 
             try
             {
-                if(windowArrayList.Count > 0)
+                if (windowArrayList.Count > 0)
                 {
                    // Sometimes the command "getwindowlist" delivered an empty string, but 
                    // within the array "windowArrayList" were data. Now the included window names are returned.

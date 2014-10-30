@@ -280,28 +280,22 @@ namespace Ldtpd
                 {
                     try
                     {
-                        int Index = -1;
+                        index = -1;
 
                         // In case of an exception, the program adds the element as
                         // new element to the windowList. Now I see my missing Qt window.
                         try
                         {
-                            Index = windowList.IndexOf(element);
+                            index = windowList.IndexOf(element);
                         }
                         catch (Exception ex)
                         {
                             LogMessage(ex);
                         }
 
-                        if (Index == -1)
+                        if (index == -1)
                             windowList.Add(element);
 
-/*
-                        if (windowList.IndexOf(element) == -1) // original code
-                            // Add parent window handle,
-                            // if it doesn't exist
-                            windowList.Add(element);
- */ 
                     }
                     catch (System.UnauthorizedAccessException ex)
                     {
@@ -342,27 +336,21 @@ namespace Ldtpd
                     {
                         try
                         {
-                            int Index = -1;
+                            index = -1;
 
                             // In case of an exception, the program adds the element as
                             // new element to the windowList. Now I see my missing Qt window.
                             try
                             {
-                                Index = windowList.IndexOf(element);
+                                index = windowList.IndexOf(element);
                             }
                             catch (Exception ex)
                             {
                                 LogMessage(ex);
                             }
 
-                            if (Index == -1)
+                            if (index == -1)
                                 windowList.Add(element);
-/*
-                            if (windowList.IndexOf(e) == -1) // original code
-                                // Add sub window handle, if it doesn't
-                                // exist
-                                windowList.Add(e);
- */ 
                         }
                         catch (Exception ex)
                         {
