@@ -133,7 +133,7 @@ namespace Ldtpd
             else if (type == ControlType.Table)
                 // For Linux compatibility
                 return new CurrentObjInfo("tbl", tbl++);
-            else if (type == ControlType.Pane)
+            else if (type == ControlType.Pane || type == ControlType.Group)
             {
                 if (String.IsNullOrEmpty(e.Current.Name))
                     return new CurrentObjInfo("pane", pane++);
