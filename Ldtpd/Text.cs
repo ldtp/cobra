@@ -140,6 +140,11 @@ namespace Ldtpd
                     return ((RangeValuePattern)pattern).Current.Value.ToString(
                         CultureInfo.CurrentCulture);
                 }
+		else if (childHandle.TryGetCurrentPattern(
+                    LegacyIAccessiblePattern.Pattern, out pattern))
+                {
+                    data = ((LegacyIAccessiblePattern)pattern).Current.Value;
+                }
                 else
                 {
                     throw new XmlRpcFaultException(123, "Unable to get text");
