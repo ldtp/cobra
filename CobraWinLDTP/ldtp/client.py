@@ -66,9 +66,10 @@ else:
 
 class _Method(xmlrpclib._Method):
     def __call__(self, *args, **kwargs):
-        logger.debug('%s(%s)' % (self.__name, \
-                                     ', '.join(list(map(repr, args)) + ['%s=%s' % (k, repr(v)) \
-                                                                      for k, v in kwargs.items()])))
+        if _ldtp_debug:
+            logger.debug('%s(%s)' % (self.__name, \
+                                         ', '.join(list(map(repr, args)) + ['%s=%s' % (k, repr(v)) \
+                                                                          for k, v in kwargs.items()])))
         return self.__send(self.__name, args)
 
 class Transport(xmlrpclib.Transport):
