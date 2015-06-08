@@ -67,7 +67,7 @@ else:
 class _Method(xmlrpclib._Method):
     def __call__(self, *args, **kwargs):
         logger.debug('%s(%s)' % (self.__name, \
-                                     ', '.join(map(repr, args) + ['%s=%s' % (k, repr(v)) \
+                                     ', '.join(list(map(repr, args)) + ['%s=%s' % (k, repr(v)) \
                                                                       for k, v in kwargs.items()])))
         return self.__send(self.__name, args)
 
