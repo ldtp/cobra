@@ -822,6 +822,19 @@ namespace Ldtpd
                         if (debug || writeToFile != null)
                             LogMessage("Obj name: " + s + " : " +
                                 element.Current.ControlType.ProgrammaticName);
+			if (element.Current.ControlType == ControlType.MenuItem)
+                        { // Do this only for menuitem type
+                            // Split keyboard shortcut, as that might not be
+                            // part of user provided object name
+                            string[] tmpStrArray = Regex.Split(s, @"\t");
+                            LogMessage("Menuitem shortcut length: " +
+                                tmpStrArray.Length);
+                            if (tmpStrArray.Length > 1)
+                                // Keyboard shortcut found,
+                                // just take first element from array
+                                s = tmpStrArray[0];
+                            tmpStrArray = null;
+                        }
                     }
                     actualString = null;
                     if (s != null)
