@@ -789,6 +789,16 @@ namespace Ldtpd
                         return element.Current.Name;
                     else
                     {
+                        //try use msaa to access value
+                        try
+                        {
+                            var editorValuePattern = element.GetCurrentPattern(LegacyIAccessiblePattern.Pattern) as LegacyIAccessiblePattern;
+                            return editorValuePattern.Current.Value;
+                        }
+                        catch (Exception ex)
+                        {
+                            LogMessage(ex);
+                        }
                         // Specific to DataGrid of Windows Forms
                         element.SetFocus();
                         Mouse mouse = new Mouse(utils);
