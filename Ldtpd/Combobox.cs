@@ -259,7 +259,7 @@ namespace Ldtpd
                                 utils.InternalWait(1);
                                 LogMessage("Handle name: " + childHandle.Current.Name +
                                     " - " + childHandle.Current.ControlType.ProgrammaticName);
-                                bool typeExist = utils.InternalWaitTillChildControlTypeExist(childHandle, comboTtype);
+                                bool typeExist = utils.InternalWaitTillChildControlTypeExist(childHandle, type);
                                 LogMessage("Control type exist: " + typeExist);
                                 AutomationElementCollection c = childHandle.FindAll(TreeScope.Subtree,
                                     Condition.TrueCondition);
