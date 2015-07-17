@@ -52,8 +52,9 @@ namespace Ldtpd
         {
             // Pane added for a bug in QT
             // Ref: https://cobra.codeplex.com/discussions/450296
-            ControlType[] type = new ControlType[4] { ControlType.Edit,
-                ControlType.Document, ControlType.ComboBox, ControlType.Pane };
+            ControlType[] type = new ControlType[5] { ControlType.Edit,
+                ControlType.Document, ControlType.ComboBox, ControlType.Pane,
+                ControlType.Text };
             try
             {
                 return utils.GetObjectHandle(windowName, objName, type);
@@ -140,7 +141,7 @@ namespace Ldtpd
                     return ((RangeValuePattern)pattern).Current.Value.ToString(
                         CultureInfo.CurrentCulture);
                 }
-		else if (childHandle.TryGetCurrentPattern(
+                else if (childHandle.TryGetCurrentPattern(
                     LegacyIAccessiblePattern.Pattern, out pattern))
                 {
                     data = ((LegacyIAccessiblePattern)pattern).Current.Value;
