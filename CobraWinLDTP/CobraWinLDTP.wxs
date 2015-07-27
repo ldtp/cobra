@@ -94,7 +94,7 @@ SOFTWARE.
             <File Id='CobraWinLDTPEXE'
                   Name='CobraWinLDTP.exe'
                   DiskId='1'
-                  Source='CobraWinLDTP.exe'
+                  Source='CobraWinLDTP\bin\Release\CobraWinLDTP.exe'
                   KeyPath='yes'>
             <!--
             <Shortcut Id="startmenuWinLDTPService"
@@ -119,7 +119,7 @@ SOFTWARE.
             <File Id='SetEnvironmentVariableexe'
                   Name='SetEnvironmentVariable.exe'
                   DiskId='1'
-                  Source='SetEnvironmentVariable.exe'
+                  Source='../SetEnvironmentVariable/bin/Release/SetEnvironmentVariable.exe'
                   KeyPath='yes' />
          </Component>
 
@@ -139,7 +139,7 @@ SOFTWARE.
             <File Id='LDTPDLL'
                   Name='Ldtp.dll'
                   DiskId='1'
-                  Source='Ldtp.dll'
+                  Source='../Ldtp/bin/Release/Ldtp.dll'
                   KeyPath='yes' />
          </Component>
 
@@ -159,7 +159,7 @@ SOFTWARE.
             <File Id='LdtpdDLL'
                   Name='Ldtpd.dll'
                   DiskId='1'
-                  Source='Ldtpd.dll'
+                  Source='../Ldtpd/bin/Release/Ldtpd.dll'
                   KeyPath='yes' />
          </Component>
 
