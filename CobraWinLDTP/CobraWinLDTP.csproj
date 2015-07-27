@@ -56,7 +56,7 @@
     </Reference>
     <Reference Include="Ldtpd, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Ldtpd\bin\Debug\Ldtpd.dll</HintPath>
+      <HintPath>..\Ldtpd\bin\$(Configuration)\Ldtpd.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Runtime.Remoting" />

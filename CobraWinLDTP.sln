@@ -1,11 +1,16 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Express 2013 for Windows Desktop
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SetEnvironmentVariable", "SetEnvironmentVariable\SetEnvironmentVariable.csproj", "{44AC3DB7-85CD-4CCD-9A21-5F1514FC2020}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ldtpd", "Ldtpd\Ldtpd.csproj", "{3D7915FE-B8A9-4B21-8596-84EEEAB0FCD3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CobraWinLDTP", "CobraWinLDTP\CobraWinLDTP.csproj", "{4DAD9BF6-6DCF-4B9F-913A-0CC80925CD3C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3D7915FE-B8A9-4B21-8596-84EEEAB0FCD3} = {3D7915FE-B8A9-4B21-8596-84EEEAB0FCD3}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ldtp", "Ldtp\Ldtp.csproj", "{22180E1A-B4B2-4A7A-B15E-DD70F98B3299}"
 EndProject
