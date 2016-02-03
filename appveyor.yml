@@ -1,0 +1,13 @@
+assembly_info:
+  patch: true
+
+platform: Any CPU
+
+configuration: Release
+
+build:
+  project: CobraWinLDTP.sln
+
+artifacts:
+  - path: '**\*.msi'
+    name: CobraWinLDTP
