@@ -6,3 +6,6 @@ build/
 doc/html/
 .DS_Store
 CobraWinLDTP/ldtp/Java/lib/
+*/bin/
+*/obj/
+*.suo
