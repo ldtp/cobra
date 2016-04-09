@@ -1,6 +1,25 @@
+environment:
+  global:
+    EXT_LIBS_PATH: CobraWinLDTP\ldtp\Java\lib
+    LDTP_JAVA_SRC_PATH: CobraWinLDTP\ldtp\Java\src
+
+install:
+  - mkdir CobraWinLDTP\ldtp\Java\lib
+  - curl -fsS -o %EXT_LIBS_PATH%\commons-codec-1.6.jar http://central.maven.org/maven2/commons-codec/commons-codec/1.6/commons-codec-1.6.jar
+  - curl -fsS -o %EXT_LIBS_PATH%\ws-commons-util-1.0.2.jar http://central.maven.org/maven2/org/apache/ws/commons/util/ws-commons-util/1.0.2/ws-commons-util-1.0.2.jar
+  - curl -fsS -o %EXT_LIBS_PATH%\xmlrpc-client-3.1.3.jar http://central.maven.org/maven2/org/apache/xmlrpc/xmlrpc-client/3.1.3/xmlrpc-client-3.1.3.jar
+  - curl -fsS -o %EXT_LIBS_PATH%\xmlrpc-common-3.1.3.jar http://central.maven.org/maven2/org/apache/xmlrpc/xmlrpc-common/3.1.3/xmlrpc-common-3.1.3.jar
+  - curl -fsS -o %EXT_LIBS_PATH%\commons-logging-1.1.1.jar http://central.maven.org/maven2/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar
+  - curl -fsS -o %EXT_LIBS_PATH%\commons-logging-adapters-1.1.jar http://central.maven.org/maven2/commons-logging/commons-logging-adapters/1.1/commons-logging-adapters-1.1.jar
+  - curl -fsS -o %EXT_LIBS_PATH%\commons-logging-api-1.1.jar http://central.maven.org/maven2/commons-logging/commons-logging-api/1.1/commons-logging-api-1.1.jar
+  - javac -cp .;%EXT_LIBS_PATH%\*; %LDTP_JAVA_SRC_PATH%\com\cobra\ldtp\*.java
+  - cd %LDTP_JAVA_SRC_PATH%
+  - jar cvf ..\..\ldtp.jar com\cobra\ldtp\*.class
+  - cd ..\..\..\..
+
 assembly_info:
   patch: true
-
+ 
 platform: Any CPU
 
 configuration: Release
