@@ -497,8 +497,35 @@ SOFTWARE.
                         Return="check">
         </CustomAction>
 
+        <CustomAction   Id="ListenerServiceAddLocalHostReservation"
+                        Execute='deferred'
+                        Impersonate='no'
+                        Directory="INSTALLDIR"
+                        ExeCommand="netsh http add urlacl url=http://localhost:4118/ user=[%USERDOMAIN]\[%USERNAME]"
+                        Return="check" />
+
+        <CustomAction   Id="ListenerServiceAddLocalIPReservation"
+                        Execute='deferred'
+                        Impersonate='no'
+                        Directory="INSTALLDIR"
+                        ExeCommand="netsh http add urlacl url=http://+:4118/ user=[%USERDOMAIN]\[%USERNAME]"
+                        Return="check" />
+
+        <CustomAction   Id="ListenerServiceAddAllIPReservation"
+                        Execute='deferred'
+                        Impersonate='no'
+                        Directory="INSTALLDIR"
+                        ExeCommand="netsh http add urlacl url=http://*:4118/ user=[%USERDOMAIN]\[%USERNAME]"
+                        Return="check" />
+
         <InstallExecuteSequence> 
             <WriteEnvironmentStrings />
+            <Custom Action="ListenerServiceAddLocalHostReservation"
+                    Before='InstallFinalize'>NOT Installed</Custom>
+            <Custom Action="ListenerServiceAddLocalIPReservation"
+                    Before='InstallFinalize'>NOT Installed</Custom>
+            <Custom Action="ListenerServiceAddAllIPReservation"
+                    Before='InstallFinalize'>NOT Installed</Custom>
             <Custom Action="LaunchSetEnvironmentVariable" 
                     After="InstallFinalize">NOT Installed</Custom>
         </InstallExecuteSequence>
