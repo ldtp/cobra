@@ -4,7 +4,7 @@
 CobraWinLDTP 4.0
 
 @author: Nagappan Alagappan <nalagappan@vmware.com>
-@copyright: Copyright (c) 2011-13 VMware Inc.,
+@copyright: Copyright (c) 2011-16 VMware Inc.,
 @license: MIT license
 
 http://ldtp.freedesktop.org
@@ -31,370 +31,515 @@ SOFTWARE.
 <?define UpgradeCode=F0C8AC98-8C96-40F3-8D51-0EF5B40343EC?>
 <?define Version=4.0.0?>
 <?if $(sys.BUILDARCH)=x64?>
-   <?define Is64bit="yes"?>
-   <?define CommonFilesFolder="CommonFiles64Folder"?>
-   <?define ProgramFilesFolder="ProgramFiles64Folder"?>
-   <?define SystemFolder="System64Folder"?>
+    <?define Is64bit="yes"?>
+    <?define CommonFilesFolder="CommonFiles64Folder"?>
+    <?define ProgramFilesFolder="ProgramFiles64Folder"?>
+    <?define SystemFolder="System64Folder"?>
 <?elseif $(sys.BUILDARCH)=x86?>
-   <?define Is64bit="no"?>
-   <?define CommonFilesFolder="CommonFilesFolder"?>
-   <?define ProgramFilesFolder="ProgramFilesFolder"?>
-   <?define SystemFolder="SystemFolder"?>
+    <?define Is64bit="no"?>
+    <?define CommonFilesFolder="CommonFilesFolder"?>
+    <?define ProgramFilesFolder="ProgramFilesFolder"?>
+    <?define SystemFolder="SystemFolder"?>
 <?else?>
-   <?error Unknown build architecture?>
+    <?error Unknown build architecture?>
 <?endif?>
 
-   <Product Id='*'
-            UpgradeCode='$(var.UpgradeCode)'
-            Name='CobraWinLDTP'
-            Language='1033'
-            Codepage='1252'
-            Version='$(var.Version)'
-	    Manufacturer='VMware, Inc. (http://ldtp.freedesktop.org)'>
+    <Product    Id='*'
+                UpgradeCode='$(var.UpgradeCode)'
+                Name='CobraWinLDTP'
+                Language='1033'
+                Codepage='1252'
+                Version='$(var.Version)'
+                Manufacturer='VMware, Inc. (http://ldtp.freedesktop.org)'>
 
-      <Package Id='*'
-               Description='Cobra Windows LDTP 4.0 Installer'
-               Comments='Cobra Windows LDTP is Free Software project.'
-               Manufacturer='VMware, Inc.'
-               InstallerVersion='200'
-               Languages='1033'
-               Compressed='yes'
-               SummaryCodepage='1252' />
+        <Package    Id='*'
+                    Description='Cobra Windows LDTP 4.0 Installer'
+                    Comments='Cobra Windows LDTP is Free Software project.'
+                    Manufacturer='VMware, Inc.'
+                    InstallerVersion='200'
+                    Languages='1033'
+                    Compressed='yes'
+                    SummaryCodepage='1252' />
 
-      <Media Id='1' Cabinet='data.cab' EmbedCab='yes' />
+        <Media  Id='1' Cabinet='data.cab' EmbedCab='yes' />
 
-      <Directory Id='TARGETDIR' Name='SourceDir'>
-         <Directory Id='$(var.ProgramFilesFolder)'>
-            <Directory Id='CompanyFolder' Name='VMware'>
-               <Directory Id='INSTALLDIR' Name='CobraWinLDTP'>
-                  <Directory Id='PYLDTPDIR' Name='ldtp'>
-                     <Directory Id='PERLLDTPDIR' Name='LDTP'>
-                        <Directory Id='ROLEDIR' Name='Role' />
-                     </Directory>
-                  </Directory>
-		  <Directory Id='PYLDTPUTILSDIR' Name='ldtputils' />
-		  <Directory Id='PYOOLDTPDIR' Name='ooldtp' />
-               </Directory>
+        <Directory Id='TARGETDIR' Name='SourceDir'>
+            <Directory Id='$(var.ProgramFilesFolder)'>
+                <Directory Id='CompanyFolder' Name='VMware'>
+                    <Directory Id='INSTALLDIR' Name='CobraWinLDTP'>
+                        <Directory Id='PYLDTPDIR' Name='ldtp'>
+                            <Directory Id='PERLLDTPDIR' Name='LDTP'>
+                                <Directory Id='ROLEDIR' Name='Role' />
+                            </Directory>
+                        </Directory>
+                        <Directory Id='PYLDTPUTILSDIR' Name='ldtputils' />
+                        <Directory Id='PYOOLDTPDIR' Name='ooldtp' />
+                    </Directory>
+                </Directory>
             </Directory>
-         </Directory>
-         <Directory Id="ProgramMenuFolder">
-            <Directory Id="ProgramMenuDir" Name="CobraWinLDTP" />
-         </Directory>
-         <Directory Id="DesktopFolder" />
-      </Directory>
+            <Directory Id="ProgramMenuFolder">
+                <Directory Id="ProgramMenuDir" Name="CobraWinLDTP" />
+            </Directory>
+            <Directory Id="DesktopFolder" />
+        </Directory>
 
-      <DirectoryRef Id='INSTALLDIR'>
-         <Component Id='MainExecutable'
-                    Guid='F0C8AC98-8C96-40F3-8D51-0EF5B40343EC'
-                    Win64="$(var.Is64bit)">
-            <Environment Id='UpdatePath' Name='PATH' Action='set' Permanent='no' System='yes' Part='last' Value='[INSTALLDIR]' />
-            <Environment Id='UpdatePythonPath' Name='PYTHONPATH' Action='set' Permanent='no' System='yes' Part='last' Value='[INSTALLDIR]' />
-            <Environment Id='UpdateRubyPath' Name='RUBYLIB' Action='set' Permanent='no' System='yes' Part='last' Value='[PYLDTPDIR]' />
-            <Environment Id='UpdatePerlPath' Name='PERL5LIB' Action='set' Permanent='no' System='yes' Part='last' Value='[PYLDTPDIR]' />
-            <File Id='CobraWinLDTPEXE'
-                  Name='CobraWinLDTP.exe'
-                  DiskId='1'
-                  Source='..\CobraWinLDTP\bin\Release\CobraWinLDTP.exe'
-                  KeyPath='yes'>
-            <!--
-            <Shortcut Id="startmenuWinLDTPService"
-                      Directory="ProgramMenuDir"
-                      Name="Cobra WinLDTP Service"
-                      WorkingDirectory='INSTALLDIR'
-                      Icon="CobraWinLDTP.exe"
-                      IconIndex="0"
-		      Advertise="no" />
-            -->
-            <!-- This is considered BAD practice - should be a user option, defaulting to no -->
-            <!-- FYI, look into 
-               <ShortcutProperty Key="System.AppUserModel.PreventPinning" Value="0" />
-               <ShortcutProperty Key="System.AppUserModel.ID" Value="[AppUserModelId]" />
-              These would be child elements of Shortcut.
-            -->
-            </File>
-         </Component>
-         <Component Id='SetEnvironmentVariable'
-                    Guid='5F6DEE34-7DEB-49F5-8392-44936CC15348'
-                    Win64="$(var.Is64bit)">
-            <File Id='SetEnvironmentVariableexe'
-                  Name='SetEnvironmentVariable.exe'
-                  DiskId='1'
-                  Source='..\SetEnvironmentVariable\bin\Release\SetEnvironmentVariable.exe'
-                  KeyPath='yes' />
-         </Component>
+        <DirectoryRef Id='INSTALLDIR'>
+            <Component  Id='MainExecutable'
+                        Guid='F0C8AC98-8C96-40F3-8D51-0EF5B40343EC'
+                        Win64="$(var.Is64bit)">
+                <Environment    Id='UpdatePath' 
+                                Name='PATH' 
+                                Action='set' 
+                                Permanent='no' 
+                                System='yes' 
+                                Part='last' 
+                                Value='[INSTALLDIR]' />
+                <Environment    Id='UpdatePythonPath'
+                                Name='PYTHONPATH' 
+                                Action='set'
+                                Permanent='no'
+                                System='yes'
+                                Part='last'
+                                Value='[INSTALLDIR]' />
+                <Environment    Id='UpdateRubyPath'
+                                Name='RUBYLIB'
+                                Action='set'
+                                Permanent='no'
+                                System='yes'
+                                Part='last'
+                                Value='[PYLDTPDIR]' />
+                <Environment    Id='UpdatePerlPath'
+                                Name='PERL5LIB'
+                                Action='set'
+                                Permanent='no'
+                                System='yes'
+                                Part='last'
+                                Value='[PYLDTPDIR]' />
+                <File   Id='CobraWinLDTPEXE'
+                        Name='CobraWinLDTP.exe'
+                        DiskId='1'
+                        Source='..\CobraWinLDTP\bin\Release\CobraWinLDTP.exe'
+                        KeyPath='yes'>
+                </File>
+                <!--
+                <Shortcut   Id="startmenuWinLDTPService"
+                            Directory="ProgramMenuDir"
+                            Name="Cobra WinLDTP Service"
+                            WorkingDirectory='INSTALLDIR'
+                            Icon="CobraWinLDTP.exe"
+                            IconIndex="0"
+                            Advertise="no" />
+                -->
 
-         <Component Id='CookComputing.XmlRpcV2'
-                    Guid='7CD1E932-A456-4858-956B-AB807AB8DB04'
-                    Win64="$(var.Is64bit)">
-            <File Id='CookComputing.XmlRpcV2DLL'
-                  Name='CookComputing.XmlRpcV2.dll'
-                  DiskId='1'
-                  Source='..\CobraWinLDTP\bin\Release\CookComputing.XmlRpcV2.dll'
-                  KeyPath='yes' />
-         </Component>
+                <!-- 
+                This is considered BAD practice - should be a user option, 
+                defaulting to no. FYI, look into: 
+                <ShortcutProperty Key="System.AppUserModel.PreventPinning" Value="0" />
+                <ShortcutProperty Key="System.AppUserModel.ID" Value="[AppUserModelId]" />
+                These would be child elements of Shortcut.
+                -->
+            </Component>
 
-         <Component Id='Ldtp'
-                    Guid='9ABA623C-B906-467A-B937-3E4233517AE7'
-                    Win64="$(var.Is64bit)">
-            <File Id='LDTPDLL'
-                  Name='Ldtp.dll'
-                  DiskId='1'
-                  Source='..\Ldtp\bin\Release\Ldtp.dll'
-                  KeyPath='yes' />
-         </Component>
+            <Component  Id='SetEnvironmentVariable'
+                        Guid='5F6DEE34-7DEB-49F5-8392-44936CC15348'
+                        Win64="$(var.Is64bit)">
+                <File   Id='SetEnvironmentVariableexe'
+                        Name='SetEnvironmentVariable.exe'
+                        DiskId='1'
+                        Source='..\SetEnvironmentVariable\bin\Release\SetEnvironmentVariable.exe'
+                        KeyPath='yes' />
+            </Component>
 
-         <Component Id='Interop.UIAutomationClient'
-                    Guid='2A0D6CAA-B1B9-4321-84F7-8AED16A4EA2A'
-                    Win64="$(var.Is64bit)">
-            <File Id='Interop.UIAutomationClientDLL'
-                  Name='Interop.UIAutomationClient.dll'
-                  DiskId='1'
-                  Source='..\CobraWinLDTP\Interop.UIAutomationClient.dll'
-                  KeyPath='yes' />
-         </Component>
+            <Component  Id='CookComputing.XmlRpcV2'
+                        Guid='7CD1E932-A456-4858-956B-AB807AB8DB04'
+                        Win64="$(var.Is64bit)">
+                <File   Id='CookComputing.XmlRpcV2DLL'
+                        Name='CookComputing.XmlRpcV2.dll'
+                        DiskId='1'
+                        Source='..\CobraWinLDTP\bin\Release\CookComputing.XmlRpcV2.dll'
+                        KeyPath='yes' />
+            </Component>
 
-         <Component Id='Ldtpd'
-                    Guid='4CF67770-784E-4E26-A52A-D60B5C488502'
-                    Win64="$(var.Is64bit)">
-            <File Id='LdtpdDLL'
-                  Name='Ldtpd.dll'
-                  DiskId='1'
-                  Source='..\Ldtpd\bin\Release\Ldtpd.dll'
-                  KeyPath='yes' />
-         </Component>
+            <Component  Id='Ldtp'
+                        Guid='9ABA623C-B906-467A-B937-3E4233517AE7'
+                        Win64="$(var.Is64bit)">
+                <File   Id='LDTPDLL'
+                        Name='Ldtp.dll'
+                        DiskId='1'
+                        Source='..\Ldtp\bin\Release\Ldtp.dll'
+                        KeyPath='yes' />
+            </Component>
 
-         <Component Id='UIAComWrapper'
-                    Guid='BFF88604-2741-4BB4-AA81-5FAECE8A727B'
-                    Win64="$(var.Is64bit)">
-            <File Id='UIAComWrapperDLL'
-                  Name='UIAComWrapper.dll'
-                  DiskId='1'
-                  Source='..\CobraWinLDTP\bin\Release\UIAComWrapper.dll'
-                  KeyPath='yes' />
-         </Component>
+            <Component  Id='Interop.UIAutomationClient'
+                        Guid='2A0D6CAA-B1B9-4321-84F7-8AED16A4EA2A'
+                        Win64="$(var.Is64bit)">
+                <File   Id='Interop.UIAutomationClientDLL'
+                        Name='Interop.UIAutomationClient.dll'
+                        DiskId='1'
+                        Source='..\CobraWinLDTP\Interop.UIAutomationClient.dll'
+                        KeyPath='yes' />
+            </Component>
 
-         <Component Id='WUIATestLibrary'
-                    Guid='BFBC4427-9C93-4719-8AF6-26DB60BAB73C'
-                    Win64="$(var.Is64bit)">
-            <File Id='WUIATestLibraryDLL'
-                  Name='WUIATestLibrary.dll'
-                  DiskId='1'
-                  Source='..\CobraWinLDTP\bin\Release\WUIATestLibrary.dll'
-                  KeyPath='yes' />
-         </Component>
-	 <Component Id="mit" Guid="D14AC46F-5C53-4BF6-8FC0-0B8A6E722284">
-                <File Id="mitrtf" KeyPath="yes" Source="..\CobraWinLDTP\License.rtf" />
-         </Component>
-	 <Component Id="README" Guid="99C85611-B9B0-4D1D-A8B4-06B0EBC30B16">
-                <File Id="READMEtxt" KeyPath="yes" Source="..\CobraWinLDTP\README.txt" />
-         </Component>
-	 <Component Id="FAQ" Guid="2EAB177A-540B-4DC5-8D60-EEF551063A53">
-                <File Id="FAQtxt" KeyPath="yes" Source="..\CobraWinLDTP\FAQ.txt" />
-         </Component>
-	 <Component Id="AUTHORS" Guid="DF606170-5DA8-11E1-B86C-0800200C9A66">
-                <File Id="AUTHORStxt" KeyPath="yes" Source="..\CobraWinLDTP\AUTHORS.txt" />
-         </Component>
-      </DirectoryRef>
+            <Component  Id='Ldtpd'
+                        Guid='4CF67770-784E-4E26-A52A-D60B5C488502'
+                        Win64="$(var.Is64bit)">
+                <File   Id='LdtpdDLL'
+                        Name='Ldtpd.dll'
+                        DiskId='1'
+                        Source='..\Ldtpd\bin\Release\Ldtpd.dll'
+                        KeyPath='yes' />
+            </Component>
 
-      <DirectoryRef Id='PYLDTPUTILSDIR'>
-         <Component Id="ldtputilsinit" Guid="51F04CEC-92EF-4B6B-B484-0224E240603C">
-            <File Id="ldtputilsinitpy"
-                  Name="__init__.py"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ldtputils\__init__.py" />
-            <RemoveFile Id="ldtputilsinit" Name="__init__.pyc" On="uninstall" />
-         </Component>
-      </DirectoryRef>
+            <Component  Id='UIAComWrapper'
+                        Guid='BFF88604-2741-4BB4-AA81-5FAECE8A727B'
+                        Win64="$(var.Is64bit)">
+                <File   Id='UIAComWrapperDLL'
+                        Name='UIAComWrapper.dll'
+                        DiskId='1'
+                        Source='..\CobraWinLDTP\bin\Release\UIAComWrapper.dll'
+                        KeyPath='yes' />
+            </Component>
 
-      <DirectoryRef Id='PYOOLDTPDIR'>
-         <Component Id="ooldtpinit" Guid="60D7F37A-B7F7-4845-8018-AFE64BBE6C49">
-            <File Id="ooldtpinitpy"
-                  Name="__init__.py"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ooldtp\__init__.py" />
-            <RemoveFile Id="ooldtpinit" Name="__init__.pyc" On="uninstall" />
-         </Component>
-         <Component Id="ooldtpclientexception" Guid="48DA5D2E-807E-4CB9-AAE2-02866F368B85">
-            <File Id="ooldtpclientexceptionpy"
-                  Name="client_exception.py"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ooldtp\client_exception.py" />
-            <RemoveFile Id="ooldtpclientexception" Name="client_exception.pyc" On="uninstall" />
-         </Component>
-         <Component Id="ooldtplog" Guid="6265E13F-3A20-46A0-A1DA-53CEA5F339FD">
-            <File Id="ooldtplogpy"
-                  Name="log.py"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ooldtp\log.py" />
-            <RemoveFile Id="ooldtplog" Name="log.pyc" On="uninstall" />
-         </Component>
-         <Component Id="ooldtpstate" Guid="4D4A986D-C485-4EC9-BDA8-D22938D250A1">
-            <File Id="ooldtpstatepy"
-                  Name="state.py"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ooldtp\state.py" />
-            <RemoveFile Id="ooldtpstate" Name="state.pyc" On="uninstall" />
-         </Component>
-      </DirectoryRef>
+            <Component  Id='WUIATestLibrary'
+                        Guid='BFBC4427-9C93-4719-8AF6-26DB60BAB73C'
+                        Win64="$(var.Is64bit)">
+                <File   Id='WUIATestLibraryDLL'
+                        Name='WUIATestLibrary.dll'
+                        DiskId='1'
+                        Source='..\CobraWinLDTP\bin\Release\WUIATestLibrary.dll'
+                        KeyPath='yes' />
+            </Component>
 
-      <DirectoryRef Id='PYLDTPDIR'>
-         <Component Id="ldtprbclient" Guid="FDDD943B-DA40-43B7-8A76-BE0D63D3ED17">
-            <File Id="ldtpclientrb"
-                  Name="ldtp.rb"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ldtp\ldtp.rb" />
-         </Component>
-         <Component Id="ldtpclient" Guid="0FDAFD39-6362-4864-AC4E-3FB39A5E6BA3">
-            <File Id="ldtpclientpy"
-                  Name="client.py"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ldtp\client.py" />
-            <RemoveFile Id="ldtpclient" Name="client.pyc" On="uninstall" />
-         </Component>
-         <Component Id="ldtpclientexception" Guid="DBA35B90-2626-4873-A5D8-A97388C0E571">
-            <File Id="ldtpclientexceptionpy"
-                  Name="client_exception.py"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ldtp\client_exception.py" />
-            <RemoveFile Id="ldtpclientexception" Name="client_exception.pyc" On="uninstall" />
-         </Component>
-         <Component Id="ldtplog" Guid="032C9DAF-DCA7-400D-A5AA-9003CF87D7AB">
-            <File Id="ldtplogpy"
-                  Name="log.py"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ldtp\log.py" />
-            <RemoveFile Id="ldtplog" Name="log.pyc" On="uninstall" />
-         </Component>
-         <Component Id="ldtpstate" Guid="C79063B2-F628-4C03-9060-4E00C502BF8D">
-            <File Id="ldtpstatepy"
-                  Name="state.py"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ldtp\state.py" />
-            <RemoveFile Id="ldtpstate" Name="state.pyc" On="uninstall" />
-         </Component>
-         <Component Id="ldtpinit" Guid="5ED6BB3C-3038-498D-8276-82FDDC987AEC">
-            <File Id="ldtpinitpy"
-                  Name="__init__.py"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ldtp\__init__.py" />
-            <RemoveFile Id="ldtpinit" Name="__init__.pyc" On="uninstall" />
-         </Component>
-        <Component Id="ldtpjar" Guid="B4CB0FA0-B0C8-11E1-AFA6-0800200C9A66">
-            <File Id="ldtpjarfile"
-                  Name="ldtp.jar"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ldtp\ldtp.jar" />
-            <RemoveFile Id="ldtpjar" Name="ldtp.jar" On="uninstall" />
-         </Component>
-         <Component Id="ldtpperl" Guid="4E798C3B-F351-499F-B5F1-0C9FD9FF1697">
-            <File Id="ldtpperlfile"
-                  Name="LDTP.pm"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ldtp\Perl\LDTP.pm" />
-            <RemoveFile Id="ldtpperl" Name="LDTP.pm" On="uninstall" />
-         </Component>
-         <Component Id="perlreadme" Guid="4D72AD92-EBCA-4F7A-AD5A-75285B2A31FF">
-            <File Id="perlreadmefile"
-                  Name="README"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ldtp\Perl\Readme" />
-            <RemoveFile Id="perlreadme" Name="README" On="uninstall" />
-         </Component>
-      </DirectoryRef>
-      <DirectoryRef Id='PERLLDTPDIR'>
-         <Component Id="servicepm" Guid="952804A0-ADA5-45DD-9870-81F3AC60AC1F">
-            <File Id="servicefile"
-                  Name="Service.pm"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ldtp\Perl\LDTP\Service.pm" />
-            <RemoveFile Id="servicepm" Name="Service.pm" On="uninstall" />
-         </Component>
-         <Component Id="windowpm" Guid="3E7C3288-C482-4650-AD22-3F6460A1D475">
-            <File Id="windowfile"
-                  Name="Window.pm"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ldtp\Perl\LDTP\Window.pm" />
-            <RemoveFile Id="windowpm" Name="Window.pm" On="uninstall" />
-         </Component>
-      </DirectoryRef>
-      <DirectoryRef Id='ROLEDIR'>
-         <Component Id="rpchandlerpm" Guid="9705456A-B2A6-4E0B-AC2F-6CB165B928AF">
-            <File Id="rpchandlerfile"
-                  Name="RPCHandler.pm"
-                  KeyPath="yes"
-                  Source="..\CobraWinLDTP\ldtp\Perl\LDTP\Role\RPCHandler.pm" />
-            <RemoveFile Id="rpchandlerpm" Name="RPCHandler.pm" On="uninstall" />
-         </Component>
-      </DirectoryRef>
+            <Component  Id="mit" 
+                        Guid="D14AC46F-5C53-4BF6-8FC0-0B8A6E722284">
+                <File   Id="mitrtf" 
+                        KeyPath="yes" 
+                        Source="..\CobraWinLDTP\License.rtf" />
+            </Component>
 
-      <DirectoryRef Id="ProgramMenuDir">
-         <Component Id="ProgramMenuDir"
-                    Guid="F55D9ADD-A4DD-4A47-8137-A8D3B48E4157"
-                    Win64="$(var.Is64bit)">
-		    <!--<RemoveFolder Id="PYLDTPDIR" On='uninstall' />-->
-            <RemoveFolder Id="ProgramMenuDir" On='uninstall' />
-            <RegistryValue Root='HKCU' Key='Software\[Manufacturer]\[ProductName]' Type='string' Value='' KeyPath='yes' />
-         </Component>
-      </DirectoryRef>
+            <Component  Id="README"
+                        Guid="99C85611-B9B0-4D1D-A8B4-06B0EBC30B16">
+                <File   Id="READMEtxt"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\README.txt" />
+            </Component>
 
-      <Feature Id='Complete' Level='1'>
-         <ComponentRef Id='MainExecutable' />
-	 <ComponentRef Id='SetEnvironmentVariable' />
-         <ComponentRef Id='CookComputing.XmlRpcV2' />
-         <ComponentRef Id='Ldtp' />
-         <ComponentRef Id='Interop.UIAutomationClient' />
-         <ComponentRef Id='Ldtpd' />
-         <ComponentRef Id='UIAComWrapper' />
-         <ComponentRef Id='WUIATestLibrary' />
-         <ComponentRef Id='mit' />
-         <ComponentRef Id='README' />
-         <ComponentRef Id='FAQ' />
-         <ComponentRef Id='AUTHORS' />
-         <ComponentRef Id="ldtprbclient" />
-         <ComponentRef Id="ldtpclient" />
-         <ComponentRef Id="ldtpclientexception" />
-         <ComponentRef Id="ldtplog" />
-         <ComponentRef Id="ldtpstate" />
-         <ComponentRef Id="ldtpinit" />
-         <ComponentRef Id="ldtpjar" />
-         <ComponentRef Id="ldtpperl" />
-         <ComponentRef Id="perlreadme" />
-         <ComponentRef Id="servicepm" />
-         <ComponentRef Id="windowpm" />
-         <ComponentRef Id="rpchandlerpm" />
-         <ComponentRef Id="ldtputilsinit" />
-         <ComponentRef Id="ooldtpinit" />
-         <ComponentRef Id="ooldtplog" />
-         <ComponentRef Id="ooldtpstate" />
-         <ComponentRef Id="ooldtpclientexception" />
-         <ComponentRef Id='ProgramMenuDir' />
-      </Feature>
+            <Component  Id="FAQ" 
+                        Guid="2EAB177A-540B-4DC5-8D60-EEF551063A53">
+                <File   Id="FAQtxt" 
+                        KeyPath="yes" 
+                        Source="..\CobraWinLDTP\FAQ.txt" />
+            </Component>
 
-      <!-- Note: I haven't tried this myself, I use Upgrade/UpgradeVersion
-      elements for finer control -->
-      <MajorUpgrade
-         AllowSameVersionUpgrades='yes'
-         Schedule='afterInstallInitialize'
-         DowngradeErrorMessage='A newer version is installed' />
+            <Component  Id="AUTHORS" 
+                        Guid="DF606170-5DA8-11E1-B86C-0800200C9A66">
+                <File   Id="AUTHORStxt" 
+                        KeyPath="yes" 
+                        Source="..\CobraWinLDTP\AUTHORS.txt" />
+            </Component>
 
-      <!-- You may want to point to a .ico file instead - this will copy the exe for icon caching -->
-      <!--
-      <Icon Id="CobraWinLDTP.exe" SourceFile="CobraWinLDTP.exe" />
-      -->
-      <CustomAction Id="LaunchSetEnvironmentVariable"
-                      Directory="INSTALLDIR"
-                      ExeCommand='"[INSTALLDIR]SetEnvironmentVariable.exe"'
-                      Return="check">
-      </CustomAction>
-      <InstallExecuteSequence> 
-         <WriteEnvironmentStrings />
-	 <Custom Action="LaunchSetEnvironmentVariable" After="InstallFinalize">NOT Installed</Custom>
-      </InstallExecuteSequence>
+        </DirectoryRef>
 
-    <UI>
-       <UIRef Id="WixUI_Minimal" />
-    </UI>
+        <DirectoryRef Id='PYLDTPUTILSDIR'>
+            <Component  Id="ldtputilsinit" 
+                        Guid="51F04CEC-92EF-4B6B-B484-0224E240603C">
+                <File   Id="ldtputilsinitpy"
+                        Name="__init__.py"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ldtputils\__init__.py" />
+                <RemoveFile Id="ldtputilsinit"
+                            Name="__init__.pyc"
+                            On="uninstall" />
+            </Component>
+        </DirectoryRef>
 
-   </Product>
+        <DirectoryRef Id='PYOOLDTPDIR'>
+            <Component  Id="ooldtpinit"
+                        Guid="60D7F37A-B7F7-4845-8018-AFE64BBE6C49">
+                <File   Id="ooldtpinitpy"
+                        Name="__init__.py"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ooldtp\__init__.py" />
+                <RemoveFile Id="ooldtpinit"
+                            Name="__init__.pyc"
+                            On="uninstall" />
+            </Component>
+
+            <Component  Id="ooldtpclientexception"
+                        Guid="48DA5D2E-807E-4CB9-AAE2-02866F368B85">
+                <File   Id="ooldtpclientexceptionpy"
+                        Name="client_exception.py"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ooldtp\client_exception.py" />
+                <RemoveFile Id="ooldtpclientexception"
+                            Name="client_exception.pyc"
+                            On="uninstall" />
+            </Component>
+
+            <Component  Id="ooldtplog"
+                        Guid="6265E13F-3A20-46A0-A1DA-53CEA5F339FD">
+                <File   Id="ooldtplogpy"
+                        Name="log.py"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ooldtp\log.py" />
+                <RemoveFile Id="ooldtplog"
+                            Name="log.pyc"
+                            On="uninstall" />
+            </Component>
+
+            <Component  Id="ooldtpstate"
+                        Guid="4D4A986D-C485-4EC9-BDA8-D22938D250A1">
+                <File   Id="ooldtpstatepy"
+                        Name="state.py"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ooldtp\state.py" />
+                <RemoveFile Id="ooldtpstate"
+                            Name="state.pyc"
+                            On="uninstall" />
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id='PYLDTPDIR'>
+            <Component  Id="ldtprbclient"
+                        Guid="FDDD943B-DA40-43B7-8A76-BE0D63D3ED17">
+                <File   Id="ldtpclientrb"
+                        Name="ldtp.rb"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ldtp\ldtp.rb" />
+            </Component>
+
+            <Component  Id="ldtpclient"
+                        Guid="0FDAFD39-6362-4864-AC4E-3FB39A5E6BA3">
+                <File   Id="ldtpclientpy"
+                        Name="client.py"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ldtp\client.py" />
+                <RemoveFile Id="ldtpclient"
+                            Name="client.pyc"
+                            On="uninstall" />
+            </Component>
+
+            <Component  Id="ldtpclientexception" 
+                        Guid="DBA35B90-2626-4873-A5D8-A97388C0E571">
+                <File   Id="ldtpclientexceptionpy"
+                        Name="client_exception.py"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ldtp\client_exception.py" />
+                <RemoveFile Id="ldtpclientexception"
+                            Name="client_exception.pyc"
+                            On="uninstall" />
+            </Component>
+
+            <Component  Id="ldtplog"
+                        Guid="032C9DAF-DCA7-400D-A5AA-9003CF87D7AB">
+                <File   Id="ldtplogpy"
+                        Name="log.py"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ldtp\log.py" />
+                <RemoveFile Id="ldtplog"
+                            Name="log.pyc"
+                            On="uninstall" />
+            </Component>
+
+            <Component Id="ldtpstate"
+                        Guid="C79063B2-F628-4C03-9060-4E00C502BF8D">
+                <File   Id="ldtpstatepy"
+                        Name="state.py"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ldtp\state.py" />
+                <RemoveFile Id="ldtpstate"
+                            Name="state.pyc"
+                            On="uninstall" />
+            </Component>
+
+            <Component  Id="ldtpinit"
+                        Guid="5ED6BB3C-3038-498D-8276-82FDDC987AEC">
+                <File   Id="ldtpinitpy"
+                        Name="__init__.py"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ldtp\__init__.py" />
+                <RemoveFile Id="ldtpinit"
+                            Name="__init__.pyc"
+                            On="uninstall" />
+            </Component>
+
+            <Component  Id="ldtpjar"
+                        Guid="B4CB0FA0-B0C8-11E1-AFA6-0800200C9A66">
+                <File   Id="ldtpjarfile"
+                        Name="ldtp.jar"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ldtp\ldtp.jar" />
+                <RemoveFile Id="ldtpjar"
+                            Name="ldtp.jar" On="uninstall" />
+            </Component>
+
+            <Component  Id="ldtpperl"
+                        Guid="4E798C3B-F351-499F-B5F1-0C9FD9FF1697">
+                <File   Id="ldtpperlfile"
+                        Name="LDTP.pm"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ldtp\Perl\LDTP.pm" />
+                <RemoveFile Id="ldtpperl"
+                            Name="LDTP.pm"
+                            On="uninstall" />
+            </Component>
+
+            <Component  Id="perlreadme"
+                        Guid="4D72AD92-EBCA-4F7A-AD5A-75285B2A31FF">
+                <File   Id="perlreadmefile"
+                        Name="README"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ldtp\Perl\Readme" />
+                <RemoveFile Id="perlreadme"
+                            Name="README"
+                            On="uninstall" />
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id='PERLLDTPDIR'>
+            <Component  Id="servicepm"
+                        Guid="952804A0-ADA5-45DD-9870-81F3AC60AC1F">
+                <File   Id="servicefile"
+                        Name="Service.pm"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ldtp\Perl\LDTP\Service.pm" />
+                <RemoveFile Id="servicepm"
+                            Name="Service.pm"
+                            On="uninstall" />
+            </Component>
+
+            <Component  Id="windowpm"
+                        Guid="3E7C3288-C482-4650-AD22-3F6460A1D475">
+                <File   Id="windowfile"
+                        Name="Window.pm"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ldtp\Perl\LDTP\Window.pm" />
+                <RemoveFile Id="windowpm"
+                            Name="Window.pm"
+                            On="uninstall" />
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id='ROLEDIR'>
+            <Component  Id="rpchandlerpm"
+                        Guid="9705456A-B2A6-4E0B-AC2F-6CB165B928AF">
+                <File   Id="rpchandlerfile"
+                        Name="RPCHandler.pm"
+                        KeyPath="yes"
+                        Source="..\CobraWinLDTP\ldtp\Perl\LDTP\Role\RPCHandler.pm" />
+                <RemoveFile Id="rpchandlerpm"
+                            Name="RPCHandler.pm"
+                            On="uninstall" />
+            </Component>
+        </DirectoryRef>
+
+        <DirectoryRef Id="ProgramMenuDir">
+            <Component  Id="ProgramMenuDir"
+                        Guid="F55D9ADD-A4DD-4A47-8137-A8D3B48E4157"
+                        Win64="$(var.Is64bit)">
+                <RemoveFolder   Id="ProgramMenuDir"
+                                On='uninstall' />
+                <RegistryValue  Root='HKCU'
+                                Key='Software\[Manufacturer]\[ProductName]'
+                                Type='string'
+                                Value=''
+                                KeyPath='yes' />
+            </Component>
+        </DirectoryRef>
+
+        <Feature Id='Complete' Level='1'>
+            <ComponentRef Id='MainExecutable' />
+            <ComponentRef Id='SetEnvironmentVariable' />
+            <ComponentRef Id='CookComputing.XmlRpcV2' />
+            <ComponentRef Id='Ldtp' />
+            <ComponentRef Id='Interop.UIAutomationClient' />
+            <ComponentRef Id='Ldtpd' />
+            <ComponentRef Id='UIAComWrapper' />
+            <ComponentRef Id='WUIATestLibrary' />
+            <ComponentRef Id='mit' />
+            <ComponentRef Id='README' />
+            <ComponentRef Id='FAQ' />
+            <ComponentRef Id='AUTHORS' />
+            <ComponentRef Id="ldtprbclient" />
+            <ComponentRef Id="ldtpclient" />
+            <ComponentRef Id="ldtpclientexception" />
+            <ComponentRef Id="ldtplog" />
+            <ComponentRef Id="ldtpstate" />
+            <ComponentRef Id="ldtpinit" />
+            <ComponentRef Id="ldtpjar" />
+            <ComponentRef Id="ldtpperl" />
+            <ComponentRef Id="perlreadme" />
+            <ComponentRef Id="servicepm" />
+            <ComponentRef Id="windowpm" />
+            <ComponentRef Id="rpchandlerpm" />
+            <ComponentRef Id="ldtputilsinit" />
+            <ComponentRef Id="ooldtpinit" />
+            <ComponentRef Id="ooldtplog" />
+            <ComponentRef Id="ooldtpstate" />
+            <ComponentRef Id="ooldtpclientexception" />
+            <ComponentRef Id='ProgramMenuDir' />
+        </Feature>
+
+        <!-- Note: I haven't tried this myself, I use Upgrade/UpgradeVersion
+        elements for finer control -->
+        <MajorUpgrade   AllowSameVersionUpgrades='yes'
+                        Schedule='afterInstallInitialize'
+                        DowngradeErrorMessage='A newer version is installed' />
+
+        <!-- 
+        You may want to point to a .ico file instead - this will copy the exe for icon caching
+        <Icon Id="CobraWinLDTP.exe" SourceFile="CobraWinLDTP.exe" />
+        -->
+
+        <CustomAction   Id="LaunchSetEnvironmentVariable"
+                        Directory="INSTALLDIR"
+                        ExeCommand='"[INSTALLDIR]SetEnvironmentVariable.exe"'
+                        Return="check">
+        </CustomAction>
+
+        <CustomAction   Id="ListenerServiceAddLocalHostReservation"
+                        Execute='deferred'
+                        Impersonate='no'
+                        Directory="INSTALLDIR"
+                        ExeCommand="netsh http add urlacl url=http://localhost:4118/ user=[%USERDOMAIN]\[%USERNAME]"
+                        Return="check" />
+
+        <CustomAction   Id="ListenerServiceAddLocalIPReservation"
+                        Execute='deferred'
+                        Impersonate='no'
+                        Directory="INSTALLDIR"
+                        ExeCommand="netsh http add urlacl url=http://+:4118/ user=[%USERDOMAIN]\[%USERNAME]"
+                        Return="check" />
+
+        <CustomAction   Id="ListenerServiceAddAllIPReservation"
+                        Execute='deferred'
+                        Impersonate='no'
+                        Directory="INSTALLDIR"
+                        ExeCommand="netsh http add urlacl url=http://*:4118/ user=[%USERDOMAIN]\[%USERNAME]"
+                        Return="check" />
+
+        <InstallExecuteSequence> 
+            <WriteEnvironmentStrings />
+            <Custom Action="ListenerServiceAddLocalHostReservation"
+                    Before='InstallFinalize'>
+                    <![CDATA[(VersionNT >= 601)]]>
+                    </Custom>
+            <Custom Action="ListenerServiceAddLocalIPReservation"
+                    Before='InstallFinalize'>
+                    <![CDATA[(VersionNT >= 601)]]>
+                    </Custom>
+            <Custom Action="ListenerServiceAddAllIPReservation"
+                    Before='InstallFinalize'>
+                    <![CDATA[(VersionNT >= 601)]]>
+                    </Custom>
+            <Custom Action="LaunchSetEnvironmentVariable" 
+                    After="InstallFinalize">NOT Installed</Custom>
+        </InstallExecuteSequence>
+
+        <UI>
+            <UIRef Id="WixUI_Minimal" />
+        </UI>
+
+    </Product>
 </Wix>
 
