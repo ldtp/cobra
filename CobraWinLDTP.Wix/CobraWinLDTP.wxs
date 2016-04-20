@@ -521,11 +521,17 @@ SOFTWARE.
         <InstallExecuteSequence> 
             <WriteEnvironmentStrings />
             <Custom Action="ListenerServiceAddLocalHostReservation"
-                    Before='InstallFinalize'>NOT Installed</Custom>
+                    Before='InstallFinalize'>
+                    <![CDATA[(VersionNT >= 601)]]>
+                    </Custom>
             <Custom Action="ListenerServiceAddLocalIPReservation"
-                    Before='InstallFinalize'>NOT Installed</Custom>
+                    Before='InstallFinalize'>
+                    <![CDATA[(VersionNT >= 601)]]>
+                    </Custom>
             <Custom Action="ListenerServiceAddAllIPReservation"
-                    Before='InstallFinalize'>NOT Installed</Custom>
+                    Before='InstallFinalize'>
+                    <![CDATA[(VersionNT >= 601)]]>
+                    </Custom>
             <Custom Action="LaunchSetEnvironmentVariable" 
                     After="InstallFinalize">NOT Installed</Custom>
         </InstallExecuteSequence>
