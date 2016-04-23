@@ -119,8 +119,7 @@ SOFTWARE.
                         Name='CobraWinLDTP.exe'
                         DiskId='1'
                         Source='..\CobraWinLDTP\bin\Release\CobraWinLDTP.exe'
-                        KeyPath='yes'>
-                </File>
+                        KeyPath='yes'/>
                 <!--
                 <Shortcut   Id="startmenuWinLDTPService"
                             Directory="ProgramMenuDir"
@@ -140,6 +139,16 @@ SOFTWARE.
                 -->
             </Component>
 
+            <Component  Id='CobraWinLDTPExeConfig'
+                        Guid='D5EB2B8F-CF4B-4C4F-A1D7-0A1DD4076008'
+                        Win64="$(var.Is64bit)">
+                <File   Id='CobraWinLDTPExeConfigFile'
+                        Name='CobraWinLDTP.exe.config'
+                        DiskId='1'
+                        Source='..\CobraWinLDTP\app.config'
+                        KeyPath='yes' />
+            </Component>
+
             <Component  Id='SetEnvironmentVariable'
                         Guid='5F6DEE34-7DEB-49F5-8392-44936CC15348'
                         Win64="$(var.Is64bit)">
@@ -147,6 +156,16 @@ SOFTWARE.
                         Name='SetEnvironmentVariable.exe'
                         DiskId='1'
                         Source='..\SetEnvironmentVariable\bin\Release\SetEnvironmentVariable.exe'
+                        KeyPath='yes' />
+            </Component>
+
+            <Component  Id='SetEnvironmentVariableExeConfig'
+                        Guid='1F07A393-B8AE-417B-932B-E896A39E9608'
+                        Win64="$(var.Is64bit)">
+                <File   Id='SetEnvironmentVariableExeConfigFile'
+                        Name='SetEnvironmentVariable.exe.config'
+                        DiskId='1'
+                        Source='..\SetEnvironmentVariable\app.config'
                         KeyPath='yes' />
             </Component>
 
@@ -449,7 +468,9 @@ SOFTWARE.
 
         <Feature Id='Complete' Level='1'>
             <ComponentRef Id='MainExecutable' />
+            <ComponentRef Id='CobraWinLDTPExeConfig' />
             <ComponentRef Id='SetEnvironmentVariable' />
+            <ComponentRef Id='SetEnvironmentVariableExeConfig' />
             <ComponentRef Id='CookComputing.XmlRpcV2' />
             <ComponentRef Id='Ldtp' />
             <ComponentRef Id='Interop.UIAutomationClient' />
