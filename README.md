@@ -1,4 +1,5 @@
-Cobra WinLDTP is based on Linux Desktop Testing Project - http://ldtp.freedesktop.org LDTP works on Windows/Linux/Mac/Solairs/FreeBSD/NetBSD/Palm Source, yes its Cross Platform GUI testing tool. Please share your feedback with us (nagappan@gmail.com).
+Cobra WinLDTP is based on Linux Desktop Testing Project - http://ldtp.freedesktop.org 
+LDTP works on Windows/Linux/Mac/Solairs/FreeBSD/NetBSD/Palm Source, yes its Cross Platform GUI testing tool. Please share your feedback with us (nagappan@gmail.com).
 
 * Linux GUI testing is known to work on GNOME / KDE (QT >= 4.8) / Java Swing / LibreOffice / Mozilla application on all major Linux distribution
 * Windows GUI testing is known to work on application written in .NET / C++ / Java / QT on Windows XP SP3 / Vista SP2 / Windows 7 / Windows 8 development version
