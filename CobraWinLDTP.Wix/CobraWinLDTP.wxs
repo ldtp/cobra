@@ -1,5 +1,7 @@
 <?xml version='1.0' encoding='windows-1252'?>
-<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'
+     xmlns:http="http://schemas.microsoft.com/wix/HttpExtension">
+
 <!--
 CobraWinLDTP 4.0
 
@@ -120,6 +122,18 @@ SOFTWARE.
                         DiskId='1'
                         Source='..\CobraWinLDTP\bin\Release\CobraWinLDTP.exe'
                         KeyPath='yes'/>
+                        
+                <http:UrlReservation Url="http://localhost:4118/" HandleExisting="replace">
+                  <http:UrlAce SecurityPrincipal="NT AUTHORITY\NETWORK SERVICE" Rights="all" />
+                </http:UrlReservation>
+
+                <http:UrlReservation Url="http://+:4118/" HandleExisting="replace">
+                  <http:UrlAce SecurityPrincipal="NT AUTHORITY\NETWORK SERVICE" Rights="all" />
+                </http:UrlReservation>
+                
+                <http:UrlReservation Url="http://*:4118/" HandleExisting="replace">
+                  <http:UrlAce SecurityPrincipal="NT AUTHORITY\NETWORK SERVICE" Rights="all" />
+                </http:UrlReservation>
                 <!--
                 <Shortcut   Id="startmenuWinLDTPService"
                             Directory="ProgramMenuDir"
@@ -518,41 +532,8 @@ SOFTWARE.
                         Return="check">
         </CustomAction>
 
-        <CustomAction   Id="ListenerServiceAddLocalHostReservation"
-                        Execute='deferred'
-                        Impersonate='no'
-                        Directory="INSTALLDIR"
-                        ExeCommand="netsh http add urlacl url=http://localhost:4118/ user=[%USERDOMAIN]\[%USERNAME]"
-                        Return="check" />
-
-        <CustomAction   Id="ListenerServiceAddLocalIPReservation"
-                        Execute='deferred'
-                        Impersonate='no'
-                        Directory="INSTALLDIR"
-                        ExeCommand="netsh http add urlacl url=http://+:4118/ user=[%USERDOMAIN]\[%USERNAME]"
-                        Return="check" />
-
-        <CustomAction   Id="ListenerServiceAddAllIPReservation"
-                        Execute='deferred'
-                        Impersonate='no'
-                        Directory="INSTALLDIR"
-                        ExeCommand="netsh http add urlacl url=http://*:4118/ user=[%USERDOMAIN]\[%USERNAME]"
-                        Return="check" />
-
         <InstallExecuteSequence> 
             <WriteEnvironmentStrings />
-            <Custom Action="ListenerServiceAddLocalHostReservation"
-                    Before='InstallFinalize'>
-                    <![CDATA[(VersionNT >= 601)]]>
-                    </Custom>
-            <Custom Action="ListenerServiceAddLocalIPReservation"
-                    Before='InstallFinalize'>
-                    <![CDATA[(VersionNT >= 601)]]>
-                    </Custom>
-            <Custom Action="ListenerServiceAddAllIPReservation"
-                    Before='InstallFinalize'>
-                    <![CDATA[(VersionNT >= 601)]]>
-                    </Custom>
             <Custom Action="LaunchSetEnvironmentVariable" 
                     After="InstallFinalize">NOT Installed</Custom>
         </InstallExecuteSequence>
