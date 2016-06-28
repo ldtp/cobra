@@ -33,6 +33,10 @@
       <HintPath>$(WixExtDir)\WixNetFxExtension.dll</HintPath>
       <Name>WixNetFxExtension</Name>
     </WixExtension>
+    <WixExtension Include="WixHttpExtension">
+      <HintPath>$(WixExtDir)\WixHttpExtension.dll</HintPath>
+      <Name>WixHttpExtension</Name>
+    </WixExtension>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CobraWinLDTP\CobraWinLDTP.csproj">
