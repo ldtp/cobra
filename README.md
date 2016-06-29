@@ -1,11 +1,45 @@
 Cobra WinLDTP is based on Linux Desktop Testing Project - http://ldtp.freedesktop.org 
 LDTP works on Windows/Linux/Mac/Solairs/FreeBSD/NetBSD/Palm Source, yes its Cross Platform GUI testing tool. Please share your feedback with us (nagappan@gmail.com).
 
-* Linux GUI testing is known to work on GNOME / KDE (QT >= 4.8) / Java Swing / LibreOffice / Mozilla application on all major Linux distribution
-* Windows GUI testing is known to work on application written in .NET / C++ / Java / QT on Windows XP SP3 / Vista SP2 / Windows 7 / Windows 8 development version
-* Mac GUI testing is known to work on OS X Snow Leopard/Lion/Mountain Lion. Where ever ATOMac runs, LDTP should work on it
+### Linux 
 
-Verified with Windows XP SP3 / Windows 7 SP1 / Windows 8. Minimum requirement >= .NET3.5 for Windows XP/7. Test scripts can be written in Python / Ruby / Java / C# / VB.NET / PowerShell / Clojure / Perl and it can be extended to other languages. 
+GUI testing is known to work on all major Linux distribution with: 
+
+  * GNOME 
+  * KDE (Qt >= 4.8)
+  * Java Swing
+  * LibreOffice
+  * Mozilla application 
+
+### Windows 
+
+GUI testing is known to work on (minimum requirement >= .NET3.5)
+
+  * Windows XP SP3
+  * Vista SP2
+  * Windows 7
+  * Windows 8 
+  * Windows 8.1
+  * Windows 10
+
+with application written in 
+
+  * .NET
+  * C++ (MFC, WPF)
+  * Java Swing
+  * Qt >= 4.8 
+
+### Mac 
+
+GUI testing is known to work on 
+
+  * OS X Snow Leopard
+  * OS X Lion
+  * OS X Mountain Lion
+  
+Where ever ATOMac runs, LDTP should work on it
+
+Test scripts can be written in Python / Ruby / Java / C# / VB.NET / PowerShell / Clojure / Perl and it can be extended to other languages. 
 
 ## Download
 
