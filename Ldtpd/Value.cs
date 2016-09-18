@@ -307,7 +307,7 @@ namespace Ldtpd
         }
         public int Increase(string windowName, string objName, int iterations)
         {
-            double max = GetMaxValue(windowName, objName);
+            double max = Double.MaxValue;//GetMaxValue(windowName, objName);
             double value = GetValue(windowName, objName);
             bool flag = false;
             for (int i = 0; i < iterations; i++)
@@ -327,7 +327,7 @@ namespace Ldtpd
         }
         public int Decrease(string windowName, string objName, int iterations)
         {
-            double min = GetMinValue(windowName, objName);
+            double min = Double.MinValue;//GetMinValue(windowName, objName);
             double value = GetValue(windowName, objName);
             bool flag = false;
             for (int i = 0; i < iterations; i++)
