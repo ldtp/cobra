@@ -1,8 +1,8 @@
 @ECHO OFF
 
 REM Configure tool locations
-SET MSBUILD=C:\Program Files (x86)\MSBuild\12.0\Bin\MSBuild.exe
-SET WIX=C:\Program Files (x86)\WiX Toolset v3.9\bin
+SET MSBUILD=C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe
+SET WIX=C:\Program Files (x86)\WiX Toolset v3.10\bin
 
 REM ===========================================================
 
