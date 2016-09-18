@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Cobra WinLDTP 4.0
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
@@ -76,15 +76,17 @@ namespace Ldtpd
                         "Object state is disabled");
                 }
                 childHandle.SetFocus();
-                if (childHandle.TryGetCurrentPattern(RangeValuePattern.Pattern,
+                if (childHandle.TryGetCurrentPattern(LegacyIAccessiblePattern.Pattern,
                     out pattern))
                 {
-                    if (((RangeValuePattern)pattern).Current.IsReadOnly)
+/*                    
+                    if (((LegacyIAccessiblePattern)pattern).Current.IsReadOnly)
                     {
                         throw new XmlRpcFaultException(123,
                             "Control is read-only.");
                     }
-                    ((RangeValuePattern)pattern).SetValue(value);
+*/
+                    ((LegacyIAccessiblePattern)pattern).SetValue(Convert.ToString(value, CultureInfo.InvariantCulture));
                     return 1;
                 }
             }
@@ -112,15 +114,17 @@ namespace Ldtpd
             try
             {
                 childHandle.SetFocus();
-                if (childHandle.TryGetCurrentPattern(RangeValuePattern.Pattern,
+                if (childHandle.TryGetCurrentPattern(LegacyIAccessiblePattern.Pattern,
                     out pattern))
                 {
-                    if (((RangeValuePattern)pattern).Current.IsReadOnly)
+/*                    
+                    if (((LegacyIAccessiblePattern)pattern).Current.IsReadOnly)
                     {
                         throw new XmlRpcFaultException(123,
                             "Control is read-only.");
                     }
-                    return ((RangeValuePattern)pattern).Current.Value;
+*/
+                    return Convert.ToDouble(((LegacyIAccessiblePattern)pattern).Current.Value, CultureInfo.InvariantCulture);
                 }
             }
             catch (Exception ex)
