@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Cobra WinLDTP 4.0
  * 
  * Author: Nagappan Alagappan <nalagappan@vmware.com>
@@ -76,15 +76,17 @@ namespace Ldtpd
                         "Object state is disabled");
                 }
                 childHandle.SetFocus();
-                if (childHandle.TryGetCurrentPattern(RangeValuePattern.Pattern,
+                if (childHandle.TryGetCurrentPattern(LegacyIAccessiblePattern.Pattern,
                     out pattern))
                 {
-                    if (((RangeValuePattern)pattern).Current.IsReadOnly)
+/*                    
+                    if (((LegacyIAccessiblePattern)pattern).Current.IsReadOnly)
                     {
                         throw new XmlRpcFaultException(123,
                             "Control is read-only.");
                     }
-                    ((RangeValuePattern)pattern).SetValue(value);
+*/
+                    ((LegacyIAccessiblePattern)pattern).SetValue(Convert.ToString(value, CultureInfo.InvariantCulture));
                     return 1;
                 }
             }
@@ -112,15 +114,17 @@ namespace Ldtpd
             try
             {
                 childHandle.SetFocus();
-                if (childHandle.TryGetCurrentPattern(RangeValuePattern.Pattern,
+                if (childHandle.TryGetCurrentPattern(LegacyIAccessiblePattern.Pattern,
                     out pattern))
                 {
-                    if (((RangeValuePattern)pattern).Current.IsReadOnly)
+/*                    
+                    if (((LegacyIAccessiblePattern)pattern).Current.IsReadOnly)
                     {
                         throw new XmlRpcFaultException(123,
                             "Control is read-only.");
                     }
-                    return ((RangeValuePattern)pattern).Current.Value;
+*/
+                    return Convert.ToDouble(((LegacyIAccessiblePattern)pattern).Current.Value, CultureInfo.InvariantCulture);
                 }
             }
             catch (Exception ex)
@@ -303,7 +307,7 @@ namespace Ldtpd
         }
         public int Increase(string windowName, string objName, int iterations)
         {
-            double max = GetMaxValue(windowName, objName);
+            double max = Double.MaxValue;//GetMaxValue(windowName, objName);
             double value = GetValue(windowName, objName);
             bool flag = false;
             for (int i = 0; i < iterations; i++)
@@ -323,7 +327,7 @@ namespace Ldtpd
         }
         public int Decrease(string windowName, string objName, int iterations)
         {
-            double min = GetMinValue(windowName, objName);
+            double min = Double.MinValue;//GetMinValue(windowName, objName);
             double value = GetValue(windowName, objName);
             bool flag = false;
             for (int i = 0; i < iterations; i++)
