@@ -76,16 +76,21 @@ namespace Ldtpd
                         "Object state is disabled");
                 }
                 childHandle.SetFocus();
-                if (childHandle.TryGetCurrentPattern(LegacyIAccessiblePattern.Pattern,
+                if (childHandle.TryGetCurrentPattern(RangeValuePattern.Pattern,
                     out pattern))
                 {
-/*                    
-                    if (((LegacyIAccessiblePattern)pattern).Current.IsReadOnly)
+                    if (((RangeValuePattern)pattern).Current.IsReadOnly)
                     {
                         throw new XmlRpcFaultException(123,
                             "Control is read-only.");
                     }
-*/
+
+                    ((RangeValuePattern)pattern).SetValue(value);
+                    return 1;
+                }
+                else if (childHandle.TryGetCurrentPattern(LegacyIAccessiblePattern.Pattern,
+                    out pattern))
+                {
                     ((LegacyIAccessiblePattern)pattern).SetValue(Convert.ToString(value, CultureInfo.InvariantCulture));
                     return 1;
                 }
@@ -114,16 +119,20 @@ namespace Ldtpd
             try
             {
                 childHandle.SetFocus();
-                if (childHandle.TryGetCurrentPattern(LegacyIAccessiblePattern.Pattern,
+                if (childHandle.TryGetCurrentPattern(RangeValuePattern.Pattern,
                     out pattern))
                 {
-/*                    
-                    if (((LegacyIAccessiblePattern)pattern).Current.IsReadOnly)
+                    if (((RangeValuePattern)pattern).Current.IsReadOnly)
                     {
                         throw new XmlRpcFaultException(123,
                             "Control is read-only.");
                     }
-*/
+
+                    return ((RangeValuePattern)pattern).Current.Value;
+                }
+                else if (childHandle.TryGetCurrentPattern(LegacyIAccessiblePattern.Pattern,
+                    out pattern))
+                {
                     return Convert.ToDouble(((LegacyIAccessiblePattern)pattern).Current.Value, CultureInfo.InvariantCulture);
                 }
             }
@@ -175,6 +184,11 @@ namespace Ldtpd
                     }
                     return ((RangeValuePattern)pattern).Current.Minimum;
                 }
+                else if (childHandle.TryGetCurrentPattern(LegacyIAccessiblePattern.Pattern,
+                    out pattern))
+                {
+                    return Double.MinValue;
+                }
             }
             catch (Exception ex)
             {
@@ -209,6 +223,11 @@ namespace Ldtpd
                             "Control is read-only.");
                     }
                     return ((RangeValuePattern)pattern).Current.Maximum;
+                }
+                else if (childHandle.TryGetCurrentPattern(LegacyIAccessiblePattern.Pattern,
+                    out pattern))
+                {
+                    return Double.MaxValue;
                 }
             }
             catch (Exception ex)
@@ -288,6 +307,11 @@ namespace Ldtpd
                     }
                     return ((RangeValuePattern)pattern).Current.SmallChange;
                 }
+                else if (childHandle.TryGetCurrentPattern(LegacyIAccessiblePattern.Pattern,
+                    out pattern))
+                {
+                    return 1;
+                }
             }
             catch (Exception ex)
             {
@@ -307,7 +331,7 @@ namespace Ldtpd
         }
         public int Increase(string windowName, string objName, int iterations)
         {
-            double max = Double.MaxValue;//GetMaxValue(windowName, objName);
+            double max = GetMaxValue(windowName, objName);
             double value = GetValue(windowName, objName);
             bool flag = false;
             for (int i = 0; i < iterations; i++)
@@ -327,7 +351,7 @@ namespace Ldtpd
         }
         public int Decrease(string windowName, string objName, int iterations)
         {
-            double min = Double.MinValue;//GetMinValue(windowName, objName);
+            double min = GetMinValue(windowName, objName);
             double value = GetValue(windowName, objName);
             bool flag = false;
             for (int i = 0; i < iterations; i++)
