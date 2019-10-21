@@ -532,10 +532,77 @@ SOFTWARE.
                         Return="check">
         </CustomAction>
 
+        <CustomAction   Id="ListenerServiceAddLocalHostReservation"
+                        Execute='commit'
+                        Impersonate='no'
+                        Directory="INSTALLDIR"
+                        ExeCommand="netsh http add urlacl url=http://localhost:4118/ user=[%USERNAME]"
+                        Return="check" />
+
+        <CustomAction   Id="ListenerServiceAddLocalIPReservation"
+                        Execute='commit'
+                        Impersonate='no'
+                        Directory="INSTALLDIR"
+                        ExeCommand="netsh http add urlacl url=http://+:4118/ user=[%USERNAME]"
+                        Return="check" />
+
+        <CustomAction   Id="ListenerServiceAddAllIPReservation"
+                        Execute='commit'
+                        Impersonate='no'
+                        Directory="INSTALLDIR"
+                        ExeCommand="netsh http add urlacl url=http://*:4118/ user=[%USERNAME]"
+                        Return="check" />
+
+        <CustomAction   Id="ListenerServiceRemoveLocalHostReservation"
+                        Execute='commit'
+                        Impersonate='no'
+                        Directory="INSTALLDIR"
+                        ExeCommand="netsh http delete urlacl url=http://localhost:4118/"
+                        Return="check" />
+
+        <CustomAction   Id="ListenerServiceRemoveLocalIPReservation"
+                        Execute='commit'
+                        Impersonate='no'
+                        Directory="INSTALLDIR"
+                        ExeCommand="netsh http delete urlacl url=http://+:4118/"
+                        Return="check" />
+
+        <CustomAction   Id="ListenerServiceRemoveAllIPReservation"
+                        Execute='commit'
+                        Impersonate='no'
+                        Directory="INSTALLDIR"
+                        ExeCommand="netsh http delete urlacl url=http://*:4118/"
+                        Return="check" />                        
+                        
         <InstallExecuteSequence> 
             <WriteEnvironmentStrings />
+            <Custom Action="ListenerServiceAddLocalHostReservation"
+                    Before='InstallFinalize'>
+                    <![CDATA[(VersionNT >= 601)]]> AND (NOT Installed) AND (NOT REMOVE)
+                    </Custom>
+            <Custom Action="ListenerServiceAddLocalIPReservation"
+                    Before='InstallFinalize'>
+                    <![CDATA[(VersionNT >= 601)]]> AND (NOT Installed) AND (NOT REMOVE)
+                    </Custom>
+            <Custom Action="ListenerServiceAddAllIPReservation"
+                    Before='InstallFinalize'>
+                    <![CDATA[(VersionNT >= 601)]]> AND (NOT Installed) AND (NOT REMOVE)
+                    </Custom>
             <Custom Action="LaunchSetEnvironmentVariable" 
                     After="InstallFinalize">NOT Installed</Custom>
+            <!-- Remove URL reservation -->
+            <Custom Action="ListenerServiceRemoveLocalHostReservation"
+                    Before='InstallFinalize'>
+                    <![CDATA[(VersionNT >= 601)]]> AND (NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")
+                    </Custom>
+            <Custom Action="ListenerServiceRemoveLocalIPReservation"
+                    Before='InstallFinalize'>
+                    <![CDATA[(VersionNT >= 601)]]> AND (NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")
+                    </Custom>
+            <Custom Action="ListenerServiceRemoveAllIPReservation"
+                    Before='InstallFinalize'>
+                    <![CDATA[(VersionNT >= 601)]]> AND (NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")
+                    </Custom>
         </InstallExecuteSequence>
 
         <UI>
